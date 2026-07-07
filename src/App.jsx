@@ -446,8 +446,7 @@ const CO_NUEVOS_PO_LIGA = [
 // LÓGICA — CHAMPIONS LEAGUE
 // ============================================================
 function useChampions() {
-  const [coefs, setCoefs] = useState(CL_COEFS_INICIALES);
-  const [modoAdmin, setModoAdmin] = useState(false);
+  const coefs = CL_COEFS_INICIALES;
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
   const [sorteoR3, setSorteoR3] = useState(null);
@@ -455,7 +454,6 @@ function useChampions() {
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const setCoef = (team, value) => setCoefs((p) => ({ ...p, [team]: value === "" ? undefined : parseFloat(value) }));
   const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
@@ -579,7 +577,7 @@ function useChampions() {
   }, [sorteoPO, resPO]);
 
   return {
-    coefs, setCoef, modoAdmin, setModoAdmin, allTeams,
+    coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
@@ -594,8 +592,7 @@ function useChampions() {
 // LÓGICA — EUROPA LEAGUE (recibe datos de Champions League en directo)
 // ============================================================
 function useEuropa(cl) {
-  const [coefs, setCoefs] = useState(EL_COEFS_INICIALES);
-  const [modoAdmin, setModoAdmin] = useState(false);
+  const coefs = EL_COEFS_INICIALES;
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
   const [sorteoR3, setSorteoR3] = useState(null);
@@ -603,7 +600,6 @@ function useEuropa(cl) {
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const setCoef = (team, value) => setCoefs((p) => ({ ...p, [team]: value === "" ? undefined : parseFloat(value) }));
   const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
@@ -732,7 +728,7 @@ function useEuropa(cl) {
   }, [sorteoPO, resPO]);
 
   return {
-    coefs, setCoef, modoAdmin, setModoAdmin, allTeams,
+    coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
@@ -747,8 +743,7 @@ function useEuropa(cl) {
 // LÓGICA — CONFERENCE LEAGUE (recibe datos de Champions y Europa en directo)
 // ============================================================
 function useConference(cl, el) {
-  const [coefs, setCoefs] = useState(CO_COEFS_INICIALES);
-  const [modoAdmin, setModoAdmin] = useState(false);
+  const coefs = CO_COEFS_INICIALES;
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
   const [sorteoR3, setSorteoR3] = useState(null);
@@ -756,7 +751,6 @@ function useConference(cl, el) {
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const setCoef = (team, value) => setCoefs((p) => ({ ...p, [team]: value === "" ? undefined : parseFloat(value) }));
   const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
@@ -784,13 +778,13 @@ function useConference(cl, el) {
     const info = CL_R1_INFO[tieId];
     const dato = cl.perdedoresR1.find((p) => p.tie === tieId);
     if (dato) return { nombre: dato.perdedor, nombreBase: dato.perdedor, pais: dato.pais, coef: coefs[dato.perdedor], definido: true, texto: `${dato.perdedor} (${dato.pais})` };
-    return { texto: `${info[0].n} o ${info[1].n} (pendiente de Champions League)`, pais: undefined, coef: undefined, definido: false };
+    return { texto: `Perdedor ${tieId} de Champions League (${info[0].n} o ${info[1].n} — pendiente)`, pais: undefined, coef: undefined, definido: false };
   };
   const resolverExternoEL = (tieId) => {
     const info = EL_R1_INFO[tieId];
     const dato = el.perdedoresR1.find((p) => p.tie === tieId);
     if (dato) return { nombre: dato.perdedor, nombreBase: dato.perdedor, pais: dato.pais, coef: coefs[dato.perdedor], definido: true, texto: `${dato.perdedor} (${dato.pais})` };
-    return { texto: `${info[0].n} o ${info[1].n} (pendiente de Europa League)`, pais: undefined, coef: undefined, definido: false };
+    return { texto: `Perdedor ${tieId} de Europa League (${info[0].n} o ${info[1].n} — pendiente)`, pais: undefined, coef: undefined, definido: false };
   };
   const resolverLado = (lado) => {
     if (lado.tipo === "literal") return { nombre: lado.nombre, nombreBase: lado.nombre, pais: lado.pais, coef: coefs[lado.nombre], definido: true, texto: `${lado.nombre} (${lado.pais})` };
@@ -895,7 +889,7 @@ function useConference(cl, el) {
   const rellenarPO = () => { if (!sorteoPO || sorteoPO.error) return; const n = {}; sorteoPO.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResPO(n); };
 
   return {
-    coefs, setCoef, modoAdmin, setModoAdmin, allTeams,
+    coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverExternoCL, resolverLado, resolverR2, r2Completa,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
@@ -916,7 +910,10 @@ function TieCard({ nombreA, paisA, nombreB, paisB, ruta, nota, tie, resultado, o
   return (
     <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "12px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
-        <div style={{ color: colores.texto, fontSize: 14 }}>{nombreA} {paisA && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisA})</span>} vs {nombreB} {paisB && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisB})</span>}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>{tie.id}</span>
+          <div style={{ color: colores.texto, fontSize: 14 }}>{nombreA} {paisA && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisA})</span>} vs {nombreB} {paisB && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisB})</span>}</div>
+        </div>
         {ruta && <RutaBadge ruta={ruta} colores={colores} />}
       </div>
       {nota && <div style={{ color: colores.alerta, fontSize: 11, marginBottom: 6 }}>{nota}</div>}
@@ -931,7 +928,7 @@ function CabeceraRonda({ titulo, fechas, colores, onRellenar, disabledRellenar }
     <div style={{ marginBottom: 4 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2 }}>{titulo}</div>
-        {onRellenar && <BotonAleatorio onClick={onRellenar} label="Rellenar" colores={colores} />}
+        {onRellenar && <BotonAleatorio onClick={onRellenar} label="Simular" colores={colores} />}
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 10 }}>{fechas}</div>
     </div>
@@ -954,21 +951,13 @@ function ChampionsView({ cl }) {
   const t = TEMA_CL;
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20 }}>
-        <button onClick={() => cl.setModoAdmin((m) => !m)}
-          style={{ background: cl.modoAdmin ? t.alerta : t.tarjeta, color: cl.modoAdmin ? t.fondo : t.textoSuave, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {cl.modoAdmin ? "🔓 Modo administrador (editando)" : "🔒 Coeficientes bloqueados"}
-        </button>
-      </div>
-
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES {!cl.modoAdmin && "(bloqueados)"}</div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {cl.allTeams.map((team, idx) => (
           <div key={team} style={{ display: "flex", alignItems: "center", gap: 8, background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "6px 10px" }}>
             <span style={{ color: t.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", width: 22 }}>{idx + 1}</span>
             <span style={{ color: t.texto, fontSize: 12, flex: 1 }}>{team}</span>
-            <input type="number" step="0.001" value={cl.coefs[team] ?? ""} disabled={!cl.modoAdmin} onChange={(e) => cl.setCoef(team, e.target.value)}
-              style={{ width: 55, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 4, color: cl.modoAdmin ? t.acento : t.textoSuave, padding: "3px 5px", fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }} />
+            <span style={{ color: t.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{cl.coefs[team]?.toFixed(3) ?? "—"}</span>
           </div>
         ))}
       </div>
@@ -1064,21 +1053,13 @@ function EuropaView({ el, cl }) {
   const t = TEMA_EL;
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20 }}>
-        <button onClick={() => el.setModoAdmin((m) => !m)}
-          style={{ background: el.modoAdmin ? t.acento : t.tarjeta, color: el.modoAdmin ? t.fondo : t.textoSuave, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {el.modoAdmin ? "🔓 Modo administrador (editando)" : "🔒 Coeficientes bloqueados"}
-        </button>
-      </div>
-
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES {!el.modoAdmin && "(bloqueados)"}</div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {el.allTeams.map((team, idx) => (
           <div key={team} style={{ display: "flex", alignItems: "center", gap: 8, background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "6px 10px" }}>
             <span style={{ color: t.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", width: 22 }}>{idx + 1}</span>
             <span style={{ color: t.texto, fontSize: 12, flex: 1 }}>{team}</span>
-            <input type="number" step="0.001" value={el.coefs[team] ?? ""} disabled={!el.modoAdmin} onChange={(e) => el.setCoef(team, e.target.value)}
-              style={{ width: 55, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 4, color: el.modoAdmin ? t.acento : t.textoSuave, padding: "3px 5px", fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }} />
+            <span style={{ color: t.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{el.coefs[team]?.toFixed(3) ?? "—"}</span>
           </div>
         ))}
       </div>
@@ -1182,21 +1163,13 @@ function ConferenceView({ co, cl, el }) {
   const t = TEMA_CO;
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20 }}>
-        <button onClick={() => co.setModoAdmin((m) => !m)}
-          style={{ background: co.modoAdmin ? t.acento : t.tarjeta, color: co.modoAdmin ? t.fondo : t.textoSuave, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {co.modoAdmin ? "🔓 Modo administrador (editando)" : "🔒 Coeficientes bloqueados"}
-        </button>
-      </div>
-
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES {!co.modoAdmin && "(bloqueados)"}</div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {co.allTeams.map((team, idx) => (
           <div key={team} style={{ display: "flex", alignItems: "center", gap: 8, background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "5px 8px" }}>
             <span style={{ color: t.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", width: 22 }}>{idx + 1}</span>
             <span style={{ color: t.texto, fontSize: 11, flex: 1 }}>{team}</span>
-            <input type="number" step="0.001" value={co.coefs[team] ?? ""} disabled={!co.modoAdmin} onChange={(e) => co.setCoef(team, e.target.value)}
-              style={{ width: 50, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 4, color: co.modoAdmin ? t.acento : t.textoSuave, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }} />
+            <span style={{ color: t.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{co.coefs[team]?.toFixed(3) ?? "—"}</span>
           </div>
         ))}
       </div>
@@ -1290,16 +1263,357 @@ function ConferenceView({ co, cl, el }) {
           <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.acento, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>CLASIFICADOS A FASE DE LIGA</div>
           {co.clasificados.map((c, i) => <div key={i} style={{ color: t.texto, fontSize: 14, padding: "2px 0" }}>{c.nombre} ({c.pais})</div>)}
           {(() => {
-            const directosEL = el.perdedoresPO.filter((p) => p.ruta === "Liga");
+            const directosEL = el.perdedoresPO;
             return directosEL.length > 0 ? (
               <div style={{ marginTop: 10 }}>
-                <div style={{ color: t.textoSuave, fontSize: 11 }}>+ directos desde Europa League (perdedores de Playoff Ruta Liga) — {directosEL.length} cargados:</div>
-                {directosEL.map((p, i) => <div key={i} style={{ color: t.texto, fontSize: 13, padding: "1px 0" }}>{p.perdedor} ({p.pais})</div>)}
+                <div style={{ color: t.textoSuave, fontSize: 11 }}>+ directos desde Europa League (los 12 perdedores del Playoff, Ruta Campeones y Ruta Liga) — {directosEL.length}/12 cargados:</div>
+                {directosEL.map((p, i) => <div key={i} style={{ color: t.texto, fontSize: 13, padding: "1px 0" }}>{p.perdedor} ({p.pais}) <span style={{ color: t.textoSuave, fontSize: 11 }}>· Ruta {p.ruta}</span></div>)}
               </div>
-            ) : <div style={{ color: t.textoSuave, fontSize: 11, marginTop: 10 }}>+ perdedores de Playoff Ruta Liga de Europa League — aún no cargados, resuelve esa ronda en Europa League</div>;
+            ) : <div style={{ color: t.textoSuave, fontSize: 11, marginTop: 10 }}>+ los 12 perdedores del Playoff de Europa League (Ruta Campeones y Ruta Liga) — aún no cargados, resuelve esa ronda en Europa League</div>;
           })()}
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// TEMA NEUTRO — INICIO Y GUÍA
+// ============================================================
+const TEMA_HOME = { fondo: "#0D1117", tarjeta: "#151C26", borde: "#2A3648", acento: "#E8C15A", texto: "#F4F1E8", textoSuave: "#95A3B4", alerta: "#E8734A" };
+
+// ============================================================
+// VISTA — INICIO (LANDING)
+// ============================================================
+function LandingView({ irA }) {
+  const t = TEMA_HOME;
+  const seccion = { background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 10, padding: "18px 20px", marginBottom: 16 };
+  const h2 = { fontFamily: "'Oswald', sans-serif", color: t.acento, fontSize: 19, margin: "0 0 10px" };
+  const p = { color: t.texto, fontSize: 14, lineHeight: 1.7, margin: "0 0 8px" };
+  const cardBtn = (color) => ({ background: "transparent", color, border: `1px solid ${color}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 10 });
+  const competiciones = [
+    { id: "formato", color: t.acento, titulo: "📘 Entiende el formato", desc: "La guía para todos los públicos: qué es una fase previa, cómo se decide cada eliminatoria y qué pasa con los eliminados. Con gráficos y ejemplos.", boton: "Leer la guía" },
+    { id: "CL", color: TEMA_CL.acento, titulo: "Champions League — fase previa", desc: "De la Ronda 1 al Playoff, con las rutas de Campeones y de Liga, sorteos simulados y el destino de cada eliminado.", boton: "Abrir simulador" },
+    { id: "EL", color: TEMA_EL.acento, titulo: "Europa League — fase previa", desc: "Incluye en directo a los equipos que llegan eliminados de la Champions League en cada ronda.", boton: "Abrir simulador" },
+    { id: "CO", color: TEMA_CO.acento, titulo: "Conference League — fase previa", desc: "La competición con más participantes: 26 cruces en Ronda 1 y las llegadas desde Champions y Europa League.", boton: "Abrir simulador" },
+  ];
+  return (
+    <div>
+      <div style={{ margin: "8px 0 24px" }}>
+        <div style={{ fontFamily: "'Oswald', sans-serif", color: t.texto, fontSize: 34, fontWeight: 700, lineHeight: 1.15 }}>Modo Competición</div>
+        <div style={{ color: t.textoSuave, fontSize: 15, marginTop: 6 }}>Simuladores y guías para entender los formatos de las competiciones de fútbol.</div>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>¿Por qué existe esto?</h2>
+        <p style={p}>
+          Los formatos de las competiciones son cada vez más complejos: rondas previas, rutas paralelas, sorteos
+          condicionados y equipos que cambian de torneo a mitad de temporada. Este sitio reúne en un solo lugar
+          simuladores interactivos y explicaciones claras para seguir cada competición paso a paso.
+        </p>
+        <p style={p}>
+          El proyecto arranca con las fases previas de las competiciones europeas de clubes (Champions League,
+          Europa League y Conference League) e irá incorporando más competiciones y fases.
+        </p>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>¿Qué puedes hacer?</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <p style={{ ...p, margin: 0 }}><strong style={{ color: t.acento }}>Entiende el formato</strong> — una guía con gráficos y ejemplos que explica cómo funcionan las fases previas, pensada para todos los públicos.</p>
+          <p style={{ ...p, margin: 0 }}><strong style={{ color: t.acento }}>Simula cada competición</strong> — introduce resultados reales o genera simulaciones ronda a ronda, sorteos incluidos.</p>
+          <p style={{ ...p, margin: 0 }}><strong style={{ color: t.acento }}>Sigue las conexiones entre torneos</strong> — los datos fluyen en directo: un eliminado de Champions aparece automáticamente en Europa League o Conference League.</p>
+        </div>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>¿De qué va?</h2>
+        <p style={p}>
+          Cada competición tiene su propia página con todas las rondas de la fase previa: cruces oficiales,
+          coeficientes UEFA, sorteos simulados y el recorrido de cada equipo hasta la fase de liga. Todos los
+          partidos están numerados (R1-6, EL2-4, CO2P-12…) para poder localizarlos cuando otra ronda o otra
+          competición hace referencia a ellos.
+        </p>
+      </div>
+
+      <h2 style={{ ...h2, marginTop: 24 }}>Empieza por aquí</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12, marginBottom: 8 }}>
+        {competiciones.map((c) => (
+          <div key={c.id} style={{ background: t.tarjeta, border: `1px solid ${c.color}`, borderRadius: 10, padding: "16px 18px", display: "flex", flexDirection: "column" }}>
+            <div style={{ fontFamily: "'Oswald', sans-serif", color: c.color, fontSize: 16, marginBottom: 6 }}>{c.titulo}</div>
+            <div style={{ color: t.texto, fontSize: 13, lineHeight: 1.6, flex: 1 }}>{c.desc}</div>
+            <div><button onClick={() => irA(c.id)} style={cardBtn(c.color)}>{c.boton} →</button></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// GRÁFICOS SVG DE LA GUÍA
+// ============================================================
+function EmbudoSVG({ t }) {
+  const etapas = [
+    { label: "Ronda 1", sub: "julio", n: 28, unidad: "equipos" },
+    { label: "Ronda 2", sub: "julio", n: 28, unidad: "equipos" },
+    { label: "Ronda 3", sub: "agosto", n: 20, unidad: "equipos" },
+    { label: "Playoff", sub: "agosto", n: 14, unidad: "equipos" },
+    { label: "Fase de Liga", sub: "septiembre", n: 7, unidad: "plazas" },
+  ];
+  const bw = 96, gap = 34, base = 150;
+  return (
+    <svg viewBox="0 0 660 200" style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="Embudo de rondas de la fase previa de la Champions League">
+      {etapas.map((e, i) => {
+        const h = e.n * 4;
+        const x = 8 + i * (bw + gap);
+        const esFinal = i === etapas.length - 1;
+        return (
+          <g key={e.label}>
+            <rect x={x} y={base - h} width={bw} height={h} rx={6} fill={t.acento} fillOpacity={esFinal ? 0.9 : 0.18} stroke={t.acento} strokeWidth="1.5" />
+            <text x={x + bw / 2} y={base - h - 8} textAnchor="middle" fill={t.texto} fontSize="13" fontFamily="'JetBrains Mono', monospace">{e.n} {e.unidad}</text>
+            <text x={x + bw / 2} y={base + 20} textAnchor="middle" fill={t.texto} fontSize="13" fontWeight="600">{e.label}</text>
+            <text x={x + bw / 2} y={base + 37} textAnchor="middle" fill={t.textoSuave} fontSize="11">{e.sub}</text>
+            {i < etapas.length - 1 && <text x={x + bw + gap / 2} y={base - 12} textAnchor="middle" fill={t.textoSuave} fontSize="16">→</text>}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function EscaleraSVG({ t }) {
+  const bandas = [
+    { y: 10, color: TEMA_CL.acento, nombre: "CHAMPIONS LEAGUE", sub: "primera competición" },
+    { y: 100, color: TEMA_EL.acento, nombre: "EUROPA LEAGUE", sub: "segunda competición" },
+    { y: 190, color: TEMA_CO.acento, nombre: "CONFERENCE LEAGUE", sub: "tercera competición" },
+  ];
+  const flecha = (x, y1, y2, color) => (
+    <g>
+      <line x1={x} y1={y1} x2={x} y2={y2 - 8} stroke={color} strokeWidth="2" />
+      <polygon points={`${x - 5},${y2 - 8} ${x + 5},${y2 - 8} ${x},${y2}`} fill={color} />
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 660 250" style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="Escalera de descenso entre competiciones europeas">
+      {bandas.map((b) => (
+        <g key={b.nombre}>
+          <rect x="0" y={b.y} width="470" height="50" rx="8" fill={b.color} fillOpacity="0.15" stroke={b.color} strokeWidth="1.5" />
+          <text x="16" y={b.y + 22} fill={b.color} fontSize="14" fontWeight="700" fontFamily="'Oswald', sans-serif">{b.nombre}</text>
+          <text x="16" y={b.y + 40} fill={t.textoSuave} fontSize="11">{b.sub}</text>
+        </g>
+      ))}
+      {flecha(300, 60, 100, TEMA_EL.acento)}
+      <text x="312" y="86" fill={t.textoSuave} fontSize="11">eliminados de Champions</text>
+      {flecha(300, 150, 190, TEMA_CO.acento)}
+      <text x="312" y="176" fill={t.textoSuave} fontSize="11">eliminados de Europa League</text>
+      <path d="M 500 35 C 590 35, 590 215, 500 215" fill="none" stroke={TEMA_CO.acento} strokeWidth="2" strokeDasharray="5 4" />
+      <polygon points="500,210 512,207 508,219" fill={TEMA_CO.acento} />
+      <line x1="470" y1="35" x2="500" y2="35" stroke={TEMA_CO.acento} strokeWidth="2" strokeDasharray="5 4" />
+      <line x1="500" y1="215" x2="470" y2="215" stroke={TEMA_CO.acento} strokeWidth="2" strokeDasharray="5 4" />
+      <text x="588" y="118" fill={t.textoSuave} fontSize="11" textAnchor="middle">Ronda 1</text>
+      <text x="588" y="133" fill={t.textoSuave} fontSize="11" textAnchor="middle">directa</text>
+    </svg>
+  );
+}
+
+function CalendarioSVG({ t }) {
+  const hitos = [
+    { x: 90, label: "Ronda 1", sub: "7–16 jul" },
+    { x: 210, label: "Ronda 2", sub: "21–30 jul" },
+    { x: 330, label: "Ronda 3", sub: "4–13 ago" },
+    { x: 450, label: "Playoff", sub: "18–27 ago" },
+    { x: 585, label: "Fase de Liga", sub: "desde sept" },
+  ];
+  return (
+    <svg viewBox="0 0 660 120" style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="Calendario de las fases previas: julio y agosto">
+      <line x1="30" y1="60" x2="630" y2="60" stroke={t.borde} strokeWidth="2" />
+      {hitos.map((h, i) => (
+        <g key={h.label}>
+          <circle cx={h.x} cy="60" r={i === hitos.length - 1 ? 8 : 5} fill={i === hitos.length - 1 ? t.acento : t.tarjeta} stroke={t.acento} strokeWidth="2" />
+          <text x={h.x} y="38" textAnchor="middle" fill={t.texto} fontSize="13" fontWeight="600">{h.label}</text>
+          <text x={h.x} y="88" textAnchor="middle" fill={t.textoSuave} fontSize="11" fontFamily="'JetBrains Mono', monospace">{h.sub}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function EjemploEliminatoria({ t }) {
+  const filas = [
+    { fase: "IDA", marcador: "Equipo A 2 – 1 Equipo B", nota: "en el estadio del Equipo A" },
+    { fase: "VUELTA", marcador: "Equipo B 2 – 1 Equipo A", nota: "en el estadio del Equipo B" },
+    { fase: "GLOBAL", marcador: "3 – 3", nota: "empate → se juega prórroga", destaca: true },
+    { fase: "PRÓRROGA", marcador: "0 – 0", nota: "sigue el empate → penaltis" },
+    { fase: "PENALTIS", marcador: "2 – 4", nota: "el Equipo B avanza de ronda", destaca: true },
+  ];
+  return (
+    <div style={{ background: t.fondo, border: `1px solid ${t.borde}`, borderRadius: 10, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+      {filas.map((f) => (
+        <div key={f.fase} style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: f.destaca ? t.acento : t.textoSuave, width: 78 }}>{f.fase}</span>
+          <span style={{ color: f.destaca ? t.acento : t.texto, fontSize: 14, fontWeight: f.destaca ? 700 : 500, fontFamily: "'JetBrains Mono', monospace" }}>{f.marcador}</span>
+          <span style={{ color: t.textoSuave, fontSize: 12 }}>{f.nota}</span>
+        </div>
+      ))}
+      <div style={{ color: t.textoSuave, fontSize: 12, lineHeight: 1.6, marginTop: 4 }}>
+        El Equipo A no queda fuera de Europa: según la ronda y la competición, continúa en el torneo del escalón inferior.
+      </div>
+    </div>
+  );
+}
+
+function EjemploBombo({ t }) {
+  const cabezas = [["Benfica", "90.0"], ["Ferencváros", "51.3"], ["PAOK", "48.3"], ["Midtjylland", "48.3"]];
+  const resto = [["Beşiktaş", "15.5"], ["Twente", "13.6"], ["Hajduk Split", "10.0"], ["St. Gallen", "6.9"]];
+  const chip = (nombre, coef, color) => (
+    <div key={nombre} style={{ display: "flex", justifyContent: "space-between", gap: 10, border: `1px solid ${color}`, borderRadius: 6, padding: "5px 10px" }}>
+      <span style={{ color: t.texto, fontSize: 12 }}>{nombre}</span>
+      <span style={{ color, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>{coef}</span>
+    </div>
+  );
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+      <div>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: t.acento, marginBottom: 8 }}>CABEZAS DE SERIE (mejor coeficiente)</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{cabezas.map(([n, c]) => chip(n, c, t.acento))}</div>
+      </div>
+      <div>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: t.textoSuave, marginBottom: 8 }}>NO CABEZAS DE SERIE</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{resto.map(([n, c]) => chip(n, c, t.textoSuave))}</div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// VISTA — ARTÍCULO "ENTIENDE EL FORMATO"
+// ============================================================
+function FormatoView({ irA }) {
+  const t = TEMA_HOME;
+  const seccion = { background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 10, padding: "18px 20px", marginBottom: 16 };
+  const h2 = { fontFamily: "'Oswald', sans-serif", color: t.acento, fontSize: 19, margin: "0 0 10px" };
+  const p = { color: t.texto, fontSize: 14, lineHeight: 1.75, margin: "0 0 10px" };
+  const li = { color: t.texto, fontSize: 14, lineHeight: 1.75, marginBottom: 6 };
+  const pie = { color: t.textoSuave, fontSize: 12, lineHeight: 1.6, marginTop: 8 };
+  return (
+    <div>
+      <div style={{ margin: "8px 0 20px" }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 11, letterSpacing: 3, marginBottom: 6 }}>GUÍA · PARA TODOS LOS PÚBLICOS</div>
+        <div style={{ fontFamily: "'Oswald', sans-serif", color: t.texto, fontSize: 30, fontWeight: 700, lineHeight: 1.2 }}>Las fases previas europeas, explicadas</div>
+        <div style={{ color: t.textoSuave, fontSize: 14, marginTop: 6 }}>Qué son, cómo funcionan y por qué perder una eliminatoria no siempre significa quedarse fuera de Europa.</div>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>1 · ¿Qué es una fase previa?</h2>
+        <p style={p}>
+          Cada verano, antes de que en septiembre arranquen las fases de liga, más de 150 equipos de toda Europa
+          disputan las fases previas: una serie de eliminatorias que reparten las últimas plazas de la Champions
+          League, la Europa League y la Conference League.
+        </p>
+        <p style={p}>
+          Para los campeones y clasificados de las ligas de países pequeños y medianos —de Andorra a Islandia,
+          de Malta a Kazajistán— estas rondas de julio y agosto son su camino hacia la fase de liga. Los equipos
+          de las grandes ligas entran más tarde, en las rondas finales, o directamente en la fase de liga.
+        </p>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>2 · Un embudo de cuatro rondas</h2>
+        <p style={p}>
+          La estructura es un embudo con cuatro rondas eliminatorias: Ronda 1, Ronda 2, Ronda 3 y Playoff. En cada
+          ronda, la mitad de los equipos avanza y la otra mitad cambia de destino. Este es el camino completo en la
+          Champions League:
+        </p>
+        <EmbudoSVG t={t} />
+        <div style={pie}>
+          El embudo no siempre se estrecha de ronda en ronda porque en las Rondas 2 y 3 y en el Playoff entran
+          equipos nuevos con mejor coeficiente. En Europa League y Conference League el esquema es el mismo, con
+          más participantes: solo la Ronda 2 de la Conference reúne 98 equipos.
+        </div>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>3 · Ida y vuelta: así se decide cada eliminatoria</h2>
+        <p style={p}>
+          Cada cruce se juega a dos partidos, uno en el estadio de cada equipo. Se suman los goles de los dos
+          partidos (el resultado global) y avanza el que más goles haya marcado en total. Si el global termina
+          empatado, se juega una prórroga de 30 minutos en el partido de vuelta; y si el empate persiste, la
+          eliminatoria se decide en los penaltis. Un ejemplo:
+        </p>
+        <EjemploEliminatoria t={t} />
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>4 · Nadie queda fuera a la primera: la escalera de competiciones</h2>
+        <p style={p}>
+          Perder una eliminatoria no siempre significa despedirse de Europa. Las tres competiciones funcionan como
+          una escalera: los eliminados de la Champions League bajan a la Europa League o a la Conference League, y
+          los eliminados de la Europa League bajan a la Conference League.
+        </p>
+        <EscaleraSVG t={t} />
+        <p style={{ ...p, marginTop: 10 }}>Cuanto más avanzada es la ronda en la que un equipo cae, mejor es su recolocación:</p>
+        <ul style={{ margin: 0, paddingLeft: 22 }}>
+          <li style={li}>Pierde la <strong>Ronda 1 de Champions</strong> → pasa a la Ronda 2 de la Conference League (Ruta de Campeones).</li>
+          <li style={li}>Pierde la <strong>Ronda 2 o la Ronda 3 de Champions</strong> → pasa a la Ronda 3 o al Playoff de la Europa League.</li>
+          <li style={li}>Pierde el <strong>Playoff de Champions</strong> → entra directamente en la fase de liga de la Europa League, sin jugar ninguna ronda más.</li>
+          <li style={li}>Pierde el <strong>Playoff de Europa League</strong> (cualquiera de las dos rutas) → entra directamente en la fase de liga de la Conference League. Son 12 equipos en total.</li>
+        </ul>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>5 · Dos rutas paralelas</h2>
+        <p style={p}>
+          Dentro de cada competición, las fases previas se dividen en dos caminos que no se cruzan hasta la fase
+          de liga:
+        </p>
+        <ul style={{ margin: 0, paddingLeft: 22 }}>
+          <li style={li}><strong style={{ color: TEMA_CL.acento }}>Ruta de Campeones</strong>: reservada a los campeones de liga de cada país. Solo se enfrentan campeones entre sí, lo que garantiza que cada temporada haya campeones nacionales de ligas modestas en las fases de liga.</li>
+          <li style={li}><strong style={{ color: TEMA_CO.acento }}>Ruta de Liga (o Principal)</strong>: para el resto de clasificados — subcampeones, terceros y ganadores de copa.</li>
+        </ul>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>6 · Sorteos y coeficientes: quién juega contra quién</h2>
+        <p style={p}>
+          Cada club tiene un coeficiente UEFA que resume sus resultados europeos de las últimas cinco temporadas.
+          En cada sorteo, la mitad de los equipos con mejor coeficiente son cabezas de serie y solo pueden
+          emparejarse con equipos de la otra mitad. Además, dos equipos del mismo país no pueden enfrentarse en
+          las rondas previas. Un ejemplo con ocho equipos:
+        </p>
+        <EjemploBombo t={t} />
+        <div style={pie}>
+          Benfica solo puede emparejarse con uno de los cuatro equipos de la columna derecha — nunca con
+          Ferencváros, PAOK o Midtjylland. Ser cabeza de serie no garantiza nada: la eliminatoria se decide en
+          el campo.
+        </div>
+      </div>
+
+      <div style={seccion}>
+        <h2 style={h2}>7 · El calendario</h2>
+        <p style={p}>
+          Todo ocurre en unas ocho semanas, entre principios de julio y finales de agosto, con la ida y la vuelta
+          de cada ronda separadas por una semana:
+        </p>
+        <CalendarioSVG t={t} />
+      </div>
+
+      <div style={{ ...seccion, border: `1px solid ${t.acento}` }}>
+        <h2 style={h2}>Ahora pruébalo tú</h2>
+        <p style={p}>
+          Los simuladores reproducen todo lo anterior con los cruces y coeficientes oficiales de la temporada
+          2026/27: introduce resultados o simúlalos, sortea las rondas siguientes y observa cómo cada eliminado
+          reaparece en la competición del escalón inferior. Todos los partidos están numerados para que puedas
+          seguir cualquier referencia.
+        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {[["CL", "Champions League", TEMA_CL.acento], ["EL", "Europa League", TEMA_EL.acento], ["CO", "Conference League", TEMA_CO.acento]].map(([id, label, color]) => (
+            <button key={id} onClick={() => irA(id)} style={{ background: "transparent", color, border: `1px solid ${color}`, borderRadius: 8, padding: "10px 18px", fontSize: 14, fontWeight: 600, fontFamily: "'Oswald', sans-serif", cursor: "pointer" }}>
+              {label} →
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1311,14 +1625,17 @@ export default function App() {
   const cl = useChampions();
   const el = useEuropa(cl);
   const co = useConference(cl, el);
-  const [tab, setTab] = useState("CL");
+  const [tab, setTab] = useState("inicio");
 
   const tabs = [
+    { id: "inicio", label: "Inicio", color: "#C9D4E0" },
+    { id: "formato", label: "Entiende el formato", color: TEMA_HOME.acento },
     { id: "CL", label: "Champions League", color: TEMA_CL.acento },
     { id: "EL", label: "Europa League", color: TEMA_EL.acento },
     { id: "CO", label: "Conference League", color: TEMA_CO.acento },
   ];
-  const fondoActivo = tab === "CL" ? TEMA_CL.fondo : tab === "EL" ? TEMA_EL.fondo : TEMA_CO.fondo;
+  const fondoActivo = tab === "CL" ? TEMA_CL.fondo : tab === "EL" ? TEMA_EL.fondo : tab === "CO" ? TEMA_CO.fondo : TEMA_HOME.fondo;
+  const esSimulador = tab === "CL" || tab === "EL" || tab === "CO";
 
   return (
     <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
@@ -1326,8 +1643,8 @@ export default function App() {
 
       <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: "#888", fontSize: 11, letterSpacing: 3, marginBottom: 4 }}>SIMULADOR UEFA 2026/27 · FASE PREVIA COMPLETA</div>
-          <div style={{ display: "flex", gap: 4 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: "#888", fontSize: 11, letterSpacing: 3, marginBottom: 4 }}>MODO COMPETICIÓN · SIMULADORES Y GUÍAS</div>
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
             {tabs.map((tb) => (
               <button key={tb.id} onClick={() => setTab(tb.id)}
                 style={{
@@ -1351,15 +1668,19 @@ export default function App() {
 
       <div style={{ padding: "24px 20px 40px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          {tab === "inicio" && <LandingView irA={setTab} />}
+          {tab === "formato" && <FormatoView irA={setTab} />}
           {tab === "CL" && <ChampionsView cl={cl} />}
           {tab === "EL" && <EuropaView el={el} cl={cl} />}
           {tab === "CO" && <ConferenceView co={co} cl={cl} el={el} />}
 
-          <div style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 12, color: "#666", fontSize: 11, lineHeight: 1.6 }}>
-            Los datos fluyen en directo entre pestañas — resuelve un resultado en Champions y verás el efecto
-            inmediatamente en Europa/Conference League sin guardar ni recargar nada. Próxima versión: sorteo
-            de fase de liga y rondas posteriores.
-          </div>
+          {esSimulador && (
+            <div style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 12, color: "#666", fontSize: 11, lineHeight: 1.6 }}>
+              Los datos fluyen en directo entre pestañas — resuelve un resultado en Champions y verás el efecto
+              inmediatamente en Europa/Conference League sin guardar ni recargar nada. Próxima versión: sorteo
+              de fase de liga y rondas posteriores.
+            </div>
+          )}
         </div>
       </div>
     </div>
