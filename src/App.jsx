@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import Landing from "./Landing.jsx";
+import Articulo from "./Articulo.jsx";
 
 // ============================================================
 // FUNCIONES COMPARTIDAS
@@ -446,8 +448,7 @@ const CO_NUEVOS_PO_LIGA = [
 // LÓGICA — CHAMPIONS LEAGUE
 // ============================================================
 function useChampions() {
-  const [coefs, setCoefs] = useState(CL_COEFS_INICIALES);
-  const [modoAdmin, setModoAdmin] = useState(false);
+  const [coefs] = useState(CL_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
   const [sorteoR3, setSorteoR3] = useState(null);
@@ -455,7 +456,6 @@ function useChampions() {
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const setCoef = (team, value) => setCoefs((p) => ({ ...p, [team]: value === "" ? undefined : parseFloat(value) }));
   const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
@@ -579,7 +579,7 @@ function useChampions() {
   }, [sorteoPO, resPO]);
 
   return {
-    coefs, setCoef, modoAdmin, setModoAdmin, allTeams,
+    coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
@@ -594,8 +594,7 @@ function useChampions() {
 // LÓGICA — EUROPA LEAGUE (recibe datos de Champions League en directo)
 // ============================================================
 function useEuropa(cl) {
-  const [coefs, setCoefs] = useState(EL_COEFS_INICIALES);
-  const [modoAdmin, setModoAdmin] = useState(false);
+  const [coefs] = useState(EL_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
   const [sorteoR3, setSorteoR3] = useState(null);
@@ -603,7 +602,6 @@ function useEuropa(cl) {
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const setCoef = (team, value) => setCoefs((p) => ({ ...p, [team]: value === "" ? undefined : parseFloat(value) }));
   const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
@@ -732,7 +730,7 @@ function useEuropa(cl) {
   }, [sorteoPO, resPO]);
 
   return {
-    coefs, setCoef, modoAdmin, setModoAdmin, allTeams,
+    coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
@@ -747,8 +745,7 @@ function useEuropa(cl) {
 // LÓGICA — CONFERENCE LEAGUE (recibe datos de Champions y Europa en directo)
 // ============================================================
 function useConference(cl, el) {
-  const [coefs, setCoefs] = useState(CO_COEFS_INICIALES);
-  const [modoAdmin, setModoAdmin] = useState(false);
+  const [coefs] = useState(CO_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
   const [sorteoR3, setSorteoR3] = useState(null);
@@ -756,7 +753,6 @@ function useConference(cl, el) {
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const setCoef = (team, value) => setCoefs((p) => ({ ...p, [team]: value === "" ? undefined : parseFloat(value) }));
   const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
@@ -784,13 +780,13 @@ function useConference(cl, el) {
     const info = CL_R1_INFO[tieId];
     const dato = cl.perdedoresR1.find((p) => p.tie === tieId);
     if (dato) return { nombre: dato.perdedor, nombreBase: dato.perdedor, pais: dato.pais, coef: coefs[dato.perdedor], definido: true, texto: `${dato.perdedor} (${dato.pais})` };
-    return { texto: `${info[0].n} o ${info[1].n} (pendiente de Champions League)`, pais: undefined, coef: undefined, definido: false };
+    return { texto: `Perdedor ${tieId} (${info[0].n} o ${info[1].n}, pendiente de Champions League)`, pais: undefined, coef: undefined, definido: false };
   };
   const resolverExternoEL = (tieId) => {
     const info = EL_R1_INFO[tieId];
     const dato = el.perdedoresR1.find((p) => p.tie === tieId);
     if (dato) return { nombre: dato.perdedor, nombreBase: dato.perdedor, pais: dato.pais, coef: coefs[dato.perdedor], definido: true, texto: `${dato.perdedor} (${dato.pais})` };
-    return { texto: `${info[0].n} o ${info[1].n} (pendiente de Europa League)`, pais: undefined, coef: undefined, definido: false };
+    return { texto: `Perdedor ${tieId} (${info[0].n} o ${info[1].n}, pendiente de Europa League)`, pais: undefined, coef: undefined, definido: false };
   };
   const resolverLado = (lado) => {
     if (lado.tipo === "literal") return { nombre: lado.nombre, nombreBase: lado.nombre, pais: lado.pais, coef: coefs[lado.nombre], definido: true, texto: `${lado.nombre} (${lado.pais})` };
@@ -895,7 +891,7 @@ function useConference(cl, el) {
   const rellenarPO = () => { if (!sorteoPO || sorteoPO.error) return; const n = {}; sorteoPO.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResPO(n); };
 
   return {
-    coefs, setCoef, modoAdmin, setModoAdmin, allTeams,
+    coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverExternoCL, resolverLado, resolverR2, r2Completa,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
@@ -916,7 +912,10 @@ function TieCard({ nombreA, paisA, nombreB, paisB, ruta, nota, tie, resultado, o
   return (
     <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "12px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
-        <div style={{ color: colores.texto, fontSize: 14 }}>{nombreA} {paisA && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisA})</span>} vs {nombreB} {paisB && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisB})</span>}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {tie?.id && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>{tie.id}</span>}
+          <div style={{ color: colores.texto, fontSize: 14 }}>{nombreA} {paisA && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisA})</span>} vs {nombreB} {paisB && <span style={{ color: colores.textoSuave, fontSize: 11 }}>({paisB})</span>}</div>
+        </div>
         {ruta && <RutaBadge ruta={ruta} colores={colores} />}
       </div>
       {nota && <div style={{ color: colores.alerta, fontSize: 11, marginBottom: 6 }}>{nota}</div>}
@@ -931,7 +930,7 @@ function CabeceraRonda({ titulo, fechas, colores, onRellenar, disabledRellenar }
     <div style={{ marginBottom: 4 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2 }}>{titulo}</div>
-        {onRellenar && <BotonAleatorio onClick={onRellenar} label="Rellenar" colores={colores} />}
+        {onRellenar && <BotonAleatorio onClick={onRellenar} label="Simular" colores={colores} />}
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 10 }}>{fechas}</div>
     </div>
@@ -954,21 +953,13 @@ function ChampionsView({ cl }) {
   const t = TEMA_CL;
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20 }}>
-        <button onClick={() => cl.setModoAdmin((m) => !m)}
-          style={{ background: cl.modoAdmin ? t.alerta : t.tarjeta, color: cl.modoAdmin ? t.fondo : t.textoSuave, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {cl.modoAdmin ? "🔓 Modo administrador (editando)" : "🔒 Coeficientes bloqueados"}
-        </button>
-      </div>
-
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES {!cl.modoAdmin && "(bloqueados)"}</div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {cl.allTeams.map((team, idx) => (
           <div key={team} style={{ display: "flex", alignItems: "center", gap: 8, background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "6px 10px" }}>
             <span style={{ color: t.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", width: 22 }}>{idx + 1}</span>
             <span style={{ color: t.texto, fontSize: 12, flex: 1 }}>{team}</span>
-            <input type="number" step="0.001" value={cl.coefs[team] ?? ""} disabled={!cl.modoAdmin} onChange={(e) => cl.setCoef(team, e.target.value)}
-              style={{ width: 55, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 4, color: cl.modoAdmin ? t.acento : t.textoSuave, padding: "3px 5px", fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }} />
+            <span style={{ color: t.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{cl.coefs[team]?.toFixed(3) ?? "—"}</span>
           </div>
         ))}
       </div>
@@ -1064,21 +1055,13 @@ function EuropaView({ el, cl }) {
   const t = TEMA_EL;
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20 }}>
-        <button onClick={() => el.setModoAdmin((m) => !m)}
-          style={{ background: el.modoAdmin ? t.acento : t.tarjeta, color: el.modoAdmin ? t.fondo : t.textoSuave, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {el.modoAdmin ? "🔓 Modo administrador (editando)" : "🔒 Coeficientes bloqueados"}
-        </button>
-      </div>
-
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES {!el.modoAdmin && "(bloqueados)"}</div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {el.allTeams.map((team, idx) => (
           <div key={team} style={{ display: "flex", alignItems: "center", gap: 8, background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "6px 10px" }}>
             <span style={{ color: t.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", width: 22 }}>{idx + 1}</span>
             <span style={{ color: t.texto, fontSize: 12, flex: 1 }}>{team}</span>
-            <input type="number" step="0.001" value={el.coefs[team] ?? ""} disabled={!el.modoAdmin} onChange={(e) => el.setCoef(team, e.target.value)}
-              style={{ width: 55, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 4, color: el.modoAdmin ? t.acento : t.textoSuave, padding: "3px 5px", fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }} />
+            <span style={{ color: t.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>{el.coefs[team]?.toFixed(3) ?? "—"}</span>
           </div>
         ))}
       </div>
@@ -1182,21 +1165,13 @@ function ConferenceView({ co, cl, el }) {
   const t = TEMA_CO;
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 20 }}>
-        <button onClick={() => co.setModoAdmin((m) => !m)}
-          style={{ background: co.modoAdmin ? t.acento : t.tarjeta, color: co.modoAdmin ? t.fondo : t.textoSuave, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {co.modoAdmin ? "🔓 Modo administrador (editando)" : "🔒 Coeficientes bloqueados"}
-        </button>
-      </div>
-
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES {!co.modoAdmin && "(bloqueados)"}</div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {co.allTeams.map((team, idx) => (
           <div key={team} style={{ display: "flex", alignItems: "center", gap: 8, background: t.tarjeta, border: `1px solid ${t.borde}`, borderRadius: 8, padding: "5px 8px" }}>
             <span style={{ color: t.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", width: 22 }}>{idx + 1}</span>
             <span style={{ color: t.texto, fontSize: 11, flex: 1 }}>{team}</span>
-            <input type="number" step="0.001" value={co.coefs[team] ?? ""} disabled={!co.modoAdmin} onChange={(e) => co.setCoef(team, e.target.value)}
-              style={{ width: 50, background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 4, color: co.modoAdmin ? t.acento : t.textoSuave, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }} />
+            <span style={{ color: t.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{co.coefs[team]?.toFixed(3) ?? "—"}</span>
           </div>
         ))}
       </div>
@@ -1290,13 +1265,13 @@ function ConferenceView({ co, cl, el }) {
           <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.acento, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>CLASIFICADOS A FASE DE LIGA</div>
           {co.clasificados.map((c, i) => <div key={i} style={{ color: t.texto, fontSize: 14, padding: "2px 0" }}>{c.nombre} ({c.pais})</div>)}
           {(() => {
-            const directosEL = el.perdedoresPO.filter((p) => p.ruta === "Liga");
+            const directosEL = el.perdedoresPO;
             return directosEL.length > 0 ? (
               <div style={{ marginTop: 10 }}>
-                <div style={{ color: t.textoSuave, fontSize: 11 }}>+ directos desde Europa League (perdedores de Playoff Ruta Liga) — {directosEL.length} cargados:</div>
+                <div style={{ color: t.textoSuave, fontSize: 11 }}>+ directos desde Europa League (los 12 perdedores del Playoff, ambas rutas) — {directosEL.length}/12 cargados:</div>
                 {directosEL.map((p, i) => <div key={i} style={{ color: t.texto, fontSize: 13, padding: "1px 0" }}>{p.perdedor} ({p.pais})</div>)}
               </div>
-            ) : <div style={{ color: t.textoSuave, fontSize: 11, marginTop: 10 }}>+ perdedores de Playoff Ruta Liga de Europa League — aún no cargados, resuelve esa ronda en Europa League</div>;
+            ) : <div style={{ color: t.textoSuave, fontSize: 11, marginTop: 10 }}>+ los 12 perdedores del Playoff de Europa League (ambas rutas) — aún no cargados, resuelve esa ronda en Europa League</div>;
           })()}
         </div>
       )}
@@ -1305,13 +1280,34 @@ function ConferenceView({ co, cl, el }) {
 }
 
 // ============================================================
-// APP PRINCIPAL — con pestañas, sin ningún botón de guardar/recargar
+// APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
+function useHashRoute() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onChange);
+    return () => window.removeEventListener("hashchange", onChange);
+  }, []);
+  return hash;
+}
+
 export default function App() {
   const cl = useChampions();
   const el = useEuropa(cl);
   const co = useConference(cl, el);
   const [tab, setTab] = useState("CL");
+  const hash = useHashRoute();
+
+  const vista = hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato") ? "formato" : "inicio";
+
+  useEffect(() => {
+    if (hash.startsWith("#/simulador/")) {
+      const t = (hash.split("/")[2] || "").toUpperCase();
+      if (["CL", "EL", "CO"].includes(t)) setTab(t);
+    }
+    window.scrollTo(0, 0);
+  }, [hash]);
 
   const tabs = [
     { id: "CL", label: "Champions League", color: TEMA_CL.acento },
@@ -1321,47 +1317,59 @@ export default function App() {
   const fondoActivo = tab === "CL" ? TEMA_CL.fondo : tab === "EL" ? TEMA_EL.fondo : TEMA_CO.fondo;
 
   return (
-    <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
+    <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');`}</style>
 
-      <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: "#888", fontSize: 11, letterSpacing: 3, marginBottom: 4 }}>SIMULADOR UEFA 2026/27 · FASE PREVIA COMPLETA</div>
-          <div style={{ display: "flex", gap: 4 }}>
-            {tabs.map((tb) => (
-              <button key={tb.id} onClick={() => setTab(tb.id)}
-                style={{
-                  background: tab === tb.id ? tb.color : "transparent",
-                  color: tab === tb.id ? "#0B1420" : tb.color,
-                  border: `1px solid ${tb.color}`,
-                  borderBottom: tab === tb.id ? "none" : `1px solid ${tb.color}`,
-                  borderRadius: "8px 8px 0 0",
-                  padding: "10px 18px",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  fontFamily: "'Oswald', sans-serif",
-                  cursor: "pointer",
-                }}>
-                {tb.label}
-              </button>
-            ))}
+      {vista === "inicio" && <Landing />}
+      {vista === "formato" && <Articulo />}
+      {vista === "simulador" && (
+        <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
+            <div style={{ maxWidth: 960, margin: "0 auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", color: "#888", fontSize: 11, letterSpacing: 3 }}>SIMULADOR UEFA 2026/27 · FASE PREVIA COMPLETA</div>
+                <div style={{ display: "flex", gap: 14 }}>
+                  <a href="#/" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>← Inicio</a>
+                  <a href="#/formato" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Entiende el formato</a>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 4 }}>
+                {tabs.map((tb) => (
+                  <button key={tb.id} onClick={() => setTab(tb.id)}
+                    style={{
+                      background: tab === tb.id ? tb.color : "transparent",
+                      color: tab === tb.id ? "#0B1420" : tb.color,
+                      border: `1px solid ${tb.color}`,
+                      borderBottom: tab === tb.id ? "none" : `1px solid ${tb.color}`,
+                      borderRadius: "8px 8px 0 0",
+                      padding: "10px 18px",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      fontFamily: "'Oswald', sans-serif",
+                      cursor: "pointer",
+                    }}>
+                    {tb.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ padding: "24px 20px 40px" }}>
+            <div style={{ maxWidth: 960, margin: "0 auto" }}>
+              {tab === "CL" && <ChampionsView cl={cl} />}
+              {tab === "EL" && <EuropaView el={el} cl={cl} />}
+              {tab === "CO" && <ConferenceView co={co} cl={cl} el={el} />}
+
+              <div style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 12, color: "#666", fontSize: 11, lineHeight: 1.6 }}>
+                Los datos fluyen en directo entre pestañas — resuelve un resultado en Champions y verás el efecto
+                inmediatamente en Europa/Conference League sin guardar ni recargar nada. Próxima versión: sorteo
+                de fase de liga y rondas posteriores.
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div style={{ padding: "24px 20px 40px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          {tab === "CL" && <ChampionsView cl={cl} />}
-          {tab === "EL" && <EuropaView el={el} cl={cl} />}
-          {tab === "CO" && <ConferenceView co={co} cl={cl} el={el} />}
-
-          <div style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 12, color: "#666", fontSize: 11, lineHeight: 1.6 }}>
-            Los datos fluyen en directo entre pestañas — resuelve un resultado en Champions y verás el efecto
-            inmediatamente en Europa/Conference League sin guardar ni recargar nada. Próxima versión: sorteo
-            de fase de liga y rondas posteriores.
-          </div>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
