@@ -1361,11 +1361,30 @@ export default function App() {
               {tab === "EL" && <EuropaView el={el} cl={cl} />}
               {tab === "CO" && <ConferenceView co={co} cl={cl} el={el} />}
 
+              <div style={{ display: "flex", justifyContent: "center", margin: "28px 0 8px" }}>
+                <a href="mailto:feedback@modocompeticion.com" style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: tabs.find((tb) => tb.id === tab).color, color: "#0B1420",
+                  borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 700,
+                  fontFamily: "'Oswald', sans-serif", textDecoration: "none",
+                }}>
+                  ✉️ Cuéntanos qué falla
+                </a>
+              </div>
+
               <div style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 12, color: "#666", fontSize: 11, lineHeight: 1.6 }}>
                 Los datos fluyen en directo entre pestañas — resuelve un resultado en Champions y verás el efecto
                 inmediatamente en Europa/Conference League sin guardar ni recargar nada. Próxima versión: sorteo
                 de fase de liga y rondas posteriores.
               </div>
+
+              <footer style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 16, color: "#5A6678", fontSize: 11, lineHeight: 1.6 }}>
+                <div>Modo Competición · Los coeficientes y listados de acceso proceden de la documentación oficial de la UEFA.</div>
+                <div style={{ marginTop: 6 }}>
+                  Modo Competición es un proyecto de Carlos Gil, en construcción permanente. Si algo no funciona, te falta
+                  una competición o simplemente tienes una idea mejor que la nuestra, <a href="mailto:feedback@modocompeticion.com" style={{ color: "#4A90D4" }}>escríbenos</a>.
+                </div>
+              </footer>
             </div>
           </div>
         </div>
