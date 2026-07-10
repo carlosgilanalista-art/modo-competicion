@@ -50,13 +50,20 @@ function shuffleCopy(arr) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
+// División en bombos: bombo 1 (cabezas de serie, mejor coeficiente) y bombo 2 (resto).
+// La usan tanto el sorteo automático como el editor manual, para que ambos apliquen
+// exactamente el mismo criterio de bombos.
+function bomboSplit(plazas) {
+  const ordenadas = [...plazas].sort((a, b) => b.coef - a.coef);
+  const mitad = ordenadas.length / 2;
+  return { cabezas: ordenadas.slice(0, mitad), resto: ordenadas.slice(mitad) };
+}
 function sortear(plazas) {
   if (plazas.length < 2) return { error: `Faltan equipos (solo ${plazas.length} disponible/s).` };
   if (plazas.length % 2 !== 0) return { error: `Número impar de plazas (${plazas.length}) — revisa resultados o eliminados pendientes de otras competiciones.` };
-  const ordenadas = [...plazas].sort((a, b) => b.coef - a.coef);
-  const mitad = ordenadas.length / 2;
-  const cabezas = shuffleCopy(ordenadas.slice(0, mitad));
-  const resto = shuffleCopy(ordenadas.slice(mitad));
+  const { cabezas: cabezasOrdenadas, resto: restoOrdenado } = bomboSplit(plazas);
+  const cabezas = shuffleCopy(cabezasOrdenadas);
+  const resto = shuffleCopy(restoOrdenado);
   function backtrack(i, usados, asignacion) {
     if (i === cabezas.length) return asignacion;
     const candidatos = resto.map((_, idx) => idx).filter((idx) => !usados.has(idx) && resto[idx].pais !== cabezas[i].pais);
@@ -76,6 +83,132 @@ function sortear(plazas) {
   const cruces = cabezas.map((cabeza) => ({ cabeza, rival: libres.shift() }));
   if (cruces.some((c) => !c.rival)) return { error: "No se pudo completar el sorteo (datos insuficientes)." };
   return { cruces, bloqueo: true };
+}
+
+// ============================================================
+// SORTEO A MANO / EDICIÓN DE UN SORTEO — misma regla que sortear():
+// cada cabeza de serie (bombo 1) se empareja con un rival de bombo 2 de
+// distinto país. El desplegable de cada fila SOLO ofrece rivales que
+// cumplan la restricción, así que nunca se puede construir un sorteo
+// ilegal desde la interfaz.
+// ============================================================
+function SorteoManualEditor({ ruta, plazas, crucesIniciales, onChange, colores }) {
+  const { cabezas, resto } = useMemo(() => bomboSplit(plazas), [plazas]);
+  const [asignacion, setAsignacion] = useState(() =>
+    cabezas.map((cabeza) => {
+      if (!crucesIniciales) return null;
+      const cruce = crucesIniciales.find((c) => c.cabeza.nombre === cabeza.nombre);
+      if (!cruce) return null;
+      const idx = resto.findIndex((r) => r.nombre === cruce.rival.nombre);
+      return idx === -1 ? null : idx;
+    })
+  );
+
+  useEffect(() => {
+    const completo = cabezas.length > 0 && asignacion.every((x) => x !== null);
+    const cruces = completo ? cabezas.map((cabeza, i) => ({ cabeza, rival: resto[asignacion[i]] })) : null;
+    onChange(ruta, cruces, completo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asignacion]);
+
+  if (cabezas.length === 0) return null;
+
+  const usados = new Set(asignacion.filter((x) => x !== null));
+  const setRival = (i, raw) => setAsignacion((prev) => { const n = [...prev]; n[i] = raw === "" ? null : Number(raw); return n; });
+  const selectStyle = { background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.texto, padding: "4px 6px", fontSize: 12, maxWidth: 260 };
+
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px dashed ${colores.acento}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
+      <div style={{ color: colores.acento, fontSize: 11, marginBottom: 8 }}>Ruta {ruta} — bombo 1 ({cabezas.length}) vs bombo 2 ({resto.length})</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {cabezas.map((cabeza, i) => {
+          const actual = asignacion[i];
+          const opciones = resto
+            .map((r, idx) => ({ r, idx }))
+            .filter(({ r, idx }) => (!usados.has(idx) || idx === actual) && r.pais !== cabeza.pais);
+          return (
+            <div key={cabeza.nombre} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ color: colores.texto, fontSize: 12, width: 190 }}>{cabeza.nombre} <span style={{ color: colores.textoSuave }}>({cabeza.pais})</span></span>
+              <span style={{ color: colores.textoSuave, fontSize: 11 }}>vs</span>
+              <select value={actual ?? ""} onChange={(e) => setRival(i, e.target.value)} style={selectStyle}>
+                <option value="">— elegir rival —</option>
+                {opciones.map(({ r, idx }) => <option key={r.nombre} value={idx}>{r.nombre} ({r.pais})</option>)}
+              </select>
+              {actual === null && opciones.length === 0 && (
+                <span style={{ color: colores.alerta, fontSize: 11 }}>Sin rivales de otro país libres — cambia otra fila primero</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Agrupa uno o varios SorteoManualEditor (uno por ruta/bombo) y expone un único
+// "confirmar" que solo se activa cuando TODAS las rutas están completas y son válidas.
+function PanelSorteoManual({ pools, crucesIniciales, onConfirmar, onCancelar, colores, textoConfirmar = "Confirmar sorteo manual" }) {
+  const rutas = Object.keys(pools);
+  const [estado, setEstado] = useState({});
+  const handleChange = (ruta, cruces, completo) => setEstado((prev) => ({ ...prev, [ruta]: { cruces, completo } }));
+  const todoCompleto = rutas.every((r) => estado[r]?.completo);
+  return (
+    <div style={{ marginBottom: 16 }}>
+      {rutas.map((ruta) => (
+        <SorteoManualEditor key={ruta} ruta={ruta} plazas={pools[ruta]} crucesIniciales={crucesIniciales?.[ruta]} onChange={handleChange} colores={colores} />
+      ))}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          disabled={!todoCompleto}
+          onClick={() => onConfirmar(Object.fromEntries(rutas.map((r) => [r, estado[r].cruces])))}
+          style={{ background: todoCompleto ? colores.acento : "#2A2A2A", color: todoCompleto ? colores.fondo : "#6A6A6A", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: todoCompleto ? "pointer" : "not-allowed" }}>
+          ✓ {textoConfirmar}
+        </button>
+        <button onClick={onCancelar} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+// Normaliza el formato de pools (algunos hooks devuelven array directo, otros {plazas, error}) a { ruta: plazas[] }
+function extraerPlazas(pools) {
+  return Object.fromEntries(Object.entries(pools).map(([k, v]) => [k, Array.isArray(v) ? v : v.plazas]));
+}
+
+// Botonera para elegir cómo generar/editar un sorteo: automático, a mano, o editar uno ya hecho.
+function ControlesSorteo({ sorteo, pools, poolsListas, onAuto, onConfirmarManual, colores, labelAuto, labelManualNuevo = "✍️ Sorteo a mano", labelEditar = "✏️ Editar sorteo" }) {
+  const [modo, setModo] = useState(null); // null | "manual" | "editar"
+  useEffect(() => { setModo(null); }, [sorteo?.cruces]);
+  if (modo === "manual" || modo === "editar") {
+    const crucesIniciales = modo === "editar" && sorteo && !sorteo.error
+      ? Object.fromEntries(Object.keys(pools).map((ruta) => [ruta, sorteo.cruces.filter((c) => c.ruta === ruta)]))
+      : undefined;
+    return (
+      <PanelSorteoManual
+        pools={pools}
+        crucesIniciales={crucesIniciales}
+        onConfirmar={(crucesPorRuta) => { onConfirmarManual(crucesPorRuta); setModo(null); }}
+        onCancelar={() => setModo(null)}
+        colores={colores}
+        textoConfirmar={modo === "editar" ? "Guardar cambios del sorteo" : "Confirmar sorteo manual"}
+      />
+    );
+  }
+  return (
+    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: sorteo && !sorteo.error ? 12 : 20 }}>
+      <BotonSorteo onClick={onAuto} disabled={!poolsListas} label={labelAuto} colores={colores} />
+      <button onClick={() => setModo("manual")} disabled={!poolsListas}
+        style={{ background: "none", border: `1px solid ${colores.acento}`, color: poolsListas ? colores.acento : "#6A6A6A", borderRadius: 8, padding: "10px 16px", fontSize: 13, fontWeight: 600, cursor: poolsListas ? "pointer" : "not-allowed" }}>
+        {labelManualNuevo}
+      </button>
+      {sorteo && !sorteo.error && (
+        <button onClick={() => setModo("editar")}
+          style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 8, padding: "10px 16px", fontSize: 13, cursor: "pointer" }}>
+          {labelEditar}
+        </button>
+      )}
+    </div>
+  );
 }
 
 // ============================================================
@@ -517,34 +650,47 @@ function useChampions() {
     return ladoA.esReal && ladoB.esReal && estadoEliminatoria(resR2[t.id]).fase === "resuelto";
   }), [resR1, resR2, coefs]);
 
-  const simularR3 = () => {
-    const plazasCP = CL_RONDA2.filter((t) => t.ruta === "Campeones").map((t) => resolverR2(t.id)).filter(Boolean);
-    const plazasLP = CL_RONDA2.filter((t) => t.ruta === "Liga").map((t) => resolverR2(t.id)).filter(Boolean);
-    const resCP = sortear(plazasCP); // 0 nuevos en Ruta Campeones
-    const resLP = sortear([...plazasLP, ...CL_NUEVOS_R3.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: e.coef }))]);
-    if (resCP.error || resLP.error) { setSorteoR3({ error: `Ruta Campeones: ${resCP.error || "OK"} · Ruta Liga: ${resLP.error || "OK"}` }); return; }
+  const poolsR3 = () => ({
+    Campeones: CL_RONDA2.filter((t) => t.ruta === "Campeones").map((t) => resolverR2(t.id)).filter(Boolean), // 0 nuevos en Ruta Campeones
+    Liga: [...CL_RONDA2.filter((t) => t.ruta === "Liga").map((t) => resolverR2(t.id)).filter(Boolean), ...CL_NUEVOS_R3.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: e.coef }))],
+  });
+  const confirmarR3 = (crucesPorRuta, bloqueo = false) => {
     const cruces = [
-      ...resCP.cruces.map((c, i) => ({ id: `R3-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
-      ...resLP.cruces.map((c, i) => ({ id: `R3-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Campeones.map((c, i) => ({ id: `R3-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Liga.map((c, i) => ({ id: `R3-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
     ];
-    setSorteoR3({ cruces, bloqueo: resCP.bloqueo || resLP.bloqueo });
+    setSorteoR3({ cruces, bloqueo });
     setResR3({}); setSorteoPO(null); setResPO({});
+  };
+  const simularR3 = () => {
+    const { Campeones, Liga } = poolsR3();
+    const resCP = sortear(Campeones), resLP = sortear(Liga);
+    if (resCP.error || resLP.error) { setSorteoR3({ error: `Ruta Campeones: ${resCP.error || "OK"} · Ruta Liga: ${resLP.error || "OK"}` }); return; }
+    confirmarR3({ Campeones: resCP.cruces, Liga: resLP.cruces }, resCP.bloqueo || resLP.bloqueo);
   };
   const r3Completa = useMemo(() => sorteoR3 && !sorteoR3.error && sorteoR3.cruces.every((t) => estadoEliminatoria(resR3[t.id]).fase === "resuelto"), [sorteoR3, resR3]);
 
-  const simularPlayoff = () => {
+  const poolsPO = () => {
+    if (!sorteoR3 || sorteoR3.error) return { Campeones: [], Liga: [] };
     const g = sorteoR3.cruces.map((t) => { const r = resolverGenerico(sorteoR3.cruces, resR3, t.id); return r ? { ...r.ganador, ruta: t.ruta } : null; }).filter(Boolean);
-    const plazasCP = g.filter((x) => x.ruta === "Campeones");
-    const plazasLP = g.filter((x) => x.ruta === "Liga");
-    const resCP = sortear([...plazasCP, ...CL_NUEVOS_PO.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: e.coef }))]);
-    const resLP = sortear(plazasLP); // 0 nuevos en Ruta Liga del Playoff
-    if (resCP.error || resLP.error) { setSorteoPO({ error: `Ruta Campeones: ${resCP.error || "OK"} · Ruta Liga: ${resLP.error || "OK"}` }); return; }
+    return {
+      Campeones: [...g.filter((x) => x.ruta === "Campeones"), ...CL_NUEVOS_PO.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: e.coef }))],
+      Liga: g.filter((x) => x.ruta === "Liga"), // 0 nuevos en Ruta Liga del Playoff
+    };
+  };
+  const confirmarPO = (crucesPorRuta, bloqueo = false) => {
     const cruces = [
-      ...resCP.cruces.map((c, i) => ({ id: `PO-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
-      ...resLP.cruces.map((c, i) => ({ id: `PO-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Campeones.map((c, i) => ({ id: `PO-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Liga.map((c, i) => ({ id: `PO-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
     ];
-    setSorteoPO({ cruces, bloqueo: resCP.bloqueo || resLP.bloqueo });
+    setSorteoPO({ cruces, bloqueo });
     setResPO({});
+  };
+  const simularPlayoff = () => {
+    const { Campeones, Liga } = poolsPO();
+    const resCP = sortear(Campeones), resLP = sortear(Liga);
+    if (resCP.error || resLP.error) { setSorteoPO({ error: `Ruta Campeones: ${resCP.error || "OK"} · Ruta Liga: ${resLP.error || "OK"}` }); return; }
+    confirmarPO({ Campeones: resCP.cruces, Liga: resLP.cruces }, resCP.bloqueo || resLP.bloqueo);
   };
   const clasificados = useMemo(() => {
     if (!sorteoPO || sorteoPO.error) return null;
@@ -582,8 +728,8 @@ function useChampions() {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
-    sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
-    sorteoPO, resPO, changePO, resetPO, simularPlayoff,
+    sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, confirmarR3,
+    sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, confirmarPO,
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
     perdedoresR1, perdedoresR2, perdedoresR3, perdedoresPO,
@@ -663,40 +809,63 @@ function useEuropa(cl) {
     return ladoA.esReal && ladoB.esReal && estadoEliminatoria(resR2[t.id]).fase === "resuelto";
   }), [resR1, resR2, coefs]);
 
-  const simularR3 = () => {
+  const poolsR3 = () => {
     const propiosLiga = EL_RONDA2.map((t) => resolverR2(t.id)).filter(Boolean);
     const clR2 = cl.perdedoresR2;
     const clLiga = clR2.filter((p) => p.ruta === "Liga").map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefs[p.perdedor] })).filter((p) => p.coef !== undefined);
     const clCampeones = clR2.filter((p) => p.ruta === "Campeones").map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefs[p.perdedor] })).filter((p) => p.coef !== undefined);
     const plazasLiga = [...propiosLiga, ...EL_NUEVOS_R3.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: e.coef })), ...clLiga];
-    const resLiga = plazasLiga.length === 14 ? sortear(plazasLiga) : { error: `${plazasLiga.length}/14 (faltan ${14 - plazasLiga.length} perdedores de Champions Ruta Liga Ronda 2 — resuélvela allí primero)` };
-    const resCampeones = clCampeones.length === 12 ? sortear(clCampeones) : { error: `${clCampeones.length}/12 de Ruta Campeones (vienen de Champions Ronda 2 — resuélvela allí primero)` };
-    if (resLiga.error || resCampeones.error) { setSorteoR3({ error: `Ruta Liga: ${resLiga.error || "OK"} · Ruta Campeones: ${resCampeones.error || "OK"}` }); return; }
+    return {
+      Liga: { plazas: plazasLiga, error: plazasLiga.length === 14 ? null : `${plazasLiga.length}/14 (faltan ${14 - plazasLiga.length} perdedores de Champions Ruta Liga Ronda 2 — resuélvela allí primero)` },
+      Campeones: { plazas: clCampeones, error: clCampeones.length === 12 ? null : `${clCampeones.length}/12 de Ruta Campeones (vienen de Champions Ronda 2 — resuélvela allí primero)` },
+    };
+  };
+  const poolsR3Listas = useMemo(() => { const p = poolsR3(); return !p.Liga.error && !p.Campeones.error; }, [resR1, resR2, coefs, cl.perdedoresR2]);
+  const confirmarR3 = (crucesPorRuta, bloqueo = false) => {
     const cruces = [
-      ...resCampeones.cruces.map((c, i) => ({ id: `R3-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
-      ...resLiga.cruces.map((c, i) => ({ id: `R3-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Campeones.map((c, i) => ({ id: `R3-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Liga.map((c, i) => ({ id: `R3-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
     ];
-    setSorteoR3({ cruces, bloqueo: resLiga.bloqueo || resCampeones.bloqueo });
+    setSorteoR3({ cruces, bloqueo });
     setResR3({}); setSorteoPO(null); setResPO({});
+  };
+  const simularR3 = () => {
+    const pools = poolsR3();
+    if (pools.Liga.error || pools.Campeones.error) { setSorteoR3({ error: `Ruta Liga: ${pools.Liga.error || "OK"} · Ruta Campeones: ${pools.Campeones.error || "OK"}` }); return; }
+    const resLiga = sortear(pools.Liga.plazas), resCampeones = sortear(pools.Campeones.plazas);
+    if (resLiga.error || resCampeones.error) { setSorteoR3({ error: `Ruta Liga: ${resLiga.error || "OK"} · Ruta Campeones: ${resCampeones.error || "OK"}` }); return; }
+    confirmarR3({ Campeones: resCampeones.cruces, Liga: resLiga.cruces }, resLiga.bloqueo || resCampeones.bloqueo);
   };
   const r3Completa = useMemo(() => sorteoR3 && !sorteoR3.error && sorteoR3.cruces.every((t) => estadoEliminatoria(resR3[t.id]).fase === "resuelto"), [sorteoR3, resR3]);
 
-  const simularPlayoff = () => {
+  const poolsPO = () => {
+    if (!sorteoR3 || sorteoR3.error) return { Liga: { plazas: [], error: "Ronda 3 pendiente" }, Campeones: { plazas: [], error: "Ronda 3 pendiente" } };
     const g = sorteoR3.cruces.map((t) => { const r = resolverGenerico(sorteoR3.cruces, resR3, t.id); return r ? { ...r.ganador, ruta: t.ruta } : null; }).filter(Boolean);
     const propiosLiga = g.filter((x) => x.ruta === "Liga");
     const propiosCampeones = g.filter((x) => x.ruta === "Campeones");
     const clR3Campeones = cl.perdedoresR3.filter((p) => p.ruta === "Campeones").map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefs[p.perdedor] })).filter((p) => p.coef !== undefined);
     const plazasLiga = [...propiosLiga, ...EL_NUEVOS_PO.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: e.coef }))];
     const plazasCampeones = [...propiosCampeones, ...clR3Campeones];
-    const resLiga = sortear(plazasLiga);
-    const resCampeones = plazasCampeones.length === 12 ? sortear(plazasCampeones) : { error: `${plazasCampeones.length}/12 (faltan ${12 - plazasCampeones.length} perdedores de Champions Ruta Campeones Ronda 3 — resuélvela allí primero)` };
-    if (resLiga.error || resCampeones.error) { setSorteoPO({ error: `Ruta Liga: ${resLiga.error || "OK"} · Ruta Campeones: ${resCampeones.error || "OK"}` }); return; }
+    return {
+      Liga: { plazas: plazasLiga, error: null },
+      Campeones: { plazas: plazasCampeones, error: plazasCampeones.length === 12 ? null : `${plazasCampeones.length}/12 (faltan ${12 - plazasCampeones.length} perdedores de Champions Ruta Campeones Ronda 3 — resuélvela allí primero)` },
+    };
+  };
+  const poolsPOListas = useMemo(() => { const p = poolsPO(); return !p.Liga.error && !p.Campeones.error; }, [sorteoR3, resR3, cl.perdedoresR3, coefs]);
+  const confirmarPO = (crucesPorRuta, bloqueo = false) => {
     const cruces = [
-      ...resCampeones.cruces.map((c, i) => ({ id: `PO-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
-      ...resLiga.cruces.map((c, i) => ({ id: `PO-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Campeones.map((c, i) => ({ id: `PO-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Liga.map((c, i) => ({ id: `PO-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
     ];
-    setSorteoPO({ cruces, bloqueo: resLiga.bloqueo || resCampeones.bloqueo });
+    setSorteoPO({ cruces, bloqueo });
     setResPO({});
+  };
+  const simularPlayoff = () => {
+    const pools = poolsPO();
+    if (pools.Liga.error || pools.Campeones.error) { setSorteoPO({ error: `Ruta Liga: ${pools.Liga.error || "OK"} · Ruta Campeones: ${pools.Campeones.error || "OK"}` }); return; }
+    const resLiga = sortear(pools.Liga.plazas), resCampeones = sortear(pools.Campeones.plazas);
+    if (resLiga.error || resCampeones.error) { setSorteoPO({ error: `Ruta Liga: ${resLiga.error || "OK"} · Ruta Campeones: ${resCampeones.error || "OK"}` }); return; }
+    confirmarPO({ Campeones: resCampeones.cruces, Liga: resLiga.cruces }, resLiga.bloqueo || resCampeones.bloqueo);
   };
   const clasificados = useMemo(() => {
     if (!sorteoPO || sorteoPO.error) return null;
@@ -733,8 +902,8 @@ function useEuropa(cl) {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
-    sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
-    sorteoPO, resPO, changePO, resetPO, simularPlayoff,
+    sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
+    sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
     perdedoresR1, perdedoresR2, perdedoresR3, perdedoresPO,
@@ -826,7 +995,7 @@ function useConference(cl, el) {
     return campeonesOk && principalOk;
   }, [resR1, resR2, coefs, cl.perdedoresR1, el.perdedoresR1]);
 
-  const simularR3 = () => {
+  const poolsR3 = () => {
     const propiosCampeones = CO_RONDA2_CAMPEONES.map((tie) => {
       const ladoA = resolverExternoCL(tie.ext1tie), ladoB = resolverExternoCL(tie.ext2tie);
       const r = resolverR2(tie, ladoA, ladoB);
@@ -840,39 +1009,60 @@ function useConference(cl, el) {
       return r ? { nombre: r.nombre, pais: r.pais, coef: r.coef } : null;
     }).filter(Boolean);
     const perdedoresELr2 = el.perdedoresR2.map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefs[p.perdedor] })).filter((p) => p.coef !== undefined);
-
     const poolCampeones = [...propiosCampeones, ...reequilibrioCL];
     const poolLiga = [...propiosLiga, ...perdedoresELr2];
-    const resCampeones = poolCampeones.length === 8 ? sortear(poolCampeones) : { error: `${poolCampeones.length}/8 (faltan ${8 - poolCampeones.length} del reequilibrio de Champions Ronda 1 — resuélvela allí primero)` };
-    const resLiga = poolLiga.length === 52 ? sortear(poolLiga) : { error: `${poolLiga.length}/52 (faltan ${52 - poolLiga.length} perdedores de Europa League Ronda 2 — resuélvela allí primero)` };
-    if (resCampeones.error || resLiga.error) { setSorteoR3({ error: `Ruta Campeones: ${resCampeones.error || "OK"} · Ruta Liga: ${resLiga.error || "OK"}` }); return; }
+    return {
+      Campeones: { plazas: poolCampeones, error: poolCampeones.length === 8 ? null : `${poolCampeones.length}/8 (faltan ${8 - poolCampeones.length} del reequilibrio de Champions Ronda 1 — resuélvela allí primero)` },
+      Liga: { plazas: poolLiga, error: poolLiga.length === 52 ? null : `${poolLiga.length}/52 (faltan ${52 - poolLiga.length} perdedores de Europa League Ronda 2 — resuélvela allí primero)` },
+    };
+  };
+  const poolsR3Listas = useMemo(() => { const p = poolsR3(); return !p.Campeones.error && !p.Liga.error; }, [resR1, resR2, coefs, cl.perdedoresR1, el.perdedoresR2]);
+  const confirmarR3 = (crucesPorRuta, bloqueo = false) => {
     const cruces = [
-      ...resCampeones.cruces.map((c, i) => ({ id: `R3-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
-      ...resLiga.cruces.map((c, i) => ({ id: `R3-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Campeones.map((c, i) => ({ id: `R3-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Liga.map((c, i) => ({ id: `R3-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
     ];
-    setSorteoR3({ cruces, bloqueo: resCampeones.bloqueo || resLiga.bloqueo });
+    setSorteoR3({ cruces, bloqueo });
     setResR3({}); setSorteoPO(null); setResPO({});
+  };
+  const simularR3 = () => {
+    const pools = poolsR3();
+    if (pools.Campeones.error || pools.Liga.error) { setSorteoR3({ error: `Ruta Campeones: ${pools.Campeones.error || "OK"} · Ruta Liga: ${pools.Liga.error || "OK"}` }); return; }
+    const resCampeones = sortear(pools.Campeones.plazas), resLiga = sortear(pools.Liga.plazas);
+    if (resCampeones.error || resLiga.error) { setSorteoR3({ error: `Ruta Campeones: ${resCampeones.error || "OK"} · Ruta Liga: ${resLiga.error || "OK"}` }); return; }
+    confirmarR3({ Campeones: resCampeones.cruces, Liga: resLiga.cruces }, resCampeones.bloqueo || resLiga.bloqueo);
   };
   const r3Completa = useMemo(() => sorteoR3 && !sorteoR3.error && sorteoR3.cruces.every((t) => estadoEliminatoria(resR3[t.id]).fase === "resuelto"), [sorteoR3, resR3]);
 
-  const simularPlayoff = () => {
+  const poolsPO = () => {
+    if (!sorteoR3 || sorteoR3.error) return { Campeones: { plazas: [], error: "Ronda 3 pendiente" }, Liga: { plazas: [], error: "Ronda 3 pendiente" } };
     const g = sorteoR3.cruces.map((t) => { const r = resolverGenerico(sorteoR3.cruces, resR3, t.id); return r ? { ...r.ganador, ruta: t.ruta } : null; }).filter(Boolean);
     const propiosCampeones = g.filter((x) => x.ruta === "Campeones");
     const propiosLiga = g.filter((x) => x.ruta === "Liga");
     const perdedoresELr3Campeones = el.perdedoresR3.filter((p) => p.ruta === "Campeones").map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefs[p.perdedor] })).filter((p) => p.coef !== undefined);
     const perdedoresELr3Liga = el.perdedoresR3.filter((p) => p.ruta === "Liga").map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefs[p.perdedor] })).filter((p) => p.coef !== undefined);
-
     const poolCampeones = [...propiosCampeones, ...perdedoresELr3Campeones];
     const poolLiga = [...propiosLiga, ...CO_NUEVOS_PO_LIGA, ...perdedoresELr3Liga]; // confirmado: UEFA access list oficial
-    const resCampeones = poolCampeones.length === 10 ? sortear(poolCampeones) : { error: `${poolCampeones.length}/10 (faltan ${10 - poolCampeones.length} perdedores de Europa League Ronda 3 Ruta Campeones — resuélvela allí primero)` };
-    const resLiga = poolLiga.length === 38 ? sortear(poolLiga) : { error: `${poolLiga.length}/38 — faltan los 5 equipos de 6º puesto sin nombre confirmado (ver aviso arriba) más los que falten de Europa League Ronda 3 Ruta Liga` };
-    if (resCampeones.error || resLiga.error) { setSorteoPO({ error: `Ruta Campeones: ${resCampeones.error || "OK"} · Ruta Liga: ${resLiga.error || "OK"}` }); return; }
+    return {
+      Campeones: { plazas: poolCampeones, error: poolCampeones.length === 10 ? null : `${poolCampeones.length}/10 (faltan ${10 - poolCampeones.length} perdedores de Europa League Ronda 3 Ruta Campeones — resuélvela allí primero)` },
+      Liga: { plazas: poolLiga, error: poolLiga.length === 38 ? null : `${poolLiga.length}/38 — faltan los 5 equipos de 6º puesto sin nombre confirmado (ver aviso arriba) más los que falten de Europa League Ronda 3 Ruta Liga` },
+    };
+  };
+  const poolsPOListas = useMemo(() => { const p = poolsPO(); return !p.Campeones.error && !p.Liga.error; }, [sorteoR3, resR3, el.perdedoresR3, coefs]);
+  const confirmarPO = (crucesPorRuta, bloqueo = false) => {
     const cruces = [
-      ...resCampeones.cruces.map((c, i) => ({ id: `PO-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
-      ...resLiga.cruces.map((c, i) => ({ id: `PO-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Campeones.map((c, i) => ({ id: `PO-CP-${i + 1}`, ruta: "Campeones", cabeza: c.cabeza, rival: c.rival })),
+      ...crucesPorRuta.Liga.map((c, i) => ({ id: `PO-LP-${i + 1}`, ruta: "Liga", cabeza: c.cabeza, rival: c.rival })),
     ];
-    setSorteoPO({ cruces, bloqueo: resCampeones.bloqueo || resLiga.bloqueo });
+    setSorteoPO({ cruces, bloqueo });
     setResPO({});
+  };
+  const simularPlayoff = () => {
+    const pools = poolsPO();
+    if (pools.Campeones.error || pools.Liga.error) { setSorteoPO({ error: `Ruta Campeones: ${pools.Campeones.error || "OK"} · Ruta Liga: ${pools.Liga.error || "OK"}` }); return; }
+    const resCampeones = sortear(pools.Campeones.plazas), resLiga = sortear(pools.Liga.plazas);
+    if (resCampeones.error || resLiga.error) { setSorteoPO({ error: `Ruta Campeones: ${resCampeones.error || "OK"} · Ruta Liga: ${resLiga.error || "OK"}` }); return; }
+    confirmarPO({ Campeones: resCampeones.cruces, Liga: resLiga.cruces }, resCampeones.bloqueo || resLiga.bloqueo);
   };
   const clasificados = useMemo(() => {
     if (!sorteoPO || sorteoPO.error) return null;
@@ -894,8 +1084,8 @@ function useConference(cl, el) {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
     resR2, changeR2, resetR2, resolverExternoCL, resolverLado, resolverR2, r2Completa,
-    sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3,
-    sorteoPO, resPO, changePO, resetPO, simularPlayoff,
+    sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
+    sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
   };
@@ -997,7 +1187,7 @@ function ChampionsView({ cl }) {
       {!cl.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa todos los resultados de Ronda 2 para poder sortear la Ronda 3.</div>}
 
       <EntrantesConfirmados titulo="Nuevos entrantes de Ronda 3 (Ruta Liga): Lyon, NEC Nijmegen, Union Saint-Gilloise, Sparta Praga, Bodø/Glimt, Olympiakos" lista={[]} colores={t} />
-      <BotonSorteo onClick={cl.simularR3} disabled={!cl.r2Completa} label={cl.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} colores={t} />
+      <ControlesSorteo sorteo={cl.sorteoR3} pools={extraerPlazas(cl.poolsR3())} poolsListas={cl.r2Completa} onAuto={cl.simularR3} onConfirmarManual={cl.confirmarR3} colores={t} labelAuto={cl.sorteoR3 ? "🎲 Volver a sortear la Ronda 3" : "🎲 Sortear Ronda 3"} />
 
       {cl.sorteoR3 && cl.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{cl.sorteoR3.error}</div>}
       {cl.sorteoR3 && !cl.sorteoR3.error && (
@@ -1016,7 +1206,7 @@ function ChampionsView({ cl }) {
           </div>
           {!cl.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Campeones): Viking, AEK Atenas, LASK Linz, Celtic" lista={[]} colores={t} />
-          <BotonSorteo onClick={cl.simularPlayoff} disabled={!cl.r3Completa} label={cl.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} colores={t} />
+          <ControlesSorteo sorteo={cl.sorteoPO} pools={extraerPlazas(cl.poolsPO())} poolsListas={cl.r3Completa} onAuto={cl.simularPlayoff} onConfirmarManual={cl.confirmarPO} colores={t} labelAuto={cl.sorteoPO ? "🎲 Volver a sortear el Playoff" : "🎲 Sortear Playoff"} />
         </>
       )}
 
@@ -1098,7 +1288,7 @@ function EuropaView({ el, cl }) {
       {!el.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa todos los resultados de Ronda 2 para poder sortear la Ronda 3.</div>}
 
       <EntrantesConfirmados titulo="Nuevos entrantes de Ronda 3 (Ruta Liga): Salzburgo, Rangers, Jagiellonia Białystok. Ruta Campeones: se alimenta de perdedores de Champions Ronda 2 (en directo)." lista={[]} colores={t} />
-      <BotonSorteo onClick={el.simularR3} disabled={!el.r2Completa} label={el.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} colores={t} />
+      <ControlesSorteo sorteo={el.sorteoR3} pools={extraerPlazas(el.poolsR3())} poolsListas={el.poolsR3Listas} onAuto={el.simularR3} onConfirmarManual={el.confirmarR3} colores={t} labelAuto={el.sorteoR3 ? "🎲 Volver a sortear la Ronda 3" : "🎲 Sortear Ronda 3"} />
 
       {el.sorteoR3 && el.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{el.sorteoR3.error}</div>}
       {el.sorteoR3 && !el.sorteoR3.error && (
@@ -1117,7 +1307,7 @@ function EuropaView({ el, cl }) {
           </div>
           {!el.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Sint-Truidense, Lillestrøm, Karviná, OFI Creta, Trabzonspor" lista={[]} colores={t} />
-          <BotonSorteo onClick={el.simularPlayoff} disabled={!el.r3Completa} label={el.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} colores={t} />
+          <ControlesSorteo sorteo={el.sorteoPO} pools={extraerPlazas(el.poolsPO())} poolsListas={el.poolsPOListas} onAuto={el.simularPlayoff} onConfirmarManual={el.confirmarPO} colores={t} labelAuto={el.sorteoPO ? "🎲 Volver a sortear el Playoff" : "🎲 Sortear Playoff"} />
         </>
       )}
 
@@ -1221,7 +1411,7 @@ function ConferenceView({ co, cl, el }) {
       {!co.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa Ronda 2 (y que Champions/Europa League tengan sus resultados de Ronda 1 reales) para poder sortear la Ronda 3.</div>}
 
       <div style={{ color: t.textoSuave, fontSize: 12, marginBottom: 12 }}>Ronda 3 es automática: Ruta Campeones (6 propios + 2 reequilibrio de Champions R1) y Ruta Liga (43 propios + 9 de Europa League R2) — sin nada que añadir a mano.</div>
-      <BotonSorteo onClick={co.simularR3} disabled={!co.r2Completa} label={co.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} colores={t} />
+      <ControlesSorteo sorteo={co.sorteoR3} pools={extraerPlazas(co.poolsR3())} poolsListas={co.poolsR3Listas} onAuto={co.simularR3} onConfirmarManual={co.confirmarR3} colores={t} labelAuto={co.sorteoR3 ? "🎲 Volver a sortear la Ronda 3" : "🎲 Sortear Ronda 3"} />
 
       {co.sorteoR3 && co.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{co.sorteoR3.error}</div>}
       {co.sorteoR3 && !co.sorteoR3.error && (
@@ -1239,7 +1429,7 @@ function ConferenceView({ co, cl, el }) {
           </div>
           {!co.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Brighton & Hove Albion (ENG), Atalanta (ITA), Getafe (ESP), Friburgo (GER), Mónaco (FRA) — confirmado por el listado de acceso oficial de la UEFA" lista={[]} colores={t} />
-          <BotonSorteo onClick={co.simularPlayoff} disabled={!co.r3Completa} label={co.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} colores={t} />
+          <ControlesSorteo sorteo={co.sorteoPO} pools={extraerPlazas(co.poolsPO())} poolsListas={co.poolsPOListas} onAuto={co.simularPlayoff} onConfirmarManual={co.confirmarPO} colores={t} labelAuto={co.sorteoPO ? "🎲 Volver a sortear el Playoff" : "🎲 Sortear Playoff"} />
         </>
       )}
 
