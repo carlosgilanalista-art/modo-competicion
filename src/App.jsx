@@ -401,7 +401,7 @@ const EL_COEFS_INICIALES = {
   "Twente": 13.585, "Beşiktaş": 15.500, "Midtjylland": 48.250, "Pafos": 24.125,
   "Maccabi Tel-Aviv": 32.500, "St. Gallen": 6.940, "Benfica": 90.000, "PAOK": 48.250,
   "Salzburgo": 45.000, "Rangers": 59.250, "Jagiellonia Białystok": 22.000,
-  "Sint-Truidense": 12.450, "Lillestrøm": 8.247, "Karviná": 9.705, "OFI Creta": 9.682, "Trabzonspor": 11.000,
+  "Sint-Truidense": 12.450, "Lillestrøm": 8.247, "Viktoria Plzeň": 9.705, "OFI Creta": 9.682, "Trabzonspor": 11.000, // Viktoria Plzeň sustituye a Karviná (excluida por amaño de partidos, 2 jul 2026); coef. pendiente de verificar
   // Equipos de Champions League que pueden caer aquí (Ronda 2 y Ronda 3, ambas rutas)
   "Sabah": 6.000, "The New Saints": 9.000, "Floriana": 4.000, "Shamrock Rovers": 19.375,
   "Flora Tallinn": 10.000, "Iberia Tbilisi": 5.000, "Lincoln Red Imps": 13.500, "Inter Escaldes": 7.500,
@@ -423,7 +423,7 @@ const EL_NUEVOS_R3 = [
 ];
 const EL_NUEVOS_PO = [
   { nombre: "Sint-Truidense", pais: "BEL", coef: 12.450 }, { nombre: "Lillestrøm", pais: "NOR", coef: 8.247 },
-  { nombre: "Karviná", pais: "CZE", coef: 9.705 }, { nombre: "OFI Creta", pais: "GRE", coef: 9.682 },
+  { nombre: "Viktoria Plzeň", pais: "CZE", coef: 9.705 }, { nombre: "OFI Creta", pais: "GRE", coef: 9.682 },
   { nombre: "Trabzonspor", pais: "TUR", coef: 11.000 },
 ];
 const EL_FECHAS = { R1: "9 jul (ida) · 16 jul (vuelta)", R2: "23 jul (ida) · 30 jul (vuelta)", R3: "6 ago (ida) · 13 ago (vuelta)", PO: "20 ago (ida) · 27 ago (vuelta)" };
@@ -1339,7 +1339,7 @@ function EuropaView({ el, cl }) {
             })}
           </div>
           {!el.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
-          <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Sint-Truidense, Lillestrøm, Karviná, OFI Creta, Trabzonspor" lista={[]} colores={t} />
+          <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Sint-Truidense, Lillestrøm, Viktoria Plzeň, OFI Creta, Trabzonspor" lista={[]} colores={t} />
           <ControlesSorteo sorteo={el.sorteoPO} pools={extraerPlazas(el.poolsPO())} poolsListas={el.poolsPOListas} onAuto={el.simularPlayoff} onConfirmarManual={el.confirmarPO} colores={t} labelAuto={el.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} />
         </>
       )}
