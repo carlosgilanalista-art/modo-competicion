@@ -1558,7 +1558,7 @@ export default function App() {
                   borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 700,
                   fontFamily: "'Oswald', sans-serif", textDecoration: "none",
                 }}>
-                  ✉️ Cuéntanos qué falla
+                  💬 Danos tu opinión
                 </a>
               </div>
 
