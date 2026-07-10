@@ -351,6 +351,25 @@ const CL_NUEVOS_PO = [
   { nombre: "LASK Linz", pais: "AUT", coef: 21.000 }, { nombre: "Celtic", pais: "SCO", coef: 44.000 },
 ];
 const CL_FECHAS = { R1: "7-8 jul (ida) · 14-15 jul (vuelta)", R2: "21-22 jul (ida) · 28-29 jul (vuelta)", R3: "4-5 ago (ida) · 11 ago (vuelta)", PO: "18-19 ago (ida) · 25-26 ago (vuelta)" };
+// Los 29 clasificados directos a la fase de liga (no pasan por fase previa): posición liguera 2025/26
+// de las federaciones con plazas directas, más los reequilibrios (Shakhtar por los finalistas PSG/Arsenal
+// ya clasificados por liga; Sporting CP por el campeón de Europa League Aston Villa) y los dos European
+// Performance Spots (Liverpool e Real Betis). Fuente: UEFA.com.
+const CL_DIRECTOS_FASE_LIGA = [
+  { nombre: "Arsenal", pais: "ENG" }, { nombre: "Manchester City", pais: "ENG" }, { nombre: "Manchester United", pais: "ENG" },
+  { nombre: "Aston Villa", pais: "ENG" }, { nombre: "Liverpool", pais: "ENG" },
+  { nombre: "Inter", pais: "ITA" }, { nombre: "Napoli", pais: "ITA" }, { nombre: "Roma", pais: "ITA" }, { nombre: "Como", pais: "ITA" },
+  { nombre: "Barcelona", pais: "ESP" }, { nombre: "Real Madrid", pais: "ESP" }, { nombre: "Villarreal", pais: "ESP" },
+  { nombre: "Atlético de Madrid", pais: "ESP" }, { nombre: "Real Betis", pais: "ESP" },
+  { nombre: "Bayern de Múnich", pais: "GER" }, { nombre: "Borussia Dortmund", pais: "GER" }, { nombre: "RB Leipzig", pais: "GER" }, { nombre: "VfB Stuttgart", pais: "GER" },
+  { nombre: "Paris Saint-Germain", pais: "FRA" }, { nombre: "Lens", pais: "FRA" }, { nombre: "Lille", pais: "FRA" },
+  { nombre: "PSV Eindhoven", pais: "NED" }, { nombre: "Feyenoord", pais: "NED" },
+  { nombre: "Porto", pais: "POR" }, { nombre: "Sporting CP", pais: "POR" },
+  { nombre: "Club Brugge", pais: "BEL" },
+  { nombre: "Slavia Praga", pais: "CZE" },
+  { nombre: "Galatasaray", pais: "TUR" },
+  { nombre: "Shakhtar Donetsk", pais: "UKR" },
+];
 
 // ============================================================
 // DATOS — EUROPA LEAGUE
@@ -408,6 +427,17 @@ const EL_NUEVOS_PO = [
   { nombre: "Trabzonspor", pais: "TUR", coef: 11.000 },
 ];
 const EL_FECHAS = { R1: "9 jul (ida) · 16 jul (vuelta)", R2: "23 jul (ida) · 30 jul (vuelta)", R3: "6 ago (ida) · 13 ago (vuelta)", PO: "20 ago (ida) · 27 ago (vuelta)" };
+// Los 13 clasificados directos a la fase de liga: 12 por posición liguera/copa nacional + 1 (Crystal
+// Palace) como campeón de la Conference League 2025/26. Fuente: UEFA.com.
+const EL_DIRECTOS_FASE_LIGA = [
+  { nombre: "Crystal Palace", pais: "ENG" }, { nombre: "Bournemouth", pais: "ENG" }, { nombre: "Sunderland", pais: "ENG" },
+  { nombre: "Milan", pais: "ITA" }, { nombre: "Juventus", pais: "ITA" },
+  { nombre: "Real Sociedad", pais: "ESP" }, { nombre: "Celta de Vigo", pais: "ESP" },
+  { nombre: "TSG Hoffenheim", pais: "GER" }, { nombre: "Bayer Leverkusen", pais: "GER" },
+  { nombre: "Marsella", pais: "FRA" }, { nombre: "Rennes", pais: "FRA" },
+  { nombre: "AZ Alkmaar", pais: "NED" },
+  { nombre: "Torreense", pais: "POR" },
+];
 
 // ============================================================
 // DATOS — CONFERENCE LEAGUE
@@ -1187,7 +1217,7 @@ function ChampionsView({ cl }) {
       {!cl.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa todos los resultados de Ronda 2 para poder sortear la Ronda 3.</div>}
 
       <EntrantesConfirmados titulo="Nuevos entrantes de Ronda 3 (Ruta Liga): Lyon, NEC Nijmegen, Union Saint-Gilloise, Sparta Praga, Bodø/Glimt, Olympiakos" lista={[]} colores={t} />
-      <ControlesSorteo sorteo={cl.sorteoR3} pools={extraerPlazas(cl.poolsR3())} poolsListas={cl.r2Completa} onAuto={cl.simularR3} onConfirmarManual={cl.confirmarR3} colores={t} labelAuto={cl.sorteoR3 ? "🎲 Volver a sortear la Ronda 3" : "🎲 Sortear Ronda 3"} />
+      <ControlesSorteo sorteo={cl.sorteoR3} pools={extraerPlazas(cl.poolsR3())} poolsListas={cl.r2Completa} onAuto={cl.simularR3} onConfirmarManual={cl.confirmarR3} colores={t} labelAuto={cl.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} />
 
       {cl.sorteoR3 && cl.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{cl.sorteoR3.error}</div>}
       {cl.sorteoR3 && !cl.sorteoR3.error && (
@@ -1206,7 +1236,7 @@ function ChampionsView({ cl }) {
           </div>
           {!cl.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Campeones): Viking, AEK Atenas, LASK Linz, Celtic" lista={[]} colores={t} />
-          <ControlesSorteo sorteo={cl.sorteoPO} pools={extraerPlazas(cl.poolsPO())} poolsListas={cl.r3Completa} onAuto={cl.simularPlayoff} onConfirmarManual={cl.confirmarPO} colores={t} labelAuto={cl.sorteoPO ? "🎲 Volver a sortear el Playoff" : "🎲 Sortear Playoff"} />
+          <ControlesSorteo sorteo={cl.sorteoPO} pools={extraerPlazas(cl.poolsPO())} poolsListas={cl.r3Completa} onAuto={cl.simularPlayoff} onConfirmarManual={cl.confirmarPO} colores={t} labelAuto={cl.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} />
         </>
       )}
 
@@ -1231,7 +1261,10 @@ function ChampionsView({ cl }) {
         <div style={{ background: t.tarjeta, border: `1px solid ${t.acento}`, borderRadius: 8, padding: 16, marginBottom: 20 }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.acento, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>CLASIFICADOS A FASE DE LIGA (vía playoff)</div>
           {cl.clasificados.map((c, i) => <div key={i} style={{ color: t.texto, fontSize: 14, padding: "2px 0" }}>{c.nombre} ({c.pais})</div>)}
-          <div style={{ color: t.textoSuave, fontSize: 11, marginTop: 8 }}>+ 29 equipos clasificados directamente (no cargados en este simulador)</div>
+          <div style={{ marginTop: 10 }}>
+            <div style={{ color: t.textoSuave, fontSize: 11 }}>+ 29 equipos clasificados directamente a la fase de liga:</div>
+            {CL_DIRECTOS_FASE_LIGA.map((e, i) => <div key={i} style={{ color: t.texto, fontSize: 13, padding: "1px 0" }}>{e.nombre} ({e.pais})</div>)}
+          </div>
         </div>
       )}
     </div>
@@ -1288,7 +1321,7 @@ function EuropaView({ el, cl }) {
       {!el.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa todos los resultados de Ronda 2 para poder sortear la Ronda 3.</div>}
 
       <EntrantesConfirmados titulo="Nuevos entrantes de Ronda 3 (Ruta Liga): Salzburgo, Rangers, Jagiellonia Białystok. Ruta Campeones: se alimenta de perdedores de Champions Ronda 2 (en directo)." lista={[]} colores={t} />
-      <ControlesSorteo sorteo={el.sorteoR3} pools={extraerPlazas(el.poolsR3())} poolsListas={el.poolsR3Listas} onAuto={el.simularR3} onConfirmarManual={el.confirmarR3} colores={t} labelAuto={el.sorteoR3 ? "🎲 Volver a sortear la Ronda 3" : "🎲 Sortear Ronda 3"} />
+      <ControlesSorteo sorteo={el.sorteoR3} pools={extraerPlazas(el.poolsR3())} poolsListas={el.poolsR3Listas} onAuto={el.simularR3} onConfirmarManual={el.confirmarR3} colores={t} labelAuto={el.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} />
 
       {el.sorteoR3 && el.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{el.sorteoR3.error}</div>}
       {el.sorteoR3 && !el.sorteoR3.error && (
@@ -1307,7 +1340,7 @@ function EuropaView({ el, cl }) {
           </div>
           {!el.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Sint-Truidense, Lillestrøm, Karviná, OFI Creta, Trabzonspor" lista={[]} colores={t} />
-          <ControlesSorteo sorteo={el.sorteoPO} pools={extraerPlazas(el.poolsPO())} poolsListas={el.poolsPOListas} onAuto={el.simularPlayoff} onConfirmarManual={el.confirmarPO} colores={t} labelAuto={el.sorteoPO ? "🎲 Volver a sortear el Playoff" : "🎲 Sortear Playoff"} />
+          <ControlesSorteo sorteo={el.sorteoPO} pools={extraerPlazas(el.poolsPO())} poolsListas={el.poolsPOListas} onAuto={el.simularPlayoff} onConfirmarManual={el.confirmarPO} colores={t} labelAuto={el.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} />
         </>
       )}
 
@@ -1332,7 +1365,10 @@ function EuropaView({ el, cl }) {
         <div style={{ background: t.tarjeta, border: `1px solid ${t.acento}`, borderRadius: 8, padding: 16, marginBottom: 20 }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.acento, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>CLASIFICADOS A FASE DE LIGA (vía playoff)</div>
           {el.clasificados.map((c, i) => <div key={i} style={{ color: t.texto, fontSize: 14, padding: "2px 0" }}>{c.nombre} ({c.pais})</div>)}
-          <div style={{ color: t.textoSuave, fontSize: 11, marginTop: 10 }}>+ 13 equipos clasificados directamente (no cargados)</div>
+          <div style={{ marginTop: 10 }}>
+            <div style={{ color: t.textoSuave, fontSize: 11 }}>+ 13 equipos clasificados directamente a la fase de liga:</div>
+            {EL_DIRECTOS_FASE_LIGA.map((e, i) => <div key={i} style={{ color: t.texto, fontSize: 13, padding: "1px 0" }}>{e.nombre} ({e.pais})</div>)}
+          </div>
           {(() => {
             const directosCL = [...cl.perdedoresPO, ...cl.perdedoresR3.filter((p) => p.ruta === "Liga")];
             return directosCL.length > 0 ? (
@@ -1411,7 +1447,7 @@ function ConferenceView({ co, cl, el }) {
       {!co.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa Ronda 2 (y que Champions/Europa League tengan sus resultados de Ronda 1 reales) para poder sortear la Ronda 3.</div>}
 
       <div style={{ color: t.textoSuave, fontSize: 12, marginBottom: 12 }}>Ronda 3 es automática: Ruta Campeones (6 propios + 2 reequilibrio de Champions R1) y Ruta Liga (43 propios + 9 de Europa League R2) — sin nada que añadir a mano.</div>
-      <ControlesSorteo sorteo={co.sorteoR3} pools={extraerPlazas(co.poolsR3())} poolsListas={co.poolsR3Listas} onAuto={co.simularR3} onConfirmarManual={co.confirmarR3} colores={t} labelAuto={co.sorteoR3 ? "🎲 Volver a sortear la Ronda 3" : "🎲 Sortear Ronda 3"} />
+      <ControlesSorteo sorteo={co.sorteoR3} pools={extraerPlazas(co.poolsR3())} poolsListas={co.poolsR3Listas} onAuto={co.simularR3} onConfirmarManual={co.confirmarR3} colores={t} labelAuto={co.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} />
 
       {co.sorteoR3 && co.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{co.sorteoR3.error}</div>}
       {co.sorteoR3 && !co.sorteoR3.error && (
@@ -1429,7 +1465,7 @@ function ConferenceView({ co, cl, el }) {
           </div>
           {!co.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Brighton & Hove Albion (ENG), Atalanta (ITA), Getafe (ESP), Friburgo (GER), Mónaco (FRA) — confirmado por el listado de acceso oficial de la UEFA" lista={[]} colores={t} />
-          <ControlesSorteo sorteo={co.sorteoPO} pools={extraerPlazas(co.poolsPO())} poolsListas={co.poolsPOListas} onAuto={co.simularPlayoff} onConfirmarManual={co.confirmarPO} colores={t} labelAuto={co.sorteoPO ? "🎲 Volver a sortear el Playoff" : "🎲 Sortear Playoff"} />
+          <ControlesSorteo sorteo={co.sorteoPO} pools={extraerPlazas(co.poolsPO())} poolsListas={co.poolsPOListas} onAuto={co.simularPlayoff} onConfirmarManual={co.confirmarPO} colores={t} labelAuto={co.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} />
         </>
       )}
 
@@ -1454,6 +1490,7 @@ function ConferenceView({ co, cl, el }) {
         <div style={{ background: t.tarjeta, border: `1px solid ${t.acento}`, borderRadius: 8, padding: 16, marginBottom: 20 }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.acento, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>CLASIFICADOS A FASE DE LIGA</div>
           {co.clasificados.map((c, i) => <div key={i} style={{ color: t.texto, fontSize: 14, padding: "2px 0" }}>{c.nombre} ({c.pais})</div>)}
+          <div style={{ color: t.textoSuave, fontSize: 11, marginTop: 10 }}>0 equipos clasificados directamente a la fase de liga — la Conference League no reparte plazas directas, las 36 se deciden por fase previa y playoff.</div>
           {(() => {
             const directosEL = el.perdedoresPO;
             return directosEL.length > 0 ? (
