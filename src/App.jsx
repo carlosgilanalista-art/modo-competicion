@@ -401,7 +401,7 @@ const EL_COEFS_INICIALES = {
   "Twente": 13.585, "Beşiktaş": 15.500, "Midtjylland": 48.250, "Pafos": 24.125,
   "Maccabi Tel-Aviv": 32.500, "St. Gallen": 6.940, "Benfica": 90.000, "PAOK": 48.250,
   "Salzburgo": 45.000, "Rangers": 59.250, "Jagiellonia Białystok": 22.000,
-  "Sint-Truidense": 12.450, "Lillestrøm": 8.247, "Viktoria Plzeň": 9.705, "OFI Creta": 9.682, "Trabzonspor": 11.000, // Viktoria Plzeň sustituye a Karviná (excluida por amaño de partidos, 2 jul 2026); coef. pendiente de verificar
+  "Sint-Truidense": 12.450, "Lillestrøm": 8.247, "Viktoria Plzeň": 50.500, "OFI Creta": 9.682, "Trabzonspor": 11.000, // Viktoria Plzeň sustituye a Karviná (excluida por amaño de partidos, 2 jul 2026)
   // Equipos de Champions League que pueden caer aquí (Ronda 2 y Ronda 3, ambas rutas)
   "Sabah": 6.000, "The New Saints": 9.000, "Floriana": 4.000, "Shamrock Rovers": 19.375,
   "Flora Tallinn": 10.000, "Iberia Tbilisi": 5.000, "Lincoln Red Imps": 13.500, "Inter Escaldes": 7.500,
@@ -423,7 +423,7 @@ const EL_NUEVOS_R3 = [
 ];
 const EL_NUEVOS_PO = [
   { nombre: "Sint-Truidense", pais: "BEL", coef: 12.450 }, { nombre: "Lillestrøm", pais: "NOR", coef: 8.247 },
-  { nombre: "Viktoria Plzeň", pais: "CZE", coef: 9.705 }, { nombre: "OFI Creta", pais: "GRE", coef: 9.682 },
+  { nombre: "Viktoria Plzeň", pais: "CZE", coef: 50.500 }, { nombre: "OFI Creta", pais: "GRE", coef: 9.682 },
   { nombre: "Trabzonspor", pais: "TUR", coef: 11.000 },
 ];
 const EL_FECHAS = { R1: "9 jul (ida) · 16 jul (vuelta)", R2: "23 jul (ida) · 30 jul (vuelta)", R3: "6 ago (ida) · 13 ago (vuelta)", PO: "20 ago (ida) · 27 ago (vuelta)" };
@@ -567,7 +567,7 @@ const CO_COEFS_INICIALES = {
   "HJK": 14.000, "Coleraine": 1.450, "FCSB": 25.500, "Auda": 4.500,
   "Raków": 22.250, "Valletta": 1.800, "Austria Wien": 9.500, "Debrecen": 5.437,
   "GAIS": 5.925, "Nordsjælland": 8.421, "Göteborg": 5.925, "Katowice": 9.350,
-  "Varaždin": 5.631, "Apollon": 7.138, "Bravo": 4.893, "Brann": 12.250,
+  "Varaždin": 5.631, "Apollon": 7.138, "Bravo": 4.893, "Brann": 12.250, "Jablonec": 9.705,
   "Shelbourne": 4.000, "Valur": 4.500, "Zrinjski": 13.250, "Zimbru": 4.500,
   "Noah": 10.750, "Sion": 6.940, "Motherwell": 6.410, "Havnar Bóltfelag": 7.000,
   "Panevėžys": 6.500, "Tobol": 8.000, "Hibernian": 7.000, "Neftchi": 6.500,
