@@ -980,6 +980,70 @@ function sortearEliminatorias(clasificacion) {
   return { po, octavos, cuartos, semis };
 }
 
+// ---- Resultados de las eliminatorias ----
+// Playoff, octavos, cuartos y semifinales son a doble partido (se reutiliza
+// estadoEliminatoria). La final es a partido único en sede neutral: si acaba
+// en empate hay prórroga y, si persiste, penaltis.
+function estadoPartidoUnico(r) {
+  if (!r || r.gA === undefined || r.gB === undefined) return { fase: "sin_datos", empate: false, etTied: false };
+  const gA = Number(r.gA), gB = Number(r.gB);
+  if (gA !== gB) return { fase: "resuelto", ganador: gA > gB ? "A" : "B", empate: false, etTied: false };
+  if (r.etA === undefined || r.etB === undefined) return { fase: "necesita_prorroga", empate: true, etTied: false };
+  const eA = gA + Number(r.etA), eB = gB + Number(r.etB);
+  if (eA !== eB) return { fase: "resuelto", ganador: eA > eB ? "A" : "B", empate: true, etTied: false };
+  if (r.penA === undefined || r.penB === undefined || Number(r.penA) === Number(r.penB)) return { fase: "necesita_penaltis", empate: true, etTied: true };
+  return { fase: "resuelto", ganador: Number(r.penA) > Number(r.penB) ? "A" : "B", empate: true, etTied: true };
+}
+function generarFinalAleatoria() {
+  const r = { gA: rnd5(), gB: rnd5() };
+  if (r.gA === r.gB) {
+    r.etA = Math.floor(Math.random() * 2); r.etB = Math.floor(Math.random() * 2);
+    if (r.etA === r.etB) { r.penA = rnd5(); r.penB = r.penA === 5 ? r.penA - 1 : r.penA + 1; }
+  }
+  return r;
+}
+
+// Resuelve el cuadro completo a partir del sorteo KO y los resultados.
+// Sedes: en playoff y octavos el mejor clasificado juega la vuelta en casa
+// (Art. 19); en cuartos y semis se aplica el mismo criterio con la posición
+// de la fase liga. El lado B de cada cruce es siempre quien cierra en casa.
+function resolverCuadro(ko, resKO, posiciones) {
+  const pos = (e) => posiciones.get(e.nombre);
+  const win2 = (id, a, b) => {
+    if (!a || !b) return null;
+    const est = estadoEliminatoria(resKO[id]);
+    return est.fase === "resuelto" ? (est.ganador === "A" ? a : b) : null;
+  };
+  const g = {};
+  const po = ko.po.map((t) => {
+    const a = t.rival, b = t.seed;
+    g[t.id] = win2(t.id, a, b);
+    return { id: t.id, a, b, etiquetaA: null, etiquetaB: null, ganador: g[t.id], destino: t.destino, destinoPos: t.destinoPos };
+  });
+  const octavos = ko.octavos.map((t) => {
+    const a = g[t.rivalRef] || null, b = t.seed;
+    g[t.id] = win2(t.id, a, b);
+    return { id: t.id, a, b, etiquetaA: a ? null : `Ganador ${t.rivalRef}`, etiquetaB: null, ganador: g[t.id] };
+  });
+  const doble = (t) => {
+    let a = g[t.a] || null, b = g[t.b] || null;
+    const etiquetaA = a ? null : `Ganador ${t.a}`, etiquetaB = b ? null : `Ganador ${t.b}`;
+    if (a && b && pos(a) < pos(b)) [a, b] = [b, a];
+    g[t.id] = win2(t.id, a, b);
+    return { id: t.id, a, b, etiquetaA, etiquetaB, ganador: g[t.id] };
+  };
+  const cuartos = ko.cuartos.map(doble);
+  const semis = ko.semis.map(doble);
+  const fA = g["SF-1"] || null, fB = g["SF-2"] || null;
+  const estF = fA && fB ? estadoPartidoUnico(resKO["FINAL"]) : { fase: "sin_datos" };
+  const final = {
+    id: "FINAL", a: fA, b: fB,
+    etiquetaA: fA ? null : "Ganador SF-1", etiquetaB: fB ? null : "Ganador SF-2",
+    ganador: estF.fase === "resuelto" ? (estF.ganador === "A" ? fA : fB) : null,
+  };
+  return { po, octavos, cuartos, semis, final, campeon: final.ganador };
+}
+
 // ---- Estado de la fase liga de una competición (compartido por las 3) ----
 function useFaseLiga(poolLiga, cfg) {
   const [sorteoLiga, setSorteoLiga] = useState(null);
@@ -1025,8 +1089,25 @@ function useFaseLiga(poolLiga, cfg) {
     () => (sorteoLiga && !sorteoLiga.error ? sorteoLiga.partidos.filter((m) => { const r = resLiga[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; }).length : 0),
     [sorteoLiga, resLiga]
   );
-  const sortearKO = () => { if (completa && clasificacion) setSorteoKO(sortearEliminatorias(clasificacion)); };
-  return { sorteoLiga, resLiga, sorteoKO, sortear, cambiarResultado, reiniciarPartido, simularJornada, intercambiar, clasificacion, clasificacionHasta, completa, jugados, sortearKO };
+  const sortearKO = () => { if (completa && clasificacion) { setSorteoKO(sortearEliminatorias(clasificacion)); setResKO({}); } };
+  const [resKO, setResKO] = useState({});
+  const cambiarKO = (id, campo, raw) => {
+    const v = validar(raw);
+    if (v === "INVALIDO") return;
+    setResKO((p) => ({ ...p, [id]: { ...p[id], [campo]: v } }));
+  };
+  const reiniciarKO = (id) => setResKO((p) => { const n = { ...p }; delete n[id]; return n; });
+  const posiciones = useMemo(() => (clasificacion ? new Map(clasificacion.map((f, i) => [f.equipo.nombre, i + 1])) : null), [clasificacion]);
+  const cuadro = useMemo(() => (sorteoKO && posiciones ? resolverCuadro(sorteoKO, resKO, posiciones) : null), [sorteoKO, resKO, posiciones]);
+  const simularRondaKO = (items) => {
+    // solo rellena cruces con ambos equipos ya definidos
+    setResKO((p) => {
+      const n = { ...p };
+      items.filter((t) => t.a && t.b).forEach((t) => { n[t.id] = t.id === "FINAL" ? generarFinalAleatoria() : generarResultadoAleatorio(); });
+      return n;
+    });
+  };
+  return { sorteoLiga, resLiga, sorteoKO, sortear, cambiarResultado, reiniciarPartido, simularJornada, intercambiar, clasificacion, clasificacionHasta, completa, jugados, sortearKO, resKO, cambiarKO, reiniciarKO, posiciones, cuadro, simularRondaKO };
 }
 
 // Calendario individual: para cada equipo, sus rivales ordenados por bombo.
@@ -1693,34 +1774,99 @@ function TablaClasificacion({ filas, colores, marca }) {
   );
 }
 
-function CuadroFinal({ ko, colores }) {
-  const seccion = { fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 11, letterSpacing: 2, margin: "14px 0 6px" };
-  const fila = { color: colores.texto, fontSize: 12, padding: "3px 0" };
-  const id = { fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "1px 5px", marginRight: 8 };
-  const pos = (n) => <span style={{ color: colores.textoSuave, fontSize: 10 }}>{n}º</span>;
+function FinalCard({ item, resultado, onChange, onReset, colores }) {
+  const definido = !!(item.a && item.b);
+  const est = estadoPartidoUnico(resultado);
+  const set = (campo, raw) => { const v = validar(raw); if (v !== "INVALIDO") onChange("FINAL", campo, v); };
+  const inputStyle = { width: 38, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
+  const penIgual = resultado?.penA !== undefined && resultado?.penB !== undefined && Number(resultado.penA) === Number(resultado.penB);
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: "12px 16px", marginTop: 8 }}>
+      <div style={{ color: colores.texto, fontSize: 14, marginBottom: 8 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "2px 6px", marginRight: 8 }}>FINAL</span>
+        {item.a ? `${item.a.nombre} (${item.a.pais})` : item.etiquetaA} vs {item.b ? `${item.b.nombre} (${item.b.pais})` : item.etiquetaB}
+        <span style={{ color: colores.textoSuave, fontSize: 11 }}> · partido único, sede neutral</span>
+      </div>
+      {!definido && <div style={{ color: colores.alerta, fontSize: 12, fontStyle: "italic" }}>Finalistas aún no definidos — resuelve las semifinales</div>}
+      {definido && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input type="number" min="0" placeholder="A" value={resultado?.gA ?? ""} onChange={(e) => set("gA", e.target.value)} style={inputStyle} />
+          <span style={{ color: colores.textoSuave }}>-</span>
+          <input type="number" min="0" placeholder="B" value={resultado?.gB ?? ""} onChange={(e) => set("gB", e.target.value)} style={inputStyle} />
+          {est.empate && (
+            <>
+              <span style={{ color: colores.alerta, fontSize: 11 }}>(prórroga)</span>
+              <input type="number" min="0" value={resultado?.etA ?? ""} onChange={(e) => set("etA", e.target.value)} style={inputStyle} />
+              <span style={{ color: colores.textoSuave }}>-</span>
+              <input type="number" min="0" value={resultado?.etB ?? ""} onChange={(e) => set("etB", e.target.value)} style={inputStyle} />
+            </>
+          )}
+          {est.etTied && (
+            <>
+              <span style={{ color: colores.alerta, fontSize: 11 }}>(pen.)</span>
+              <input type="number" min="0" value={resultado?.penA ?? ""} onChange={(e) => set("penA", e.target.value)} style={inputStyle} />
+              <span style={{ color: colores.textoSuave }}>-</span>
+              <input type="number" min="0" value={resultado?.penB ?? ""} onChange={(e) => set("penB", e.target.value)} style={inputStyle} />
+            </>
+          )}
+          {resultado && <button onClick={() => onReset("FINAL")} style={{ marginLeft: "auto", background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
+        </div>
+      )}
+      {penIgual && <div style={{ color: colores.alerta, fontSize: 11, marginTop: 4 }}>Los penaltis no pueden terminar en empate</div>}
+      {item.ganador && (
+        <div style={{ marginTop: 10, background: colores.inputBg, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: "10px 14px", color: colores.acento, fontSize: 16, fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>
+          🏆 CAMPEÓN: {item.ganador.nombre} ({item.ganador.pais})
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CuadroFinal({ liga, colores }) {
+  const { cuadro, resKO, posiciones } = liga;
+  if (!cuadro) return null;
+  const seccion = (titulo, items) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", margin: "16px 0 8px" }}>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 11, letterSpacing: 2 }}>{titulo}</div>
+      <BotonAleatorio onClick={() => liga.simularRondaKO(items)} label="Simular" colores={colores} />
+    </div>
+  );
+  const nombre = (t, lado) => {
+    const e = lado === "A" ? t.a : t.b;
+    if (!e) return lado === "A" ? t.etiquetaA : t.etiquetaB;
+    const p = posiciones.get(e.nombre);
+    return `${p ? p + "º " : ""}${e.nombre}`;
+  };
+  const cruce = (t, destinoGanador) => (
+    <TieCard key={t.id} nombreA={nombre(t, "A")} paisA={t.a?.pais} nombreB={nombre(t, "B")} paisB={t.b?.pais}
+      tie={{ id: t.id }} resultado={resKO[t.id]} onChange={liga.cambiarKO} onReset={liga.reiniciarKO}
+      definido={!!(t.a && t.b)} colores={colores}
+      ganador={t.ganador} perdedor={null} destinoGanador={destinoGanador(t)} />
+  );
   return (
     <div style={{ background: colores.tarjeta, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: 14, marginTop: 12 }}>
-      <div style={seccion}>PLAYOFF DE ELIMINATORIAS (9º-24º · el clasificado juega la vuelta en casa)</div>
-      {ko.po.map((t) => (
-        <div key={t.id} style={fila}>
-          <span style={id}>{t.id}</span>{pos(t.rivalPos)} {t.rival.nombre} vs {pos(t.seedPos)} {t.seed.nombre}
-          <span style={{ color: colores.textoSuave, fontSize: 11 }}> → el ganador visita a {pos(t.destinoPos)} {t.destino.nombre} en octavos</span>
-        </div>
-      ))}
-      <div style={seccion}>OCTAVOS DE FINAL (cabezas de serie 1º-8º, vuelta en casa)</div>
-      {ko.octavos.map((t) => (
-        <div key={t.id} style={fila}>
-          <span style={id}>{t.id}</span>Ganador {t.rivalRef} vs {pos(t.seedPos)} {t.seed.nombre}
-        </div>
-      ))}
-      <div style={seccion}>CUADRO FINAL (fijo desde octavos, sin más sorteos)</div>
-      {ko.cuartos.map((t) => (
-        <div key={t.id} style={fila}><span style={id}>{t.id}</span>Ganador {t.a} vs Ganador {t.b}</div>
-      ))}
-      {ko.semis.map((t) => (
-        <div key={t.id} style={fila}><span style={id}>{t.id}</span>Ganador {t.a} vs Ganador {t.b}</div>
-      ))}
-      <div style={fila}><span style={id}>FINAL</span>Ganador SF-1 vs Ganador SF-2</div>
+      <div style={{ color: colores.textoSuave, fontSize: 11, lineHeight: 1.6, maxWidth: 760 }}>
+        Eliminatorias a doble partido (el mejor clasificado de la fase liga juega la vuelta en casa) y final a
+        partido único. El cuadro es fijo desde octavos: no hay más sorteos (Art. 19).
+      </div>
+      {seccion("PLAYOFF DE ELIMINATORIAS (9º-24º)", cuadro.po)}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {cuadro.po.map((t) => cruce(t, (x) => `Visita a ${x.destinoPos}º ${x.destino.nombre} en octavos`))}
+      </div>
+      {seccion("OCTAVOS DE FINAL", cuadro.octavos)}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {cuadro.octavos.map((t) => cruce(t, (x) => `Pasa a cuartos de final`))}
+      </div>
+      {seccion("CUARTOS DE FINAL", cuadro.cuartos)}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {cuadro.cuartos.map((t) => cruce(t, () => "Pasa a semifinales"))}
+      </div>
+      {seccion("SEMIFINALES", cuadro.semis)}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {cuadro.semis.map((t) => cruce(t, () => "Pasa a la final"))}
+      </div>
+      {seccion("FINAL", [cuadro.final])}
+      <FinalCard item={cuadro.final} resultado={resKO["FINAL"]} onChange={liga.cambiarKO} onReset={liga.reiniciarKO} colores={colores} />
     </div>
   );
 }
@@ -1874,7 +2020,7 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion }) {
             <BotonSorteo onClick={liga.sortearKO} disabled={!liga.completa}
               label={sorteoKO ? "Volver a sortear las eliminatorias" : "Sortear eliminatorias"} colores={colores} />
             {!liga.completa && <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: -12 }}>Introduce (o simula) los {sorteo.partidos.length} resultados para poder sortear las eliminatorias.</div>}
-            {sorteoKO && <CuadroFinal ko={sorteoKO} colores={colores} />}
+            {sorteoKO && <CuadroFinal liga={liga} colores={colores} />}
           </div>
         </>
       )}
