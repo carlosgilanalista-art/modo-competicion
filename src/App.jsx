@@ -572,7 +572,7 @@ const CO_COEFS_INICIALES = {
   "Noah": 10.750, "Sion": 6.940, "Motherwell": 6.410, "Havnar Bóltfelag": 7.000,
   "Panevėžys": 6.500, "Tobol": 8.000, "Hibernian": 7.000, "Neftchi": 6.500,
   "Paksi": 5.437, "Panathinaikos": 29.250, "Železničar Pančevo": 5.150, "Braga": 63.750,
-  "Ajax": 58.250, "Polissya": 5.182, "Copenhagen": 54.375, "Gent": 39.000,
+  "Ajax": 58.250, "Polissya": 5.182, "Copenhagen": 54.375, "Gent": 39.000, "LNZ Cherkasy": 5.182,
   "SK Rapid": 29.750, "Hapoel Tel-Aviv": 5.500, "Ludogorets": 28.750, "CFR Cluj": 17.500,
   "Vaduz": 8.500, "Spartak Trnava": 10.500, "CSKA 1948": 4.212, "Koper": 4.893,
   "AEK Larnaca": 20.250, "Beitar": 5.500, "Partizan": 22.000, "DAC 1904": 6.000,
