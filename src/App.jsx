@@ -608,6 +608,236 @@ const CO_NUEVOS_PO_LIGA = [
 ];
 
 // ============================================================
+// FASE LIGA — DATOS Y MOTOR DE SORTEO
+// Según Art. 16 ("Draw system – league phase") de los reglamentos UEFA
+// de cada competición. Investigación completa con fuentes en
+// docs/investigacion-sorteo-fase-liga.md
+// ============================================================
+// El campeón vigente ocupa la posición 1 del Bombo 1 (solo en Champions).
+// PSG ganó la final 2025/26 al Arsenal (1-1, 4-3 en penaltis, Budapest).
+const CL_CAMPEON_VIGENTE = "Paris Saint-Germain";
+
+// Coeficientes UEFA 2026 (cierre de la temporada 2025/26) de los equipos que
+// entran directos a las fases de liga y no pasan por la fase previa.
+// Fuente: kassiesa.net (seeding 2026/27) y UEFA.com. Los marcados con
+// "estimado" no aparecían en las fuentes consultadas y son aproximaciones
+// razonadas — corrígelos cuando salga el listado oficial del sorteo.
+const FL_COEFS_DIRECTOS = {
+  // Champions League — 29 directos
+  "Arsenal": 119.000, "Manchester City": 125.500, "Manchester United": 76.500,
+  "Aston Villa": 83.000, "Liverpool": 130.000,
+  "Inter": 127.000, "Napoli": 63.000, "Roma": 97.750, "Como": 19.989,
+  "Barcelona": 113.250, "Real Madrid": 144.500, "Villarreal": 59.000,
+  "Atlético de Madrid": 104.750, "Real Betis": 74.500,
+  "Bayern de Múnich": 147.500, "Borussia Dortmund": 100.750, "RB Leipzig": 61.000, "VfB Stuttgart": 27.500,
+  "Paris Saint-Germain": 132.000, "Lens": 14.000 /* estimado */, "Lille": 68.750,
+  "PSV Eindhoven": 71.250, "Feyenoord": 71.000,
+  "Porto": 80.750, "Sporting CP": 84.000,
+  "Club Brugge": 75.250, "Slavia Praga": 44.000,
+  "Galatasaray": 51.000 /* estimado */, "Shakhtar Donetsk": 38.000 /* estimado */,
+  // Europa League — 13 directos
+  "Crystal Palace": 23.903, "Bournemouth": 23.903, "Sunderland": 23.903,
+  "Milan": 66.000, "Juventus": 72.250,
+  "Real Sociedad": 42.000 /* estimado */, "Celta de Vigo": 21.000 /* estimado */,
+  "TSG Hoffenheim": 15.000 /* estimado */, "Bayer Leverkusen": 105.000,
+  "Marsella": 54.000, "Rennes": 26.000 /* estimado */,
+  "AZ Alkmaar": 47.000 /* estimado */, "Torreense": 11.166 /* estimado */,
+};
+// Búsqueda de coeficiente unificada para las fases de liga: primero los
+// directos (valores finales 2026), después los mapas de la fase previa.
+const coefFaseLiga = (nombre) =>
+  FL_COEFS_DIRECTOS[nombre] ?? CO_COEFS_INICIALES[nombre] ?? EL_COEFS_INICIALES[nombre] ?? CL_COEFS_INICIALES[nombre];
+
+// Configuración por competición (Art. 16 de cada reglamento):
+// UCL/UEL: 4 bombos de 9, 2 rivales por bombo (1 casa + 1 fuera) → 8 partidos.
+// UECL: 6 bombos de 6, 1 rival por bombo; los bombos se emparejan (1-2, 3-4,
+// 5-6) y dentro de cada par se juega un partido en casa y otro fuera → 6 partidos.
+const FL_CFG_UCL = { bombos: 4, porBombo: 9, dobleRival: true, campeon: CL_CAMPEON_VIGENTE };
+const FL_CFG_UEL = { bombos: 4, porBombo: 9, dobleRival: true };
+const FL_CFG_UECL = { bombos: 6, porBombo: 6, dobleRival: false, paresBombos: true };
+
+function repartirBombos(plazas, cfg) {
+  const orden = [...plazas].sort((a, b) => b.coef - a.coef);
+  if (cfg.campeon) {
+    const i = orden.findIndex((e) => e.nombre === cfg.campeon);
+    if (i > 0) orden.unshift(orden.splice(i, 1)[0]);
+  }
+  const bombos = [];
+  for (let b = 0; b < cfg.bombos; b++) bombos.push(orden.slice(b * cfg.porBombo, (b + 1) * cfg.porBombo));
+  return bombos;
+}
+
+// Motor del sorteo de fase liga. Restricciones comunes: nunca contra un club
+// de la propia federación y máximo 2 rivales de una misma federación ajena.
+// Igual que el software oficial (AE Live/EY), comprueba viabilidad: si una
+// asignación aleatoria se bloquea, se reintenta el sorteo completo.
+function sortearFaseLiga(plazas, cfg) {
+  const total = cfg.bombos * cfg.porBombo;
+  if (plazas.length !== total) return { error: `Se necesitan ${total} equipos y hay ${plazas.length} — completa las rondas previas.` };
+  const sinCoef = plazas.filter((e) => e.coef === undefined || e.coef === null);
+  if (sinCoef.length) return { error: `Faltan coeficientes de: ${sinCoef.map((e) => e.nombre).join(", ")}` };
+  // Un mismo club no puede ocupar dos plazas. Pasa si se re-simulan rondas
+  // anteriores sin volver a sortear las intermedias: los clasificados quedan
+  // desincronizados entre competiciones.
+  const vistos = new Set();
+  const duplicados = plazas.filter((e) => (vistos.has(e.nombre) ? true : (vistos.add(e.nombre), false)));
+  if (duplicados.length) return { error: `Equipos duplicados (${[...new Set(duplicados.map((e) => e.nombre))].join(", ")}) — has re-simulado rondas anteriores; vuelve a sortear Ronda 3 y Playoff en las competiciones afectadas.` };
+  const bombos = repartirBombos(plazas, cfg);
+  const equipos = bombos.flat();
+  const bomboDe = equipos.map((_, i) => Math.floor(i / cfg.porBombo));
+  const miembros = bombos.map((b, p) => b.map((_, k) => p * cfg.porBombo + k));
+  const par = (p) => Math.floor(p / 2);
+
+  // Estado compartido de un intento de sorteo, con registro reversible para
+  // poder hacer backtracking dentro de cada bloque bombo-contra-bombo.
+  const nuevoEstado = () => {
+    const paisCount = equipos.map(() => ({}));
+    const emparejados = new Set();
+    const partidos = [];
+    const clave = (i, j) => (i < j ? `${i}-${j}` : `${j}-${i}`);
+    const compatible = (i, j) =>
+      i !== j && equipos[i].pais !== equipos[j].pais && !emparejados.has(clave(i, j)) &&
+      (paisCount[i][equipos[j].pais] || 0) < 2 && (paisCount[j][equipos[i].pais] || 0) < 2;
+    const registrar = (local, visitante) => {
+      partidos.push({ local: equipos[local], visitante: equipos[visitante], bomboLocal: bomboDe[local], bomboVisitante: bomboDe[visitante] });
+      emparejados.add(clave(local, visitante));
+      paisCount[local][equipos[visitante].pais] = (paisCount[local][equipos[visitante].pais] || 0) + 1;
+      paisCount[visitante][equipos[local].pais] = (paisCount[visitante][equipos[local].pais] || 0) + 1;
+    };
+    const quitar = (local, visitante) => {
+      partidos.pop();
+      emparejados.delete(clave(local, visitante));
+      paisCount[local][equipos[visitante].pais]--;
+      paisCount[visitante][equipos[local].pais]--;
+    };
+    return { paisCount, partidos, compatible, registrar, quitar };
+  };
+
+  const intentoDoble = () => {
+    // UCL/UEL: por cada par de bombos (p,q), dos "bloques": una biyección de
+    // locales p→q y otra q→p (y dentro del propio bombo, cada equipo recibe
+    // 1 partido en casa y 1 fuera). El backtracking es por bloque; si un
+    // bloque no tiene solución con lo ya sorteado, se reinicia el intento.
+    const st = nuevoEstado();
+    let pasos = 0;
+    const biyeccion = (filas, columnas) => {
+      const orden = shuffleCopy(filas);
+      const usados = new Set();
+      const bt = (k) => {
+        if (k === orden.length) return true;
+        if (++pasos > 200000) return false;
+        for (const j of shuffleCopy(columnas)) {
+          if (usados.has(j) || !st.compatible(orden[k], j)) continue;
+          st.registrar(orden[k], j);
+          usados.add(j);
+          if (bt(k + 1)) return true;
+          st.quitar(orden[k], j);
+          usados.delete(j);
+        }
+        return false;
+      };
+      return bt(0);
+    };
+    for (let p = 0; p < cfg.bombos; p++) {
+      // dentro del propio bombo: biyección local→visitante sin parejas repetidas
+      if (!biyeccion(miembros[p], miembros[p])) return null;
+      for (let q = p + 1; q < cfg.bombos; q++) {
+        if (!biyeccion(miembros[p], miembros[q])) return null;
+        if (!biyeccion(miembros[q], miembros[p])) return null;
+      }
+    }
+    return st.partidos;
+  };
+
+  const intentoConPares = () => {
+    // UECL: 1 rival por bombo; casa/fuera se equilibra dentro de cada par de
+    // bombos (1-2, 3-4, 5-6): un partido en casa y otro fuera por par.
+    const st = nuevoEstado();
+    const vH = equipos.map(() => Array(cfg.bombos / 2).fill(1));
+    const vA = equipos.map(() => Array(cfg.bombos / 2).fill(1));
+    let pasos = 0;
+    const aplicar = (i, j, iEsLocal) => {
+      const parI = par(bomboDe[j]), parJ = par(bomboDe[i]);
+      if (iEsLocal) { st.registrar(i, j); vH[i][parI]--; vA[j][parJ]--; }
+      else { st.registrar(j, i); vA[i][parI]--; vH[j][parJ]--; }
+    };
+    const revertir = (i, j, iEsLocal) => {
+      const parI = par(bomboDe[j]), parJ = par(bomboDe[i]);
+      if (iEsLocal) { st.quitar(i, j); vH[i][parI]++; vA[j][parJ]++; }
+      else { st.quitar(j, i); vA[i][parI]++; vH[j][parJ]++; }
+    };
+    const orientaciones = (i, j) => {
+      const parI = par(bomboDe[j]), parJ = par(bomboDe[i]);
+      const ops = [];
+      if (vH[i][parI] > 0 && vA[j][parJ] > 0) ops.push(true);
+      if (vA[i][parI] > 0 && vH[j][parJ] > 0) ops.push(false);
+      return shuffleCopy(ops);
+    };
+    // emparejamiento dentro del propio bombo (3 partidos entre los 6)
+    const matchingPropio = (lista) => {
+      if (!lista.length) return true;
+      if (++pasos > 200000) return false;
+      const i = lista[0];
+      for (const j of shuffleCopy(lista.slice(1))) {
+        if (!st.compatible(i, j)) continue;
+        for (const iEsLocal of orientaciones(i, j)) {
+          aplicar(i, j, iEsLocal);
+          if (matchingPropio(lista.filter((x) => x !== i && x !== j))) return true;
+          revertir(i, j, iEsLocal);
+        }
+      }
+      return false;
+    };
+    // emparejamiento entre dos bombos distintos (6 partidos, uno por equipo)
+    const matchingCruzado = (filas, columnas) => {
+      const orden = shuffleCopy(filas);
+      const usados = new Set();
+      const bt = (k) => {
+        if (k === orden.length) return true;
+        if (++pasos > 200000) return false;
+        for (const j of shuffleCopy(columnas)) {
+          if (usados.has(j) || !st.compatible(orden[k], j)) continue;
+          for (const iEsLocal of orientaciones(orden[k], j)) {
+            aplicar(orden[k], j, iEsLocal);
+            usados.add(j);
+            if (bt(k + 1)) return true;
+            usados.delete(j);
+            revertir(orden[k], j, iEsLocal);
+          }
+        }
+        return false;
+      };
+      return bt(0);
+    };
+    for (let p = 0; p < cfg.bombos; p++) {
+      if (!matchingPropio([...miembros[p]])) return null;
+      for (let q = p + 1; q < cfg.bombos; q++) {
+        if (!matchingCruzado(miembros[p], miembros[q])) return null;
+      }
+    }
+    return st.partidos;
+  };
+
+  for (let intento = 0; intento < 1000; intento++) {
+    const partidos = cfg.dobleRival ? intentoDoble() : intentoConPares();
+    if (partidos) return { bombos, partidos };
+  }
+  return { error: "No se encontró una combinación válida tras 1000 intentos — las restricciones de federación no dejan solución con estos 36 equipos." };
+}
+
+// Calendario individual: para cada equipo, sus rivales ordenados por bombo.
+function fixturesFaseLiga(sorteo) {
+  const map = new Map();
+  sorteo.bombos.flat().forEach((e) => map.set(e.nombre, { equipo: e, rivales: [] }));
+  sorteo.partidos.forEach((m) => {
+    map.get(m.local.nombre).rivales.push({ rival: m.visitante, casa: true, bombo: m.bomboVisitante });
+    map.get(m.visitante.nombre).rivales.push({ rival: m.local, casa: false, bombo: m.bomboLocal });
+  });
+  map.forEach((v) => v.rivales.sort((a, b) => a.bombo - b.bombo || (a.casa === b.casa ? 0 : a.casa ? -1 : 1)));
+  return map;
+}
+
+// ============================================================
 // LÓGICA — CHAMPIONS LEAGUE
 // ============================================================
 function useChampions() {
@@ -756,6 +986,19 @@ function useChampions() {
     return sorteoPO.cruces.map((t) => { const r = resolverGenerico(sorteoPO.cruces, resPO, t.id); return r ? { tie: t.id, perdedor: r.perdedor.nombre, pais: r.perdedor.pais, ruta: t.ruta } : null; }).filter(Boolean);
   }, [sorteoPO, resPO]);
 
+  // ---- Fase liga: 29 directos + 7 ganadores del playoff ----
+  const [sorteoLiga, setSorteoLiga] = useState(null);
+  const poolLiga = useMemo(() => {
+    if (!clasificados) return { plazas: [], error: "Resuelve el Playoff para conocer a los 7 clasificados que completan los 36 (29 entran directos)." };
+    const plazas = [
+      ...CL_DIRECTOS_FASE_LIGA.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: coefFaseLiga(e.nombre) })),
+      ...clasificados.map((c) => ({ nombre: c.nombre, pais: c.pais, coef: c.coef ?? coefFaseLiga(c.nombre) })),
+    ];
+    return { plazas, error: null };
+  }, [clasificados]);
+  useEffect(() => { setSorteoLiga(null); }, [clasificados]);
+  const sortearLiga = () => setSorteoLiga(sortearFaseLiga(poolLiga.plazas, FL_CFG_UCL));
+
   return {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
@@ -765,6 +1008,7 @@ function useChampions() {
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
     perdedoresR1, perdedoresR2, perdedoresR3, perdedoresPO,
+    sorteoLiga, poolLiga, sortearLiga,
   };
 }
 
@@ -932,6 +1176,26 @@ function useEuropa(cl) {
     return sorteoPO.cruces.map((t) => { const r = resolverGenerico(sorteoPO.cruces, resPO, t.id); return r ? { tie: t.id, perdedor: r.perdedor.nombre, pais: r.perdedor.pais, ruta: t.ruta } : null; }).filter(Boolean);
   }, [sorteoPO, resPO]);
 
+  // ---- Fase liga: 13 directos + 12 del playoff propio + 11 caídos de Champions
+  // (7 perdedores del Playoff + 4 perdedores de Ronda 3 Ruta Liga) ----
+  const [sorteoLiga, setSorteoLiga] = useState(null);
+  const poolLiga = useMemo(() => {
+    const directos = EL_DIRECTOS_FASE_LIGA.map((e) => ({ nombre: e.nombre, pais: e.pais, coef: coefFaseLiga(e.nombre) }));
+    const propios = (clasificados ?? []).map((c) => ({ nombre: c.nombre, pais: c.pais, coef: c.coef ?? coefFaseLiga(c.nombre) }));
+    const deCL = [...cl.perdedoresPO, ...cl.perdedoresR3.filter((p) => p.ruta === "Liga")]
+      .map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefFaseLiga(p.perdedor) }));
+    const plazas = [...directos, ...propios, ...deCL];
+    if (plazas.length !== 36) {
+      const faltan = [];
+      if (!clasificados) faltan.push("los 12 del playoff propio");
+      if (deCL.length < 11) faltan.push(`${11 - deCL.length} perdedores de Champions (Playoff y Ronda 3 Ruta Liga)`);
+      return { plazas, error: `${plazas.length}/36 — faltan ${faltan.join(" y ")}.` };
+    }
+    return { plazas, error: null };
+  }, [clasificados, cl.perdedoresPO, cl.perdedoresR3]);
+  useEffect(() => { setSorteoLiga(null); }, [clasificados, cl.perdedoresPO, cl.perdedoresR3]);
+  const sortearLiga = () => setSorteoLiga(sortearFaseLiga(poolLiga.plazas, FL_CFG_UEL));
+
   return {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
@@ -941,6 +1205,7 @@ function useEuropa(cl) {
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
     perdedoresR1, perdedoresR2, perdedoresR3, perdedoresPO,
+    sorteoLiga, poolLiga, sortearLiga,
   };
 }
 
@@ -1114,6 +1379,24 @@ function useConference(cl, el) {
   const rellenarR3 = () => { if (!sorteoR3 || sorteoR3.error) return; const n = {}; sorteoR3.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR3(n); };
   const rellenarPO = () => { if (!sorteoPO || sorteoPO.error) return; const n = {}; sorteoPO.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResPO(n); };
 
+  // ---- Fase liga: 24 ganadores del playoff propio + 12 perdedores del
+  // Playoff de Europa League (la Conference no tiene plazas directas) ----
+  const [sorteoLiga, setSorteoLiga] = useState(null);
+  const poolLiga = useMemo(() => {
+    const propios = (clasificados ?? []).map((c) => ({ nombre: c.nombre, pais: c.pais, coef: c.coef ?? coefFaseLiga(c.nombre) }));
+    const deEL = el.perdedoresPO.map((p) => ({ nombre: p.perdedor, pais: p.pais, coef: coefFaseLiga(p.perdedor) }));
+    const plazas = [...propios, ...deEL];
+    if (plazas.length !== 36) {
+      const faltan = [];
+      if (!clasificados) faltan.push("los 24 del playoff propio");
+      if (deEL.length < 12) faltan.push(`${12 - deEL.length} perdedores del Playoff de Europa League`);
+      return { plazas, error: `${plazas.length}/36 — faltan ${faltan.join(" y ")}.` };
+    }
+    return { plazas, error: null };
+  }, [clasificados, el.perdedoresPO]);
+  useEffect(() => { setSorteoLiga(null); }, [clasificados, el.perdedoresPO]);
+  const sortearLiga = () => setSorteoLiga(sortearFaseLiga(poolLiga.plazas, FL_CFG_UECL));
+
   return {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1,
@@ -1122,6 +1405,7 @@ function useConference(cl, el) {
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
+    sorteoLiga, poolLiga, sortearLiga,
   };
 }
 
@@ -1167,6 +1451,72 @@ function BotonSorteo({ onClick, disabled, label, colores }) {
       style={{ background: disabled ? "#2A2A2A" : colores.acento, color: disabled ? "#6A6A6A" : colores.fondo, border: "none", borderRadius: 8, padding: "12px 24px", fontSize: 15, fontWeight: 600, fontFamily: "'Oswald', sans-serif", cursor: disabled ? "not-allowed" : "pointer", marginBottom: 20 }}>
       🎲 {label}
     </button>
+  );
+}
+
+// ============================================================
+// PANEL DE FASE LIGA (compartido por las 3 competiciones)
+// ============================================================
+function FaseLigaPanel({ pool, sorteo, onSortear, cfg, colores, descripcion }) {
+  const listo = !pool.error;
+  const fixtures = sorteo && !sorteo.error ? fixturesFaseLiga(sorteo) : null;
+  return (
+    <div style={{ marginTop: 8, marginBottom: 24 }}>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 6 }}>
+        FASE DE LIGA — SORTEO
+      </div>
+      <div style={{ color: colores.textoSuave, fontSize: 12, lineHeight: 1.6, marginBottom: 12, maxWidth: 760 }}>{descripcion}</div>
+      {!listo && <div style={{ color: colores.alerta, fontSize: 12, marginBottom: 10 }}>{pool.error}</div>}
+      <BotonSorteo onClick={onSortear} disabled={!listo} label={sorteo && !sorteo.error ? "Volver a sortear la fase de liga" : "Sortear fase de liga"} colores={colores} />
+      {sorteo?.error && <div style={{ color: colores.alerta, fontSize: 13, marginBottom: 12 }}>{sorteo.error}</div>}
+
+      {sorteo && !sorteo.error && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${cfg.bombos > 4 ? 150 : 200}px, 1fr))`, gap: 10, marginBottom: 20 }}>
+            {sorteo.bombos.map((bombo, b) => (
+              <div key={b} style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: 10 }}>
+                <div style={{ color: colores.acento, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, letterSpacing: 1, marginBottom: 8 }}>
+                  BOMBO {b + 1}
+                </div>
+                {bombo.map((e) => (
+                  <div key={e.nombre} style={{ display: "flex", justifyContent: "space-between", gap: 6, padding: "2px 0" }}>
+                    <span style={{ color: colores.texto, fontSize: 12 }}>
+                      {e.nombre} <span style={{ color: colores.textoSuave, fontSize: 10 }}>({e.pais})</span>
+                      {cfg.campeon === e.nombre && <span style={{ color: colores.acento, fontSize: 10 }}> 👑</span>}
+                    </span>
+                    <span style={{ color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{e.coef.toFixed(3)}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 11, letterSpacing: 2, marginBottom: 8 }}>
+            CALENDARIO POR EQUIPO ({sorteo.partidos.length} partidos · 🏠 casa · ✈️ fuera · B# bombo del rival)
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 8 }}>
+            {sorteo.bombos.flat().map((e) => {
+              const f = fixtures.get(e.nombre);
+              return (
+                <div key={e.nombre} style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "8px 10px" }}>
+                  <div style={{ color: colores.texto, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+                    {e.nombre} <span style={{ color: colores.textoSuave, fontSize: 10, fontWeight: 400 }}>({e.pais})</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {f.rivales.map((r, k) => (
+                      <span key={k} style={{ background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, padding: "2px 6px", fontSize: 11, color: colores.texto, whiteSpace: "nowrap" }}>
+                        <span style={{ color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 9 }}>B{r.bombo + 1}</span>{" "}
+                        {r.casa ? "🏠" : "✈️"} {r.rival.nombre}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -1271,6 +1621,13 @@ function ChampionsView({ cl }) {
           </div>
         </div>
       )}
+
+      <FaseLigaPanel
+        pool={cl.poolLiga} sorteo={cl.sorteoLiga} onSortear={cl.sortearLiga} cfg={FL_CFG_UCL} colores={t}
+        descripcion={<>36 equipos en 4 bombos de 9 por coeficiente UEFA; el campeón vigente ({CL_CAMPEON_VIGENTE} 👑) ocupa la posición 1
+          del Bombo 1. Cada equipo juega 8 partidos contra 8 rivales distintos: 2 de cada bombo, uno en casa y otro fuera.
+          Prohibido enfrentarse a clubes de la propia federación y máximo 2 rivales de una misma federación ajena
+          (Art. 16 del reglamento UEFA). El calendario por jornadas lo fija la UEFA después, fuera del sorteo.</>} />
     </div>
   );
 }
@@ -1384,6 +1741,13 @@ function EuropaView({ el, cl }) {
           })()}
         </div>
       )}
+
+      <FaseLigaPanel
+        pool={el.poolLiga} sorteo={el.sorteoLiga} onSortear={el.sortearLiga} cfg={FL_CFG_UEL} colores={t}
+        descripcion={<>36 equipos en 4 bombos de 9 por coeficiente UEFA (sin privilegio de campeón: el bombo se decide solo por
+          coeficiente). Cada equipo juega 8 partidos contra 8 rivales distintos: 2 de cada bombo, uno en casa y otro fuera.
+          Prohibido enfrentarse a clubes de la propia federación y máximo 2 rivales de una misma federación ajena
+          (Art. 16 del reglamento UEFA). En la realidad este sorteo es 100 % digital y se revela bombo a bombo.</>} />
     </div>
   );
 }
@@ -1506,6 +1870,13 @@ function ConferenceView({ co, cl, el }) {
           })()}
         </div>
       )}
+
+      <FaseLigaPanel
+        pool={co.poolLiga} sorteo={co.sorteoLiga} onSortear={co.sortearLiga} cfg={FL_CFG_UECL} colores={t}
+        descripcion={<>36 equipos en 6 bombos de 6 por coeficiente UEFA. Cada equipo juega 6 partidos contra 6 rivales distintos:
+          1 de cada bombo. Para repartir casa/fuera los bombos van emparejados (1-2, 3-4 y 5-6): dentro de cada par se juega
+          un partido en casa y otro fuera, garantizando 3 en casa y 3 fuera. Prohibido enfrentarse a clubes de la propia
+          federación y máximo 2 rivales de una misma federación ajena (Art. 16 del reglamento UEFA).</>} />
     </div>
   );
 }
@@ -1605,8 +1976,9 @@ export default function App() {
 
               <div style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 12, color: "#666", fontSize: 11, lineHeight: 1.6 }}>
                 Los datos fluyen en directo entre pestañas — resuelve un resultado en Champions y verás el efecto
-                inmediatamente en Europa/Conference League sin guardar ni recargar nada. Próxima versión: sorteo
-                de fase de liga y rondas posteriores.
+                inmediatamente en Europa/Conference League sin guardar ni recargar nada. El sorteo de la fase de
+                liga sigue el Artículo 16 del reglamento UEFA de cada competición. Próxima versión: resultados de
+                la fase de liga y rondas posteriores.
               </div>
 
               <footer style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 16, color: "#5A6678", fontSize: 11, lineHeight: 1.6 }}>
