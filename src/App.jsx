@@ -632,6 +632,8 @@ function useChampions() {
     const set = new Set();
     CL_RONDA1.forEach((r) => { set.add(r.a); set.add(r.b); });
     CL_RONDA2.forEach((r) => { if (!r.aRef.startsWith("R1-")) set.add(r.aRef); if (!r.bRef.startsWith("R1-")) set.add(r.bRef); });
+    CL_NUEVOS_R3.forEach((e) => set.add(e.nombre));
+    CL_NUEVOS_PO.forEach((e) => set.add(e.nombre));
     return Array.from(set).sort((a, b) => (coefs[b] ?? -1) - (coefs[a] ?? -1));
   }, [coefs]);
 
@@ -791,6 +793,8 @@ function useEuropa(cl) {
     const set = new Set();
     EL_RONDA1.forEach((r) => { set.add(r.a); set.add(r.b); });
     EL_RONDA2.forEach((r) => { if (!r.aRef.startsWith("EL1-")) set.add(r.aRef); if (!r.bRef.startsWith("EL1-")) set.add(r.bRef); });
+    EL_NUEVOS_R3.forEach((e) => set.add(e.nombre));
+    EL_NUEVOS_PO.forEach((e) => set.add(e.nombre));
     return Array.from(set).sort((a, b) => (coefs[b] ?? -1) - (coefs[a] ?? -1));
   }, [coefs]);
 
