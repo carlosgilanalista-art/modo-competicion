@@ -331,7 +331,7 @@ export default function ArticuloFaseLiga() {
         <footer style={{ borderTop: `1px solid ${C.borde}`, paddingTop: 16, color: "#5A6678", fontSize: 11, lineHeight: 1.6 }}>
           <div>Modo Competición · Basado en los Artículos 16, 17 y 19 de los reglamentos oficiales de la UEFA.</div>
           <div style={{ marginTop: 6 }}>
-            Modo Competición es un proyecto de Carlos Gil, en construcción permanente. Si algo no funciona, te falta
+            Modo Competición es un proyecto de Carlos Gil (<a href="https://x.com/CarlosGilAnalis" target="_blank" rel="noopener noreferrer" style={{ color: C.azul }}>@CarlosGilAnalis</a>), en construcción permanente. Si algo no funciona, te falta
             una competición o simplemente tienes una idea mejor que la nuestra, <a href="mailto:feedback@modocompeticion.com" style={{ color: C.azul }}>escríbenos</a>.
           </div>
         </footer>
