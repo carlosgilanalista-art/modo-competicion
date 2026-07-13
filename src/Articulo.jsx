@@ -195,14 +195,15 @@ export default function Articulo() {
 
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 0", flexWrap: "wrap", gap: 10 }}>
           <a href="#/" style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3, textDecoration: "none" }}>MODO COMPETICIÓN</a>
-          <nav style={{ display: "flex", gap: 18 }}>
+          <nav style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             <a href="#/" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>← Inicio</a>
+            <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Parte 2: liga y eliminatorias</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
           </nav>
         </header>
 
         <div style={{ padding: "56px 0 44px" }}>
-          <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 10 }}>ENTIENDE EL FORMATO</div>
+          <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 10 }}>ENTIENDE EL FORMATO · PARTE 1</div>
           <h1 style={{ fontFamily: OSWALD, color: C.texto, fontSize: 38, lineHeight: 1.15, margin: "0 0 14px" }}>
             Las fases previas europeas, explicadas para todos los públicos
           </h1>
@@ -365,12 +366,15 @@ export default function Articulo() {
             <a href="#/simulador/el" style={{ color: C.naranja, border: `1px solid ${C.naranja}`, borderRadius: 8, padding: "10px 18px", fontSize: 14, fontWeight: 600, fontFamily: OSWALD, textDecoration: "none" }}>Simulador Europa League</a>
             <a href="#/simulador/co" style={{ color: C.azul, border: `1px solid ${C.azul}`, borderRadius: 8, padding: "10px 18px", fontSize: 14, fontWeight: 600, fontFamily: OSWALD, textDecoration: "none" }}>Simulador Conference League</a>
           </div>
+          <div style={{ marginTop: 16 }}>
+            <a href="#/formato-liga" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>Sigue leyendo — Parte 2: la fase de liga y las eliminatorias →</a>
+          </div>
         </Seccion>
 
         <footer style={{ borderTop: `1px solid ${C.borde}`, paddingTop: 16, color: "#5A6678", fontSize: 11, lineHeight: 1.6 }}>
           <div>Modo Competición · Los coeficientes y listados de acceso proceden de la documentación oficial de la UEFA.</div>
           <div style={{ marginTop: 6 }}>
-            Modo Competición es un proyecto de Carlos Gil, en construcción permanente. Si algo no funciona, te falta
+            Modo Competición es un proyecto de Carlos Gil (<a href="https://x.com/CarlosGilAnalis" target="_blank" rel="noopener noreferrer" style={{ color: C.azul }}>@CarlosGilAnalis</a>), en construcción permanente. Si algo no funciona, te falta
             una competición o simplemente tienes una idea mejor que la nuestra, <a href="mailto:feedback@modocompeticion.com" style={{ color: C.azul }}>escríbenos</a>.
           </div>
         </footer>

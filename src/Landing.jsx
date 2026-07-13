@@ -53,8 +53,9 @@ export default function Landing() {
         {/* Cabecera */}
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 0", flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3 }}>MODO COMPETICIÓN</div>
-          <nav style={{ display: "flex", gap: 18 }}>
-            <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Entiende el formato</a>
+          <nav style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+            <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Fases previas</a>
+            <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Liga y eliminatorias</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
           </nav>
         </header>
@@ -92,7 +93,7 @@ export default function Landing() {
         <Seccion etiqueta="02" titulo="¿Qué puedes hacer?">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
             <TarjetaAccion icono="📖" titulo="Entiende el formato" href="#/formato"
-              texto="Lee una explicación clara, con gráficos y ejemplos, de cómo se desarrolla cada competición." />
+              texto="Dos artículos con gráficos y ejemplos: las fases previas del verano, y la fase de liga y las eliminatorias que vienen después." />
             <TarjetaAccion icono="⚽" titulo="Simula las rondas"
               texto="Introduce los resultados que quieras o genera simulaciones automáticas partido a partido." />
             <TarjetaAccion icono="🎲" titulo="Sortea los cruces"
@@ -135,17 +136,21 @@ export default function Landing() {
         {/* Competiciones */}
         <Seccion etiqueta="05" titulo="Competiciones">
           <div style={{ background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 12, padding: 24, marginBottom: 12 }}>
-            <div style={{ fontFamily: OSWALD, color: C.texto, fontSize: 20, marginBottom: 6 }}>Fases previas UEFA 2026/27</div>
+            <div style={{ fontFamily: OSWALD, color: C.texto, fontSize: 20, marginBottom: 6 }}>Competiciones UEFA 2026/27: de la fase previa a la final</div>
             <div style={{ color: C.textoSuave, fontSize: 14, lineHeight: 1.6, marginBottom: 16, maxWidth: 720 }}>
-              Las rondas de clasificación de las tres competiciones europeas de clubes, conectadas entre sí:
-              simulador completo de Ronda 1 a Playoff y explicación del formato con gráficos y ejemplos.
+              Las tres competiciones europeas de clubes, conectadas entre sí: simulador completo desde la
+              Ronda 1 de julio hasta el campeón — fase previa, sorteo y jornadas de la fase de liga,
+              clasificación con los desempates oficiales y cuadro de eliminatorias.
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
               <BotonEnlace href="#/simulador/cl" label="Champions League" color={C.oro} />
               <BotonEnlace href="#/simulador/el" label="Europa League" color={C.naranja} />
               <BotonEnlace href="#/simulador/co" label="Conference League" color={C.azul} />
             </div>
-            <a href="#/formato" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Entiende el formato de las fases previas →</a>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <a href="#/formato" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Parte 1 — Las fases previas, explicadas →</a>
+              <a href="#/formato-liga" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Parte 2 — La fase de liga y las eliminatorias →</a>
+            </div>
           </div>
           <div style={{ border: `1px dashed ${C.borde}`, borderRadius: 12, padding: 20, color: C.textoSuave, fontSize: 13 }}>
             Próximamente: más competiciones, con sus simuladores y explicaciones.
@@ -155,7 +160,7 @@ export default function Landing() {
         <footer style={{ borderTop: `1px solid ${C.borde}`, paddingTop: 16, color: "#5A6678", fontSize: 11, lineHeight: 1.6 }}>
           <div>Modo Competición · Los coeficientes y listados de acceso proceden de la documentación oficial de la UEFA.</div>
           <div style={{ marginTop: 6 }}>
-            Modo Competición es un proyecto de Carlos Gil, en construcción permanente. Si algo no funciona, te falta
+            Modo Competición es un proyecto de Carlos Gil (<a href="https://x.com/CarlosGilAnalis" target="_blank" rel="noopener noreferrer" style={{ color: C.azul }}>@CarlosGilAnalis</a>), en construcción permanente. Si algo no funciona, te falta
             una competición o simplemente tienes una idea mejor que la nuestra, <a href="mailto:feedback@modocompeticion.com" style={{ color: C.azul }}>escríbenos</a>.
           </div>
         </footer>
