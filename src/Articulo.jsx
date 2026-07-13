@@ -195,14 +195,15 @@ export default function Articulo() {
 
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 0", flexWrap: "wrap", gap: 10 }}>
           <a href="#/" style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3, textDecoration: "none" }}>MODO COMPETICIÓN</a>
-          <nav style={{ display: "flex", gap: 18 }}>
+          <nav style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             <a href="#/" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>← Inicio</a>
+            <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Parte 2: liga y eliminatorias</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
           </nav>
         </header>
 
         <div style={{ padding: "56px 0 44px" }}>
-          <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 10 }}>ENTIENDE EL FORMATO</div>
+          <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 10 }}>ENTIENDE EL FORMATO · PARTE 1</div>
           <h1 style={{ fontFamily: OSWALD, color: C.texto, fontSize: 38, lineHeight: 1.15, margin: "0 0 14px" }}>
             Las fases previas europeas, explicadas para todos los públicos
           </h1>
@@ -364,6 +365,9 @@ export default function Articulo() {
             <a href="#/simulador/cl" style={{ color: C.oro, border: `1px solid ${C.oro}`, borderRadius: 8, padding: "10px 18px", fontSize: 14, fontWeight: 600, fontFamily: OSWALD, textDecoration: "none" }}>Simulador Champions League</a>
             <a href="#/simulador/el" style={{ color: C.naranja, border: `1px solid ${C.naranja}`, borderRadius: 8, padding: "10px 18px", fontSize: 14, fontWeight: 600, fontFamily: OSWALD, textDecoration: "none" }}>Simulador Europa League</a>
             <a href="#/simulador/co" style={{ color: C.azul, border: `1px solid ${C.azul}`, borderRadius: 8, padding: "10px 18px", fontSize: 14, fontWeight: 600, fontFamily: OSWALD, textDecoration: "none" }}>Simulador Conference League</a>
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <a href="#/formato-liga" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>Sigue leyendo — Parte 2: la fase de liga y las eliminatorias →</a>
           </div>
         </Seccion>
 
