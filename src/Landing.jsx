@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 // ============================================================
 // PÁGINA DE INICIO — presentación genérica del sitio
@@ -45,17 +45,20 @@ function BotonEnlace({ href, label, color }) {
   );
 }
 
-// Enlace del nav con un panel desplegable (hover en escritorio, clic en táctil).
+// Enlace del nav con un panel desplegable, por clic (funciona igual en escritorio y táctil).
 // Agrupa páginas relacionadas — p. ej. las competiciones de clubes o los simuladores —
-// bajo una sola entrada del menú.
+// bajo una sola entrada del menú. Se cierra al hacer clic fuera.
 function NavDropdown({ label, children }) {
   const [abierto, setAbierto] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!abierto) return;
+    const onClickFuera = (e) => { if (ref.current && !ref.current.contains(e.target)) setAbierto(false); };
+    document.addEventListener("click", onClickFuera);
+    return () => document.removeEventListener("click", onClickFuera);
+  }, [abierto]);
   return (
-    <div
-      style={{ position: "relative" }}
-      onMouseEnter={() => setAbierto(true)}
-      onMouseLeave={() => setAbierto(false)}
-    >
+    <div ref={ref} style={{ position: "relative" }}>
       <button
         onClick={() => setAbierto((v) => !v)}
         style={{ background: "none", border: "none", padding: 0, color: C.textoSuave, fontSize: 13, fontFamily: "'Inter', sans-serif", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
