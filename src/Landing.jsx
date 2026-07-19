@@ -56,6 +56,7 @@ export default function Landing() {
           <nav style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Fases previas</a>
             <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Liga y eliminatorias</a>
+            <a href="#/nations-league" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Nations League 2026/27</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
           </nav>
         </header>
@@ -94,6 +95,8 @@ export default function Landing() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
             <TarjetaAccion icono="📖" titulo="Entiende el formato" href="#/formato"
               texto="Dos artículos con gráficos y ejemplos: las fases previas del verano, y la fase de liga y las eliminatorias que vienen después." />
+            <TarjetaAccion icono="🏆" titulo="Nations League 2026/27" href="#/nations-league"
+              texto="Cómo el torneo de selecciones reparte plazas de repesca para la Eurocopa 2028, y qué se juega España." />
             <TarjetaAccion icono="⚽" titulo="Simula las rondas"
               texto="Introduce los resultados que quieras o genera simulaciones automáticas partido a partido." />
             <TarjetaAccion icono="🎲" titulo="Sortea los cruces"
@@ -151,6 +154,14 @@ export default function Landing() {
               <a href="#/formato" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Parte 1 — Las fases previas, explicadas →</a>
               <a href="#/formato-liga" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Parte 2 — La fase de liga y las eliminatorias →</a>
             </div>
+          </div>
+          <div style={{ background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 12, padding: 24, marginBottom: 12 }}>
+            <div style={{ fontFamily: OSWALD, color: C.texto, fontSize: 20, marginBottom: 6 }}>Selecciones: Nations League 2026/27</div>
+            <div style={{ color: C.textoSuave, fontSize: 14, lineHeight: 1.6, marginBottom: 16, maxWidth: 720 }}>
+              El mecanismo que conecta la Nations League con la repesca de la Eurocopa 2028: formato,
+              ascensos y descensos, y qué se juega cada selección.
+            </div>
+            <a href="#/nations-league" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Nations League 2026/27: el torneo que decide media Eurocopa 2028 →</a>
           </div>
           <div style={{ border: `1px dashed ${C.borde}`, borderRadius: 12, padding: 20, color: C.textoSuave, fontSize: 13 }}>
             Próximamente: más competiciones, con sus simuladores y explicaciones.
