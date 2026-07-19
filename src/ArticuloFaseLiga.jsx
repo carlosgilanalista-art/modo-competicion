@@ -151,6 +151,7 @@ export default function ArticuloFaseLiga() {
           <nav style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
             <a href="#/" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>← Inicio</a>
             <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Parte 1: fases previas</a>
+            <a href="#/nations-league" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Nations League 2026/27</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
           </nav>
         </header>

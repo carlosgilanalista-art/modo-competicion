@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import Landing from "./Landing.jsx";
 import Articulo from "./Articulo.jsx";
 import ArticuloFaseLiga from "./ArticuloFaseLiga.jsx";
+import ArticuloNationsLeague from "./ArticuloNationsLeague.jsx";
 
 // ============================================================
 // FUNCIONES COMPARTIDAS
@@ -2410,7 +2411,7 @@ export default function App() {
   const [tab, setTab] = useState("CL");
   const hash = useHashRoute();
 
-  const vista = hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : "inicio";
+  const vista = hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -2434,6 +2435,7 @@ export default function App() {
       {vista === "inicio" && <Landing />}
       {vista === "formato" && <Articulo />}
       {vista === "formato-liga" && <ArticuloFaseLiga />}
+      {vista === "nations-league" && <ArticuloNationsLeague />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
           <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
@@ -2444,6 +2446,7 @@ export default function App() {
                   <a href="#/" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>← Inicio</a>
                   <a href="#/formato" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: fases previas</a>
                   <a href="#/formato-liga" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: liga y eliminatorias</a>
+                  <a href="#/nations-league" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Nations League 2026/27</a>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 4 }}>
