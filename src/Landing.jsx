@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 // ============================================================
 // PÁGINA DE INICIO — presentación genérica del sitio
@@ -45,6 +45,44 @@ function BotonEnlace({ href, label, color }) {
   );
 }
 
+// Enlace del nav con un panel desplegable (hover en escritorio, clic en táctil).
+// Agrupa páginas relacionadas — p. ej. las competiciones de clubes o los simuladores —
+// bajo una sola entrada del menú.
+function NavDropdown({ label, children }) {
+  const [abierto, setAbierto] = useState(false);
+  return (
+    <div
+      style={{ position: "relative" }}
+      onMouseEnter={() => setAbierto(true)}
+      onMouseLeave={() => setAbierto(false)}
+    >
+      <button
+        onClick={() => setAbierto((v) => !v)}
+        style={{ background: "none", border: "none", padding: 0, color: C.textoSuave, fontSize: 13, fontFamily: "'Inter', sans-serif", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+      >
+        {label} <span style={{ fontSize: 10 }}>▾</span>
+      </button>
+      {abierto && (
+        <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 10, background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 10, padding: 10, minWidth: 220, zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NavDropdownEtiqueta({ children }) {
+  return <div style={{ fontFamily: MONO, color: C.azul, fontSize: 10, letterSpacing: 2, padding: "4px 10px 6px" }}>{children}</div>;
+}
+
+function NavDropdownEnlace({ href, children }) {
+  return (
+    <a href={href} style={{ display: "block", color: C.texto, fontSize: 13, textDecoration: "none", padding: "8px 10px", borderRadius: 6 }}>
+      {children}
+    </a>
+  );
+}
+
 export default function Landing() {
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
@@ -53,11 +91,20 @@ export default function Landing() {
         {/* Cabecera */}
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 0", flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3 }}>MODO COMPETICIÓN</div>
-          <nav style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-            <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Fases previas</a>
-            <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Liga y eliminatorias</a>
-            <a href="#/nations-league" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Nations League 2026/27</a>
-            <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
+          <nav style={{ display: "flex", gap: 22, flexWrap: "wrap", alignItems: "center" }}>
+            <NavDropdown label="Clubes">
+              <NavDropdownEtiqueta>COMPETICIONES UEFA 2026/27</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/formato">Fases previas</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/formato-liga">Liga y eliminatorias</NavDropdownEnlace>
+            </NavDropdown>
+            <NavDropdown label="Selecciones">
+              <NavDropdownEnlace href="#/nations-league">Nations League 2026/27</NavDropdownEnlace>
+            </NavDropdown>
+            <NavDropdown label="Simulador">
+              <NavDropdownEnlace href="#/simulador/cl">Champions League</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/simulador/el">Europa League</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/simulador/co">Conference League</NavDropdownEnlace>
+            </NavDropdown>
           </nav>
         </header>
 
