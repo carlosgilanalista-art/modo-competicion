@@ -2739,6 +2739,76 @@ function useNationsLeague() {
     return est.fase === "resuelto" ? (est.ganador === "A" ? finalistas.a : finalistas.b) : null;
   }, [finalistas, resFinal]);
 
+  // ---- Ranking general 2026/27 (Art. 19, confirmado por el Anexo C del reglamento UEFA) ----
+  // Provisional (fin de la fase de liga): dentro de cada liga, cada posición de grupo se
+  // ordena entre sí (nlRankMismaPosicion) — ganadores de las 4/2 grupos primero, luego los
+  // segundos, etc. — y las ligas se concatenan A(1-16) B(17-32) C(33-48) D(49-54).
+  const rankingProvisional = useMemo(() => {
+    const gruposDe = (liga) => grupos.filter((g) => g.liga === liga);
+    const bucket = (liga, i) => {
+      const gs = gruposDe(liga);
+      if (!gs.every((g) => clasificaciones.get(g.id).completa)) return null;
+      return nlRankMismaPosicion(gs.map((g) => clasificaciones.get(g.id).filas[i])).map((f) => f.equipo);
+    };
+    const orden = [];
+    for (const liga of ["A", "B", "C"]) for (let i = 0; i < 4; i++) { const b = bucket(liga, i); if (!b) return null; orden.push(...b); }
+    for (let i = 0; i < 3; i++) { const b = bucket("D", i); if (!b) return null; orden.push(...b); }
+    return orden;
+  }, [grupos, clasificaciones]);
+  // Final: se reordena con los resultados de la Final a Cuatro (1-8) y de los play-offs A/B
+  // (9-24) y B/C (25-40), tal como describe el Anexo C. Las posiciones 41-54 dependen del
+  // play-off C/D de marzo de 2028 —fuera del alcance de este simulador— y se quedan en su
+  // valor provisional, igual que haría el Art. 19 hasta que se dispute esa eliminatoria.
+  const rankingGeneral = useMemo(() => {
+    if (!rankingProvisional) return null;
+    const posInterino = new Map(rankingProvisional.map((t, i) => [t.nombre, i]));
+    const porInterino = (arr) => [...arr].sort((a, b) => posInterino.get(a.nombre) - posInterino.get(b.nombre));
+    const posLiga = (liga, i) => grupos.filter((g) => g.liga === liga).map((g) => clasificaciones.get(g.id).filas[i].equipo);
+
+    let banda1_8 = rankingProvisional.slice(0, 8);
+    if (qfCompleta && campeon && finalistas && terceristas && estadoPartidoUnico(res3P["3P"]).fase === "resuelto") {
+      const est3P = estadoPartidoUnico(res3P["3P"]);
+      const tercero = est3P.ganador === "A" ? terceristas.a : terceristas.b;
+      const cuarto = est3P.ganador === "A" ? terceristas.b : terceristas.a;
+      const subcampeon = finalistas.a.nombre === campeon.nombre ? finalistas.b : finalistas.a;
+      const derrotadosQF = porInterino(tiesQF.map((t) => { const g = nlResolverGanador(t, resQF[t.id]); return g.nombre === t.a.nombre ? t.b : t.a; }));
+      banda1_8 = [campeon, subcampeon, tercero, cuarto, ...derrotadosQF];
+    }
+
+    let banda9_24 = rankingProvisional.slice(8, 24);
+    if (tiesAB && tiesAB.every((t) => estadoEliminatoria(resAB[t.id]).fase === "resuelto")) {
+      const ganadoresAB = tiesAB.map((t) => nlResolverGanador(t, resAB[t.id]));
+      const perdedoresAB = tiesAB.map((t) => { const g = nlResolverGanador(t, resAB[t.id]); return g.nombre === t.a.nombre ? t.b : t.a; });
+      banda9_24 = [...porInterino([...ganadoresAB, ...posLiga("B", 0)]), ...porInterino([...perdedoresAB, ...posLiga("A", 3)])];
+    }
+
+    let banda25_40 = rankingProvisional.slice(24, 40);
+    if (tiesBC && tiesBC.every((t) => estadoEliminatoria(resBC[t.id]).fase === "resuelto")) {
+      const ganadoresBC = tiesBC.map((t) => nlResolverGanador(t, resBC[t.id]));
+      const perdedoresBC = tiesBC.map((t) => { const g = nlResolverGanador(t, resBC[t.id]); return g.nombre === t.a.nombre ? t.b : t.a; });
+      banda25_40 = [...porInterino([...ganadoresBC, ...posLiga("C", 0)]), ...porInterino([...perdedoresBC, ...posLiga("B", 3)])];
+    }
+
+    const banda41_54 = rankingProvisional.slice(40, 54);
+    return [...banda1_8, ...banda9_24, ...banda25_40, ...banda41_54];
+  }, [rankingProvisional, grupos, clasificaciones, campeon, finalistas, terceristas, res3P, qfCompleta, tiesQF, resQF, tiesAB, resAB, tiesBC, resBC]);
+
+  // ---- Repesca Euro 2028 ----
+  // 4 plazas para los ganadores de grupo mejor situados en la clasificación general 2026/27
+  // que no se hayan clasificado ya a la Euro 2028 por la vía tradicional. Esa clasificación
+  // tradicional no la calcula este simulador, así que el "ya clasificado" es un toggle manual.
+  const [yaClasificados, setYaClasificados] = useState({});
+  const toggleClasificado = (nombre) => setYaClasificados((p) => ({ ...p, [nombre]: !p[nombre] }));
+  const ganadoresDeGrupo = useMemo(
+    () => grupos.filter((g) => clasificaciones.get(g.id).completa).map((g) => clasificaciones.get(g.id).filas[0].equipo).sort((a, b) => a.rank - b.rank),
+    [grupos, clasificaciones]
+  );
+  const repesca = useMemo(() => {
+    if (!rankingGeneral) return null;
+    const nombresGanadores = new Set(ganadoresDeGrupo.map((e) => e.nombre));
+    return rankingGeneral.filter((t) => nombresGanadores.has(t.nombre) && !yaClasificados[t.nombre]).slice(0, 4);
+  }, [rankingGeneral, ganadoresDeGrupo, yaClasificados]);
+
   return {
     grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, clasificaciones, movimientos,
     playoffPools, sorteoAB, tiesAB, resAB, sortearAB, confirmarAB, cambiarAB, reiniciarAB, rellenarAB,
@@ -2746,6 +2816,7 @@ function useNationsLeague() {
     finalFourPool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta,
     semis, resSF, cambiarSF, reiniciarSF, sfCompleta, finalistas, terceristas,
     res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, campeon,
+    rankingProvisional, rankingGeneral, ganadoresDeGrupo, yaClasificados, toggleClasificado, repesca,
   };
 }
 
@@ -2881,6 +2952,7 @@ function NationsLeagueView({ nl }) {
         siguiente, así que queda fuera del alcance de este simulador.
       </div>
       <NLFinalFourSection nl={nl} colores={c} />
+      <NLRepescaSection nl={nl} colores={c} />
     </div>
   );
 }
@@ -3140,6 +3212,90 @@ function NLFinalFourSection({ nl, colores }) {
             ganador={campeon} notaExtra={campeon ? `🏆 Campeón de la UEFA Nations League 2026/27: ${campeon.nombre}` : null} />
         </>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// CLASIFICACIÓN GENERAL Y REPESCA EURO 2028 (Art. 19, Anexo C)
+// ============================================================
+function NLClasificacionGeneral({ ranking, colores }) {
+  const [abierta, setAbierta] = useState(false);
+  if (!ranking) {
+    return <div style={{ color: colores.textoSuave, fontSize: 12, fontStyle: "italic" }}>Pendiente — completa los 14 grupos para ver la clasificación general.</div>;
+  }
+  const th = { color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "2px 8px", textAlign: "left" };
+  const td = { color: colores.texto, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "2px 8px" };
+  const zona = (i) => (i < 8 ? "#D4A94C" : i < 24 ? "#E8734A" : i < 40 ? "#4A90D4" : "#5A6678");
+  return (
+    <div>
+      <button onClick={() => setAbierta(!abierta)}
+        style={{ background: "none", border: `1px solid ${colores.acento}`, color: colores.acento, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 10 }}>
+        {abierta ? "Ocultar clasificación general (1-54)" : "Ver clasificación general (1-54)"}
+      </button>
+      {abierta && (
+        <div style={{ overflowX: "auto", maxHeight: 480, overflowY: "auto", border: `1px solid ${colores.borde}`, borderRadius: 8 }}>
+          <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 420 }}>
+            <thead><tr><th style={th}>#</th><th style={th}>Selección</th></tr></thead>
+            <tbody>
+              {ranking.map((t, i) => (
+                <tr key={t.nombre} style={{ borderLeft: `3px solid ${zona(i)}` }}>
+                  <td style={{ ...td, color: zona(i), fontWeight: 600 }}>{i + 1}</td>
+                  <td style={{ ...td, fontFamily: "'Inter', sans-serif" }}>{t.nombre}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div style={{ color: colores.textoSuave, fontSize: 10, marginTop: 6, maxWidth: 640 }}>
+        1-8 Final a Cuatro · 9-24 reordenado por el play-off A/B · 25-40 reordenado por el play-off B/C · 41-54
+        depende del play-off C/D de marzo de 2028 (fuera de alcance) y se muestra en su valor provisional.
+      </div>
+    </div>
+  );
+}
+function NLRepescaSection({ nl, colores }) {
+  const { ganadoresDeGrupo, yaClasificados, toggleClasificado, rankingGeneral, repesca, rankingProvisional } = nl;
+  return (
+    <div style={{ marginTop: 26 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${colores.acento}`, paddingLeft: 12, marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 20 }}>Clasificación general y repesca — Eurocopa 2028</span>
+      </div>
+      <div style={{ color: colores.textoSuave, fontSize: 12, lineHeight: 1.6, marginBottom: 12, maxWidth: 720 }}>
+        Marca qué ganadores de grupo ya tienen billete para la Euro 2028 por la vía normal —algo que este
+        simulador no calcula—. Los 4 primeros sin marcar, según la clasificación general de esta edición, se
+        llevan la repesca de marzo de 2028.
+      </div>
+      {ganadoresDeGrupo.length === 0 ? (
+        <div style={{ color: colores.textoSuave, fontSize: 12, fontStyle: "italic", marginBottom: 12 }}>Pendiente — aún no hay ningún grupo completado.</div>
+      ) : (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+          {ganadoresDeGrupo.map((e) => (
+            <label key={e.nombre} style={{ display: "flex", alignItems: "center", gap: 6, background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 6, padding: "5px 10px", fontSize: 12, color: colores.texto, cursor: "pointer" }}>
+              <input type="checkbox" checked={!!yaClasificados[e.nombre]} onChange={() => toggleClasificado(e.nombre)} />
+              {e.nombre}
+            </label>
+          ))}
+        </div>
+      )}
+      {!rankingGeneral && <div style={{ color: colores.textoSuave, fontSize: 12, fontStyle: "italic", marginBottom: 12 }}>Completa los 14 grupos para calcular la repesca.</div>}
+      {rankingGeneral && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10, marginBottom: 16 }}>
+          {repesca.map((t, i) => (
+            <div key={t.nombre} style={{ background: colores.tarjeta, border: `1px solid ${colores.acento}`, borderRadius: 10, padding: "12px 14px" }}>
+              <div style={{ color: colores.acento, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>REPESCA {i + 1}</div>
+              <div style={{ color: colores.texto, fontSize: 15, fontFamily: "'Oswald', sans-serif" }}>{t.nombre}</div>
+            </div>
+          ))}
+          {repesca.length < 4 && (
+            <div style={{ color: colores.textoSuave, fontSize: 12, fontStyle: "italic", alignSelf: "center" }}>
+              {4 - repesca.length} plaza(s) más pendiente(s) — desmarca algún ganador de grupo ya clasificado, o resuelve más resultados.
+            </div>
+          )}
+        </div>
+      )}
+      <NLClasificacionGeneral ranking={rankingGeneral ?? rankingProvisional} colores={colores} />
     </div>
   );
 }
