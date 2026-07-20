@@ -2540,6 +2540,52 @@ function nlRankMismaPosicion(filas) {
   return [...filas].sort((a, b) => b.pts - a.pts || nlGlobalCmp(a, b));
 }
 
+// ---- Play-offs de ascenso/descenso (A/B, B/C) y cuartos de la Final a Cuatro ----
+// Sorteo por backtracking con reintento aleatorio y red de seguridad si no hay ninguna
+// combinación libre de restricciones (mismo enfoque, generalizado, que sortear() usa
+// para los cruces de clubes por bombos con restricción de federación). En los play-offs
+// A/B y B/C no hay ninguna restricción real (cada selección es única y las dos rutas
+// nunca comparten grupo de origen), así que el sorteo es una biyección libre. En los
+// cuartos de la Final a Cuatro sí hay una restricción real: un ganador de grupo no puede
+// cruzarse con el 2º de su propio grupo, con quien ya jugó dos veces en la fase de liga.
+function nlSortearEmparejamiento(alta, baja, bloqueado) {
+  const bajaMezclada = shuffleCopy(baja);
+  function backtrack(i, usados, asignacion) {
+    if (i === alta.length) return asignacion;
+    const candidatos = bajaMezclada.map((_, idx) => idx).filter((idx) => !usados.has(idx) && !bloqueado(alta[i], bajaMezclada[idx]));
+    for (const idx of shuffleCopy(candidatos)) {
+      usados.add(idx);
+      asignacion.push({ cabeza: alta[i], rival: bajaMezclada[idx] });
+      const res = backtrack(i + 1, usados, asignacion);
+      if (res) return res;
+      usados.delete(idx);
+      asignacion.pop();
+    }
+    return null;
+  }
+  const resultado = backtrack(0, new Set(), []);
+  if (resultado) return { cruces: resultado, bloqueo: false };
+  const libres = [...bajaMezclada];
+  const cruces = alta.map((cabeza) => ({ cabeza, rival: libres.shift() }));
+  return { cruces, bloqueo: true };
+}
+// Play-off de ida y vuelta: el peor clasificado de la general 2024/25 juega la ida en
+// casa y el mejor decide la vuelta en casa — regla explícita del reglamento, aplicada
+// igual venga el cruce de un sorteo automático o de una edición manual.
+function nlTiePlayoff(cabeza, rival) {
+  const [peor, mejor] = cabeza.rank > rival.rank ? [cabeza, rival] : [rival, cabeza];
+  return { id: `${cabeza.nombre}|${rival.nombre}`, a: peor, b: mejor };
+}
+// Cuartos de la Final a Cuatro: el ganador de grupo (cabeza de serie) decide siempre la
+// vuelta en casa, sea cual sea el rival que le toque en el sorteo.
+function nlTieCuartos(cabeza, rival) {
+  return { id: `QF-${cabeza.nombre}`, a: rival, b: cabeza };
+}
+function nlResolverGanador(tie, resultado) {
+  const est = estadoEliminatoria(resultado);
+  return est.fase === "resuelto" ? (est.ganador === "A" ? tie.a : tie.b) : null;
+}
+
 // ============================================================
 // LÓGICA — NATIONS LEAGUE (independiente: no encadena con clubes)
 // ============================================================
@@ -2594,7 +2640,106 @@ function useNationsLeague() {
     };
   }, [grupos, clasificaciones]);
 
-  return { grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, clasificaciones, movimientos };
+  // ---- Pools de play-offs (A/B, B/C) y de la Final a Cuatro de Liga A ----
+  // El play-off C/D real de la UEFA cae en marzo de 2028 (temporada siguiente, fuera del
+  // alcance de este simulador de 2026/27), así que no se resuelve aquí.
+  const playoffPools = useMemo(() => {
+    const gruposDe = (liga) => grupos.filter((g) => g.liga === liga);
+    const ligaCompleta = (liga) => gruposDe(liga).every((g) => clasificaciones.get(g.id).completa);
+    const fila = (liga, i) => gruposDe(liga).map((g) => { const f = clasificaciones.get(g.id).filas[i]; return { nombre: f.equipo.nombre, rank: f.equipo.rank, grupo: g.id }; });
+    return {
+      AB: { listo: ligaCompleta("A") && ligaCompleta("B"), alta: fila("A", 2), baja: fila("B", 1) }, // 3º de A vs 2º de B
+      BC: { listo: ligaCompleta("B") && ligaCompleta("C"), alta: fila("B", 2), baja: fila("C", 1) }, // 3º de B vs 2º de C
+    };
+  }, [grupos, clasificaciones]);
+  const finalFourPool = useMemo(() => {
+    const gruposA = grupos.filter((g) => g.liga === "A");
+    const listo = gruposA.every((g) => clasificaciones.get(g.id).completa);
+    if (!listo) return { listo: false, seeds: [], runnersUp: [] };
+    const fila = (i) => gruposA.map((g) => { const f = clasificaciones.get(g.id).filas[i]; return { nombre: f.equipo.nombre, rank: f.equipo.rank, grupo: g.id }; });
+    return { listo: true, seeds: fila(0), runnersUp: fila(1) };
+  }, [grupos, clasificaciones]);
+  const firmaPool = (p) => (p.listo ? p.alta.map((e) => e.nombre).join(",") + "|" + p.baja.map((e) => e.nombre).join(",") : null);
+  const firmaAB = firmaPool(playoffPools.AB), firmaBC = firmaPool(playoffPools.BC);
+  const firmaFF = finalFourPool.listo ? finalFourPool.seeds.map((e) => e.nombre).join(",") + "|" + finalFourPool.runnersUp.map((e) => e.nombre).join(",") : null;
+
+  // ---- Play-off A/B ----
+  const [sorteoAB, setSorteoAB] = useState(null);
+  const [resAB, setResAB] = useState({});
+  useEffect(() => { setSorteoAB(null); setResAB({}); }, [firmaAB]);
+  const sortearAB = () => { setSorteoAB(nlSortearEmparejamiento(playoffPools.AB.alta, playoffPools.AB.baja, () => false)); setResAB({}); };
+  const confirmarAB = (cruces) => { setSorteoAB({ cruces, bloqueo: false }); setResAB({}); };
+  const cambiarAB = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResAB((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
+  const reiniciarAB = (id) => setResAB((p) => { const n = { ...p }; delete n[id]; return n; });
+  const tiesAB = useMemo(() => (sorteoAB && !sorteoAB.error ? sorteoAB.cruces.map((c) => nlTiePlayoff(c.cabeza, c.rival)) : null), [sorteoAB]);
+  const rellenarAB = () => { if (!tiesAB) return; const n = {}; tiesAB.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResAB(n); };
+
+  // ---- Play-off B/C ----
+  const [sorteoBC, setSorteoBC] = useState(null);
+  const [resBC, setResBC] = useState({});
+  useEffect(() => { setSorteoBC(null); setResBC({}); }, [firmaBC]);
+  const sortearBC = () => { setSorteoBC(nlSortearEmparejamiento(playoffPools.BC.alta, playoffPools.BC.baja, () => false)); setResBC({}); };
+  const confirmarBC = (cruces) => { setSorteoBC({ cruces, bloqueo: false }); setResBC({}); };
+  const cambiarBC = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResBC((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
+  const reiniciarBC = (id) => setResBC((p) => { const n = { ...p }; delete n[id]; return n; });
+  const tiesBC = useMemo(() => (sorteoBC && !sorteoBC.error ? sorteoBC.cruces.map((c) => nlTiePlayoff(c.cabeza, c.rival)) : null), [sorteoBC]);
+  const rellenarBC = () => { if (!tiesBC) return; const n = {}; tiesBC.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResBC(n); };
+
+  // ---- Cuartos, semifinales, 3er puesto y final de la Final a Cuatro (Liga A) ----
+  const [sorteoQF, setSorteoQF] = useState(null);
+  const [resQF, setResQF] = useState({});
+  const [resSF, setResSF] = useState({});
+  const [res3P, setRes3P] = useState({});
+  const [resFinal, setResFinal] = useState({});
+  const limpiarFF = () => { setResQF({}); setResSF({}); setRes3P({}); setResFinal({}); };
+  useEffect(() => { setSorteoQF(null); limpiarFF();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaFF]);
+  const bloqueadoQF = (seed, runnerUp) => seed.grupo === runnerUp.grupo;
+  const sortearQF = () => { setSorteoQF(nlSortearEmparejamiento(finalFourPool.seeds, finalFourPool.runnersUp, bloqueadoQF)); limpiarFF(); };
+  const confirmarQF = (cruces) => { setSorteoQF({ cruces, bloqueo: false }); limpiarFF(); };
+  const cambiarQF = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResQF((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
+  const reiniciarQF = (id) => setResQF((p) => { const n = { ...p }; delete n[id]; return n; });
+  const tiesQF = useMemo(() => (sorteoQF && !sorteoQF.error ? sorteoQF.cruces.map((c) => nlTieCuartos(c.cabeza, c.rival)) : null), [sorteoQF]);
+  const rellenarQF = () => { if (!tiesQF) return; const n = {}; tiesQF.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResQF(n); };
+  const qfCompleta = useMemo(() => !!(tiesQF && tiesQF.every((t) => estadoEliminatoria(resQF[t.id]).fase === "resuelto")), [tiesQF, resQF]);
+  // Bracket fijo (QF1+QF2 → SF1, QF3+QF4 → SF2): la UEFA no ha publicado el criterio de
+  // emparejamiento de semifinales para esta edición, así que se fija por orden del sorteo.
+  const semis = useMemo(() => {
+    if (!qfCompleta) return null;
+    const g = tiesQF.map((t) => nlResolverGanador(t, resQF[t.id]));
+    return [{ id: "SF-1", a: g[0], b: g[1] }, { id: "SF-2", a: g[2], b: g[3] }];
+  }, [qfCompleta, tiesQF, resQF]);
+  const cambiarSF = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResSF((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
+  const reiniciarSF = (id) => setResSF((p) => { const n = { ...p }; delete n[id]; return n; });
+  const sfCompleta = !!(semis && semis.every((t) => estadoPartidoUnico(resSF[t.id]).fase === "resuelto"));
+  const finalistas = useMemo(() => {
+    if (!sfCompleta) return null;
+    return { a: nlResolverGanador({ id: "SF-1", a: semis[0].a, b: semis[0].b }, resSF["SF-1"]), b: nlResolverGanador({ id: "SF-2", a: semis[1].a, b: semis[1].b }, resSF["SF-2"]) };
+  }, [sfCompleta, semis, resSF]);
+  const terceristas = useMemo(() => {
+    if (!sfCompleta) return null;
+    const perdedor = (t, r) => { const est = estadoPartidoUnico(r); return est.ganador === "A" ? t.b : t.a; };
+    return { a: perdedor(semis[0], resSF["SF-1"]), b: perdedor(semis[1], resSF["SF-2"]) };
+  }, [sfCompleta, semis, resSF]);
+  const cambiar3P = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setRes3P((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
+  const reiniciar3P = (id) => setRes3P((p) => { const n = { ...p }; delete n[id]; return n; });
+  const cambiarFinal = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResFinal((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
+  const reiniciarFinal = (id) => setResFinal((p) => { const n = { ...p }; delete n[id]; return n; });
+  const campeon = useMemo(() => {
+    if (!finalistas) return null;
+    const est = estadoPartidoUnico(resFinal["FINAL"]);
+    return est.fase === "resuelto" ? (est.ganador === "A" ? finalistas.a : finalistas.b) : null;
+  }, [finalistas, resFinal]);
+
+  return {
+    grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, clasificaciones, movimientos,
+    playoffPools, sorteoAB, tiesAB, resAB, sortearAB, confirmarAB, cambiarAB, reiniciarAB, rellenarAB,
+    sorteoBC, tiesBC, resBC, sortearBC, confirmarBC, cambiarBC, reiniciarBC, rellenarBC,
+    finalFourPool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta,
+    semis, resSF, cambiarSF, reiniciarSF, sfCompleta, finalistas, terceristas,
+    res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, campeon,
+  };
 }
 
 // ============================================================
@@ -2716,6 +2861,19 @@ function NationsLeagueView({ nl }) {
         );
       })}
       <NLResumenMovimientos mov={nl.movimientos} colores={c} />
+      <NLPlayoffSection titulo="Play-off A/B" sub="3º de Liga A vs 2º de Liga B — el ganador juega en Liga A, el perdedor en Liga B"
+        pool={nl.playoffPools.AB} sorteo={nl.sorteoAB} ties={nl.tiesAB} res={nl.resAB}
+        sortear={nl.sortearAB} confirmar={nl.confirmarAB} cambiar={nl.cambiarAB} reiniciar={nl.reiniciarAB} rellenar={nl.rellenarAB}
+        colores={c} destinoGanador="Se queda/asciende a Liga A" destinoPerdedor="Se queda/desciende a Liga B" />
+      <NLPlayoffSection titulo="Play-off B/C" sub="3º de Liga B vs 2º de Liga C — el ganador juega en Liga B, el perdedor en Liga C"
+        pool={nl.playoffPools.BC} sorteo={nl.sorteoBC} ties={nl.tiesBC} res={nl.resBC}
+        sortear={nl.sortearBC} confirmar={nl.confirmarBC} cambiar={nl.cambiarBC} reiniciar={nl.reiniciarBC} rellenar={nl.rellenarBC}
+        colores={c} destinoGanador="Se queda/asciende a Liga B" destinoPerdedor="Se queda/desciende a Liga C" />
+      <div style={{ color: c.textoSuave, fontSize: 11, marginTop: 8, maxWidth: 720 }}>
+        El play-off de ascenso/descenso C/D de esta edición se disputa en marzo de 2028, ya en la temporada
+        siguiente, así que queda fuera del alcance de este simulador.
+      </div>
+      <NLFinalFourSection nl={nl} colores={c} />
     </div>
   );
 }
@@ -2756,6 +2914,225 @@ function NLResumenMovimientos({ mov, colores }) {
           {linea("D ← 2 peores 4.º de C", mov.descensos.D)}
         </>)}
       </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PLAY-OFFS Y FINAL A CUATRO — sorteo, edición manual y edición de un sorteo
+// ya hecho, con las mismas tres opciones que el simulador de clubes.
+// ============================================================
+function NLManualEditor({ alta, baja, crucesIniciales, bloqueado, onChange, colores }) {
+  const [asignacion, setAsignacion] = useState(() =>
+    alta.map((cab) => {
+      if (!crucesIniciales) return null;
+      const c = crucesIniciales.find((x) => x.cabeza.nombre === cab.nombre);
+      if (!c) return null;
+      const idx = baja.findIndex((r) => r.nombre === c.rival.nombre);
+      return idx === -1 ? null : idx;
+    })
+  );
+  useEffect(() => {
+    const completo = alta.length > 0 && asignacion.every((x) => x !== null);
+    onChange(completo ? alta.map((cab, i) => ({ cabeza: cab, rival: baja[asignacion[i]] })) : null, completo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asignacion]);
+  const usados = new Set(asignacion.filter((x) => x !== null));
+  const setRival = (i, raw) => setAsignacion((prev) => { const n = [...prev]; n[i] = raw === "" ? null : Number(raw); return n; });
+  const selectStyle = { background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.texto, padding: "4px 6px", fontSize: 12, maxWidth: 280 };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {alta.map((cab, i) => {
+        const actual = asignacion[i];
+        const opciones = baja.map((r, idx) => ({ r, idx })).filter(({ r, idx }) => (!usados.has(idx) || idx === actual) && !bloqueado(cab, r));
+        return (
+          <div key={cab.nombre} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ color: colores.texto, fontSize: 12, width: 190 }}>{cab.nombre} <span style={{ color: colores.textoSuave, fontSize: 10 }}>({cab.grupo})</span></span>
+            <span style={{ color: colores.textoSuave, fontSize: 11 }}>vs</span>
+            <select value={actual ?? ""} onChange={(e) => setRival(i, e.target.value)} style={selectStyle}>
+              <option value="">— elegir rival —</option>
+              {opciones.map(({ r, idx }) => <option key={r.nombre} value={idx}>{r.nombre} ({r.grupo})</option>)}
+            </select>
+            {actual === null && opciones.length === 0 && <span style={{ color: colores.alerta, fontSize: 11 }}>Sin rivales libres — cambia otra fila primero</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+function NLControlesEmparejamiento({ sorteo, listo, onAuto, onConfirmarManual, alta, baja, bloqueado, colores, labelAuto }) {
+  const [modo, setModo] = useState(null); // null | "manual" | "editar"
+  const [pendiente, setPendiente] = useState({ cruces: null, completo: false });
+  useEffect(() => { setModo(null); }, [sorteo?.cruces]);
+  if (modo === "manual" || modo === "editar") {
+    const inicial = modo === "editar" && sorteo && !sorteo.error ? sorteo.cruces : undefined;
+    return (
+      <div style={{ background: colores.tarjeta, border: `1px dashed ${colores.acento}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
+        <NLManualEditor alta={alta} baja={baja} crucesIniciales={inicial} bloqueado={bloqueado} colores={colores}
+          onChange={(cruces, completo) => setPendiente({ cruces, completo })} />
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <button disabled={!pendiente.completo} onClick={() => { onConfirmarManual(pendiente.cruces); setModo(null); }}
+            style={{ background: pendiente.completo ? colores.acento : "#2A2A2A", color: pendiente.completo ? colores.fondo : "#6A6A6A", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: pendiente.completo ? "pointer" : "not-allowed" }}>
+            ✓ {modo === "editar" ? "Guardar cambios" : "Confirmar emparejamiento"}
+          </button>
+          <button onClick={() => setModo(null)} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}>Cancelar</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+      <BotonSorteo onClick={onAuto} disabled={!listo} label={labelAuto} colores={colores} />
+      <button onClick={() => setModo("manual")} disabled={!listo}
+        style={{ background: "none", border: `1px solid ${colores.acento}`, color: listo ? colores.acento : "#6A6A6A", borderRadius: 8, padding: "10px 16px", fontSize: 13, fontWeight: 600, cursor: listo ? "pointer" : "not-allowed" }}>
+        ✍️ Sorteo a mano
+      </button>
+      {sorteo && !sorteo.error && (
+        <button onClick={() => setModo("editar")} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 8, padding: "10px 16px", fontSize: 13, cursor: "pointer" }}>
+          ✏️ Editar sorteo
+        </button>
+      )}
+    </div>
+  );
+}
+function NLTieCard({ tie, resultado, onChange, onReset, colores, ganador, perdedor, destinoGanador, destinoPerdedor, notaSede }) {
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "12px 16px" }}>
+      <div style={{ color: colores.texto, fontSize: 14, marginBottom: 4 }}>
+        {tie.a.nombre} <span style={{ color: colores.textoSuave, fontSize: 11 }}>({tie.a.grupo})</span>
+        {" vs "}
+        {tie.b.nombre} <span style={{ color: colores.textoSuave, fontSize: 11 }}>({tie.b.grupo})</span>
+      </div>
+      {notaSede && <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 6 }}>{notaSede}</div>}
+      <TieResultInputs tie={tie} resultado={resultado} onChange={onChange} onReset={onReset} colores={colores} />
+      {ganador && (
+        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ color: colores.acento, fontSize: 12 }}>✓ {destinoGanador}: <strong>{ganador.nombre}</strong></div>
+          {perdedor && destinoPerdedor && <div style={{ color: colores.textoSuave, fontSize: 12 }}>↳ {destinoPerdedor}: {perdedor.nombre}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+function NLPlayoffSection({ titulo, sub, pool, sorteo, ties, res, sortear, confirmar, cambiar, reiniciar, rellenar, colores, destinoGanador, destinoPerdedor }) {
+  return (
+    <div style={{ marginTop: 22 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${colores.acento}`, paddingLeft: 12, marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 20 }}>{titulo}</span>
+        <span style={{ color: colores.textoSuave, fontSize: 12 }}>{sub}</span>
+      </div>
+      {!pool.listo && <div style={{ color: colores.textoSuave, fontSize: 12, fontStyle: "italic", marginBottom: 10 }}>Pendiente — completa todos los grupos de ambas ligas para poder emparejar.</div>}
+      <NLControlesEmparejamiento sorteo={sorteo} listo={pool.listo} onAuto={sortear} onConfirmarManual={confirmar}
+        alta={pool.alta} baja={pool.baja} bloqueado={() => false} colores={colores} labelAuto="Sortear emparejamiento" />
+      {sorteo?.bloqueo && <div style={{ color: colores.alerta, fontSize: 12, marginBottom: 10 }}>No se encontró una combinación distinta tras varios intentos — se ha asignado en el orden del sorteo.</div>}
+      {ties && (
+        <>
+          <div style={{ marginBottom: 10 }}><BotonAleatorio onClick={rellenar} label="Simular todos los cruces" colores={colores} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10 }}>
+            {ties.map((tie) => (
+              <NLTieCard key={tie.id} tie={tie} resultado={res[tie.id]} onChange={cambiar} onReset={reiniciar} colores={colores}
+                ganador={nlResolverGanador(tie, res[tie.id])} perdedor={estadoEliminatoria(res[tie.id]).fase === "resuelto" ? (estadoEliminatoria(res[tie.id]).ganador === "A" ? tie.b : tie.a) : null}
+                destinoGanador={destinoGanador} destinoPerdedor={destinoPerdedor}
+                notaSede={`${tie.a.nombre} juega la ida en casa (peor clasificada del general 2024/25); ${tie.b.nombre} decide la vuelta en casa.`} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+function NLPartidoUnico({ titulo, a, b, resultado, onChange, onReset, colores, ganador, notaExtra }) {
+  const definido = !!(a && b);
+  const est = estadoPartidoUnico(resultado);
+  const set = (campo, raw) => { const v = validar(raw); if (v !== "INVALIDO") onChange("X", campo, v); };
+  const inputStyle = { width: 38, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: "12px 16px", marginBottom: 10 }}>
+      <div style={{ color: colores.texto, fontSize: 14, marginBottom: 4 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "2px 6px", marginRight: 8 }}>{titulo}</span>
+        {definido ? `${a.nombre} vs ${b.nombre}` : "Pendiente de definir"}
+        <span style={{ color: colores.textoSuave, fontSize: 11 }}> · partido único, sede neutral (Final a Cuatro)</span>
+      </div>
+      {notaExtra && <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 6 }}>{notaExtra}</div>}
+      {definido && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input type="number" min="0" value={resultado?.gA ?? ""} onChange={(e) => set("gA", e.target.value)} style={inputStyle} />
+          <span style={{ color: colores.textoSuave }}>-</span>
+          <input type="number" min="0" value={resultado?.gB ?? ""} onChange={(e) => set("gB", e.target.value)} style={inputStyle} />
+          {est.empate && (
+            <>
+              <span style={{ color: colores.alerta, fontSize: 11 }}>(prórroga)</span>
+              <input type="number" min="0" value={resultado?.etA ?? ""} onChange={(e) => set("etA", e.target.value)} style={inputStyle} />
+              <span style={{ color: colores.textoSuave }}>-</span>
+              <input type="number" min="0" value={resultado?.etB ?? ""} onChange={(e) => set("etB", e.target.value)} style={inputStyle} />
+            </>
+          )}
+          {est.etTied && (
+            <>
+              <span style={{ color: colores.alerta, fontSize: 11 }}>(pen.)</span>
+              <input type="number" min="0" value={resultado?.penA ?? ""} onChange={(e) => set("penA", e.target.value)} style={inputStyle} />
+              <span style={{ color: colores.textoSuave }}>-</span>
+              <input type="number" min="0" value={resultado?.penB ?? ""} onChange={(e) => set("penB", e.target.value)} style={inputStyle} />
+            </>
+          )}
+          {resultado && <button onClick={() => onReset("X")} style={{ marginLeft: "auto", background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
+        </div>
+      )}
+      {ganador && (
+        <div style={{ marginTop: 10, background: colores.inputBg, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: "10px 14px", color: colores.acento, fontSize: 15, fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>
+          🏆 {ganador.nombre}
+        </div>
+      )}
+    </div>
+  );
+}
+function NLFinalFourSection({ nl, colores }) {
+  const { finalFourPool: pool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta, semis, resSF, cambiarSF, reiniciarSF, sfCompleta, finalistas, terceristas, res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, campeon } = nl;
+  return (
+    <div style={{ marginTop: 26 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${colores.acento}`, paddingLeft: 12, marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 20 }}>Final a Cuatro — Liga A</span>
+        <span style={{ color: colores.textoSuave, fontSize: 12 }}>Cuartos (ida y vuelta) → semis, 3er puesto y final (partido único, sede neutral)</span>
+      </div>
+      {!pool.listo && <div style={{ color: colores.textoSuave, fontSize: 12, fontStyle: "italic", marginBottom: 10 }}>Pendiente — completa los 4 grupos de Liga A para poder sortear los cuartos.</div>}
+      <NLControlesEmparejamiento sorteo={sorteoQF} listo={pool.listo} onAuto={sortearQF} onConfirmarManual={confirmarQF}
+        alta={pool.seeds} baja={pool.runnersUp} bloqueado={bloqueadoQF} colores={colores} labelAuto="Sortear cuartos" />
+      {sorteoQF?.bloqueo && <div style={{ color: colores.alerta, fontSize: 12, marginBottom: 10 }}>No se pudo evitar algún cruce con el 2º del propio grupo — se ha asignado en el orden del sorteo.</div>}
+      {tiesQF && (
+        <>
+          <div style={{ marginBottom: 10 }}><BotonAleatorio onClick={rellenarQF} label="Simular cuartos" colores={colores} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 10, marginBottom: 16 }}>
+            {tiesQF.map((tie) => (
+              <NLTieCard key={tie.id} tie={tie} resultado={resQF[tie.id]} onChange={cambiarQF} onReset={reiniciarQF} colores={colores}
+                ganador={nlResolverGanador(tie, resQF[tie.id])} perdedor={null} destinoGanador="Pasa a semifinales"
+                notaSede={`${tie.a.nombre} juega la ida en casa; ${tie.b.nombre} (cabeza de serie, ganador de grupo) decide la vuelta en casa.`} />
+            ))}
+          </div>
+        </>
+      )}
+      {semis && (
+        <>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2, margin: "8px 0" }}>SEMIFINALES</div>
+          <NLPartidoUnico titulo="SF-1" a={semis[0].a} b={semis[0].b} resultado={resSF["SF-1"]}
+            onChange={(_, c, v) => cambiarSF("SF-1", c, v)} onReset={() => reiniciarSF("SF-1")} colores={colores}
+            ganador={finalistas?.a ?? null} />
+          <NLPartidoUnico titulo="SF-2" a={semis[1].a} b={semis[1].b} resultado={resSF["SF-2"]}
+            onChange={(_, c, v) => cambiarSF("SF-2", c, v)} onReset={() => reiniciarSF("SF-2")} colores={colores}
+            ganador={finalistas?.b ?? null} />
+        </>
+      )}
+      {sfCompleta && (
+        <>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2, margin: "8px 0" }}>TERCER PUESTO Y FINAL</div>
+          <NLPartidoUnico titulo="3P" a={terceristas.a} b={terceristas.b} resultado={res3P["3P"]}
+            onChange={(_, c, v) => cambiar3P("3P", c, v)} onReset={() => reiniciar3P("3P")} colores={colores}
+            ganador={estadoPartidoUnico(res3P["3P"]).fase === "resuelto" ? (estadoPartidoUnico(res3P["3P"]).ganador === "A" ? terceristas.a : terceristas.b) : null}
+            notaExtra="Pierden ambas semifinales." />
+          <NLPartidoUnico titulo="FINAL" a={finalistas.a} b={finalistas.b} resultado={resFinal["FINAL"]}
+            onChange={(_, c, v) => cambiarFinal("FINAL", c, v)} onReset={() => reiniciarFinal("FINAL")} colores={colores}
+            ganador={campeon} notaExtra={campeon ? `🏆 Campeón de la UEFA Nations League 2026/27: ${campeon.nombre}` : null} />
+        </>
+      )}
     </div>
   );
 }
