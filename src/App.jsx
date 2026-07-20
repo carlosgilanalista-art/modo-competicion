@@ -2719,10 +2719,12 @@ function useNationsLeague() {
   }, [qfCompleta, tiesQF, resQF]);
   const cambiarSF = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResSF((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
   const reiniciarSF = (id) => setResSF((p) => { const n = { ...p }; delete n[id]; return n; });
+  const rellenarSF = () => { if (!semis) return; const n = {}; semis.forEach((t) => { n[t.id] = generarFinalAleatoria(); }); setResSF(n); };
   const sfCompleta = !!(semis && semis.every((t) => estadoPartidoUnico(resSF[t.id]).fase === "resuelto"));
   const finalistas = useMemo(() => {
     if (!sfCompleta) return null;
-    return { a: nlResolverGanador({ id: "SF-1", a: semis[0].a, b: semis[0].b }, resSF["SF-1"]), b: nlResolverGanador({ id: "SF-2", a: semis[1].a, b: semis[1].b }, resSF["SF-2"]) };
+    const ganador = (t, r) => { const est = estadoPartidoUnico(r); return est.ganador === "A" ? t.a : t.b; };
+    return { a: ganador(semis[0], resSF["SF-1"]), b: ganador(semis[1], resSF["SF-2"]) };
   }, [sfCompleta, semis, resSF]);
   const terceristas = useMemo(() => {
     if (!sfCompleta) return null;
@@ -2733,6 +2735,7 @@ function useNationsLeague() {
   const reiniciar3P = (id) => setRes3P((p) => { const n = { ...p }; delete n[id]; return n; });
   const cambiarFinal = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResFinal((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
   const reiniciarFinal = (id) => setResFinal((p) => { const n = { ...p }; delete n[id]; return n; });
+  const rellenar3PYFinal = () => { if (!sfCompleta) return; setRes3P({ "3P": generarFinalAleatoria() }); setResFinal({ FINAL: generarFinalAleatoria() }); };
   const campeon = useMemo(() => {
     if (!finalistas) return null;
     const est = estadoPartidoUnico(resFinal["FINAL"]);
@@ -2814,8 +2817,8 @@ function useNationsLeague() {
     playoffPools, sorteoAB, tiesAB, resAB, sortearAB, confirmarAB, cambiarAB, reiniciarAB, rellenarAB,
     sorteoBC, tiesBC, resBC, sortearBC, confirmarBC, cambiarBC, reiniciarBC, rellenarBC,
     finalFourPool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta,
-    semis, resSF, cambiarSF, reiniciarSF, sfCompleta, finalistas, terceristas,
-    res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, campeon,
+    semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas,
+    res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, rellenar3PYFinal, campeon,
     rankingProvisional, rankingGeneral, ganadoresDeGrupo, yaClasificados, toggleClasificado, repesca,
   };
 }
@@ -3166,7 +3169,7 @@ function NLPartidoUnico({ titulo, a, b, resultado, onChange, onReset, colores, g
   );
 }
 function NLFinalFourSection({ nl, colores }) {
-  const { finalFourPool: pool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta, semis, resSF, cambiarSF, reiniciarSF, sfCompleta, finalistas, terceristas, res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, campeon } = nl;
+  const { finalFourPool: pool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta, semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas, res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, rellenar3PYFinal, campeon } = nl;
   return (
     <div style={{ marginTop: 26 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${colores.acento}`, paddingLeft: 12, marginBottom: 10 }}>
@@ -3191,7 +3194,10 @@ function NLFinalFourSection({ nl, colores }) {
       )}
       {semis && (
         <>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2, margin: "8px 0" }}>SEMIFINALES</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2 }}>SEMIFINALES</div>
+            <BotonAleatorio onClick={rellenarSF} label="Simular semifinales" colores={colores} />
+          </div>
           <NLPartidoUnico titulo="SF-1" a={semis[0].a} b={semis[0].b} resultado={resSF["SF-1"]}
             onChange={(_, c, v) => cambiarSF("SF-1", c, v)} onReset={() => reiniciarSF("SF-1")} colores={colores}
             ganador={finalistas?.a ?? null} />
@@ -3202,7 +3208,10 @@ function NLFinalFourSection({ nl, colores }) {
       )}
       {sfCompleta && (
         <>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2, margin: "8px 0" }}>TERCER PUESTO Y FINAL</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0" }}>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2 }}>TERCER PUESTO Y FINAL</div>
+            <BotonAleatorio onClick={rellenar3PYFinal} label="Simular tercer puesto y final" colores={colores} />
+          </div>
           <NLPartidoUnico titulo="3P" a={terceristas.a} b={terceristas.b} resultado={res3P["3P"]}
             onChange={(_, c, v) => cambiar3P("3P", c, v)} onReset={() => reiniciar3P("3P")} colores={colores}
             ganador={estadoPartidoUnico(res3P["3P"]).fase === "resuelto" ? (estadoPartidoUnico(res3P["3P"]).ganador === "A" ? terceristas.a : terceristas.b) : null}

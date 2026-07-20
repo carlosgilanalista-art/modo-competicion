@@ -45,6 +45,41 @@ function BotonEnlace({ href, label, color }) {
   );
 }
 
+// Tarjeta de una competición: nombre, sus enlaces de Explicación y su Simulador.
+// Es la unidad que se repite dentro de cada grupo (Clubes / Selecciones).
+function TarjetaCompeticion({ color, titulo, sub, explicacion, simulador }) {
+  return (
+    <div style={{ background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 12, padding: 22 }}>
+      <div style={{ fontFamily: OSWALD, color, fontSize: 19, marginBottom: sub ? 6 : 14 }}>{titulo}</div>
+      {sub && <div style={{ color: C.textoSuave, fontSize: 13, lineHeight: 1.6, marginBottom: 14, maxWidth: 640 }}>{sub}</div>}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
+        <div>
+          <div style={{ fontFamily: MONO, color: C.textoSuave, fontSize: 10, letterSpacing: 2, marginBottom: 6 }}>EXPLICACIÓN</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {explicacion.map((e) => (
+              <a key={e.href} href={e.href} style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 {e.label}</a>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontFamily: MONO, color: C.textoSuave, fontSize: 10, letterSpacing: 2, marginBottom: 6 }}>SIMULADOR</div>
+          <BotonEnlace href={simulador} label="🎮 Abrir simulador" color={color} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Grupo de competiciones (Clubes / Selecciones): etiqueta + tarjetas.
+function GrupoCompeticiones({ etiqueta, children }) {
+  return (
+    <div style={{ marginBottom: 26 }}>
+      <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 12 }}>{etiqueta}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
+    </div>
+  );
+}
+
 // Enlace del nav con un panel desplegable, por clic (funciona igual en escritorio y táctil).
 // Agrupa páginas relacionadas — p. ej. las competiciones de clubes o los simuladores —
 // bajo una sola entrada del menú. Se cierra al hacer clic fuera.
@@ -96,17 +131,18 @@ export default function Landing() {
           <div style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3 }}>MODO COMPETICIÓN</div>
           <nav style={{ display: "flex", gap: 22, flexWrap: "wrap", alignItems: "center" }}>
             <NavDropdown label="Clubes">
-              <NavDropdownEtiqueta>COMPETICIONES UEFA 2026/27</NavDropdownEtiqueta>
+              <NavDropdownEtiqueta>SIMULADOR</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador/cl">Champions League</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/simulador/el">Europa League</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/simulador/co">Conference League</NavDropdownEnlace>
+              <NavDropdownEtiqueta>EXPLICACIÓN</NavDropdownEtiqueta>
               <NavDropdownEnlace href="#/formato">Fases previas</NavDropdownEnlace>
               <NavDropdownEnlace href="#/formato-liga">Liga y eliminatorias</NavDropdownEnlace>
             </NavDropdown>
             <NavDropdown label="Selecciones">
-              <NavDropdownEnlace href="#/nations-league">Nations League 2026/27</NavDropdownEnlace>
-            </NavDropdown>
-            <NavDropdown label="Simulador">
-              <NavDropdownEnlace href="#/simulador/cl">Champions League</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/simulador/el">Europa League</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/simulador/co">Conference League</NavDropdownEnlace>
+              <NavDropdownEtiqueta>NATIONS LEAGUE 2026/27</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador-selecciones">Simulador</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/nations-league">Explicación</NavDropdownEnlace>
             </NavDropdown>
           </nav>
         </header>
@@ -188,31 +224,31 @@ export default function Landing() {
 
         {/* Competiciones */}
         <Seccion etiqueta="05" titulo="Competiciones">
-          <div style={{ background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 12, padding: 24, marginBottom: 12 }}>
-            <div style={{ fontFamily: OSWALD, color: C.texto, fontSize: 20, marginBottom: 6 }}>Competiciones UEFA 2026/27: de la fase previa a la final</div>
-            <div style={{ color: C.textoSuave, fontSize: 14, lineHeight: 1.6, marginBottom: 16, maxWidth: 720 }}>
-              Las tres competiciones europeas de clubes, conectadas entre sí: simulador completo desde la
-              Ronda 1 de julio hasta el campeón — fase previa, sorteo y jornadas de la fase de liga,
-              clasificación con los desempates oficiales y cuadro de eliminatorias.
-            </div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-              <BotonEnlace href="#/simulador/cl" label="Champions League" color={C.oro} />
-              <BotonEnlace href="#/simulador/el" label="Europa League" color={C.naranja} />
-              <BotonEnlace href="#/simulador/co" label="Conference League" color={C.azul} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <a href="#/formato" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Parte 1 — Las fases previas, explicadas →</a>
-              <a href="#/formato-liga" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Parte 2 — La fase de liga y las eliminatorias →</a>
-            </div>
-          </div>
-          <div style={{ background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 12, padding: 24, marginBottom: 12 }}>
-            <div style={{ fontFamily: OSWALD, color: C.texto, fontSize: 20, marginBottom: 6 }}>Selecciones: Nations League 2026/27</div>
-            <div style={{ color: C.textoSuave, fontSize: 14, lineHeight: 1.6, marginBottom: 16, maxWidth: 720 }}>
-              El mecanismo que conecta la Nations League con la repesca de la Eurocopa 2028: formato,
-              ascensos y descensos, y qué se juega cada selección.
-            </div>
-            <a href="#/nations-league" style={{ color: C.azul, fontSize: 13, textDecoration: "none" }}>📖 Nations League 2026/27: el torneo que decide media Eurocopa 2028 →</a>
-          </div>
+          <Parrafo>
+            Todo lo del sitio se organiza en dos grupos — clubes y selecciones— y, dentro de cada
+            competición, en las mismas dos piezas: una explicación del formato y un simulador fiel a las
+            reglas oficiales.
+          </Parrafo>
+
+          <GrupoCompeticiones etiqueta="CLUBES · FASE PREVIA Y FASE DE LIGA 2026/27">
+            <TarjetaCompeticion color={C.oro} titulo="Champions League"
+              explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
+              simulador="#/simulador/cl" />
+            <TarjetaCompeticion color={C.naranja} titulo="Europa League"
+              explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
+              simulador="#/simulador/el" />
+            <TarjetaCompeticion color={C.azul} titulo="Conference League"
+              explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
+              simulador="#/simulador/co" />
+          </GrupoCompeticiones>
+
+          <GrupoCompeticiones etiqueta="SELECCIONES">
+            <TarjetaCompeticion color={C.azul} titulo="Nations League 2026/27"
+              sub="El mecanismo que conecta la Nations League con la repesca de la Eurocopa 2028: formato, ascensos y descensos, y qué se juega cada selección."
+              explicacion={[{ href: "#/nations-league", label: "Cómo funciona" }]}
+              simulador="#/simulador-selecciones" />
+          </GrupoCompeticiones>
+
           <div style={{ border: `1px dashed ${C.borde}`, borderRadius: 12, padding: 20, color: C.textoSuave, fontSize: 13 }}>
             Próximamente: más competiciones, con sus simuladores y explicaciones.
           </div>
