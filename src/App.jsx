@@ -2450,34 +2450,33 @@ const NL_LIGA_META = {
 };
 const TEMA_NL = { fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C", acento: "#4A90D4", texto: "#F4F1E8", textoSuave: "#8A97A8", alerta: "#E8734A", inputBg: "#0A0E17", inputBorder: "#2A3A54" };
 
-// Calendario de un grupo: doble vuelta por el método del círculo (round-robin).
-// Con 3 equipos se añade un "descanso" (bye), de modo que cada jornada un equipo
-// no juega: 6 jornadas y 4 partidos por equipo, como marca el formato de Liga D.
-function nlRondasRoundRobin(n) {
-  const arr = Array.from({ length: n }, (_, i) => i);
-  if (n % 2 === 1) arr.push(-1); // bye
-  const m = arr.length;
-  const rondas = [];
-  for (let r = 0; r < m - 1; r++) {
-    const ronda = [];
-    for (let k = 0; k < m / 2; k++) {
-      const a = arr[k], b = arr[m - 1 - k];
-      if (a !== -1 && b !== -1) ronda.push([a, b]);
-    }
-    rondas.push(ronda);
-    arr.splice(1, 0, arr.pop()); // rota dejando fijo el primero
-  }
-  return rondas;
-}
+// Calendario real de la fase de liga 2026/27 (fuente: UEFA.com).
+// Grupos de 4 (Ligas A/B/C): UEFA usa una plantilla única "por posición" —
+// referida al bombo, índice 0 = B1 … índice 3 = B4—, idéntica para todos los
+// grupos. Cada par [local, visitante] son índices dentro del grupo (que en
+// NL_GRUPOS ya están ordenados por bombo). Derivada del calendario real del A3.
+const NL_PLANTILLA_G4 = [
+  [[3, 1], [2, 0]], // J1
+  [[3, 2], [0, 1]], // J2
+  [[1, 2], [0, 3]], // J3
+  [[1, 0], [2, 3]], // J4
+  [[3, 0], [2, 1]], // J5
+  [[1, 3], [0, 2]], // J6
+];
+// Los dos grupos de 3 de la Liga D no comparten plantilla entre sí, así que se
+// fijan con su calendario real explícito ([local, visitante] por jornada).
+const NL_CALENDARIO_G3 = {
+  D1: [["Andorra", "Malta"], ["Gibraltar", "Andorra"], ["Malta", "Gibraltar"], ["Malta", "Andorra"], ["Andorra", "Gibraltar"], ["Gibraltar", "Malta"]],
+  D2: [["Liechtenstein", "Lituania"], ["Lituania", "Azerbaiyán"], ["Azerbaiyán", "Liechtenstein"], ["Azerbaiyán", "Lituania"], ["Liechtenstein", "Azerbaiyán"], ["Lituania", "Liechtenstein"]],
+};
 function nlFixturesGrupo(gid, nombres) {
-  const rondas = nlRondasRoundRobin(nombres.length);
   const partidos = [];
-  const push = (jornada, localIdx, visIdx) => {
-    const local = nombres[localIdx], visitante = nombres[visIdx];
-    partidos.push({ jornada, local, visitante, clave: `${gid}|${local}|${visitante}` });
-  };
-  rondas.forEach((ronda, r) => ronda.forEach(([a, b]) => push(r + 1, a, b)));       // ida
-  rondas.forEach((ronda, r) => ronda.forEach(([a, b]) => push(rondas.length + r + 1, b, a))); // vuelta (sedes invertidas)
+  const add = (jornada, local, visitante) => partidos.push({ jornada, local, visitante, clave: `${gid}|${local}|${visitante}` });
+  if (nombres.length === 4) {
+    NL_PLANTILLA_G4.forEach((ronda, r) => ronda.forEach(([l, v]) => add(r + 1, nombres[l], nombres[v])));
+  } else {
+    NL_CALENDARIO_G3[gid].forEach(([local, visitante], r) => add(r + 1, local, visitante));
+  }
   return partidos;
 }
 
