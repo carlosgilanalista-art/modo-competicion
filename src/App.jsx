@@ -2392,6 +2392,228 @@ function ConferenceView({ co, cl, el }) {
 }
 
 // ============================================================
+// DATOS — UEFA NATIONS LEAGUE 2026/27 (selecciones)
+// Grupos reales del sorteo de febrero de 2026. Los bombos salen de la
+// clasificación general final de la Nations League 2024/25: dentro de cada
+// liga, ranks 1-4 = bombo 1, 5-8 = bombo 2, 9-12 = bombo 3, 13-16 = bombo 4.
+// En la Liga D (2 grupos de 3, ranks 49-54) los bombos van de dos en dos.
+// ============================================================
+const NL_RANKING = [ // orden = clasificación general final NL 2024/25 (rank = índice + 1)
+  "Portugal", "España", "Francia", "Alemania", "Italia", "Países Bajos", "Dinamarca", "Croacia",
+  "Serbia", "Bélgica", "Inglaterra", "Noruega", "Gales", "Chequia", "Grecia", "Turquía",
+  "Escocia", "Hungría", "Polonia", "Israel", "Suiza", "Bosnia y Herzegovina", "Austria", "Ucrania",
+  "Eslovenia", "Georgia", "República de Irlanda", "Rumanía", "Suecia", "Macedonia del Norte", "Irlanda del Norte", "Kosovo",
+  "Islandia", "Albania", "Montenegro", "Kazajistán", "Finlandia", "Eslovaquia", "Bulgaria", "Armenia",
+  "Bielorrusia", "Islas Feroe", "Chipre", "Estonia", "Letonia", "Luxemburgo", "Moldavia", "San Marino",
+  "Azerbaiyán", "Lituania", "Gibraltar", "Malta", "Liechtenstein", "Andorra",
+];
+const NL_GRUPOS = {
+  A: {
+    A1: ["Francia", "Italia", "Bélgica", "Turquía"],
+    A2: ["Alemania", "Países Bajos", "Serbia", "Grecia"],
+    A3: ["España", "Croacia", "Inglaterra", "Chequia"],
+    A4: ["Portugal", "Dinamarca", "Noruega", "Gales"],
+  },
+  B: {
+    B1: ["Escocia", "Suiza", "Eslovenia", "Macedonia del Norte"],
+    B2: ["Hungría", "Ucrania", "Georgia", "Irlanda del Norte"],
+    B3: ["Israel", "Austria", "República de Irlanda", "Kosovo"],
+    B4: ["Polonia", "Bosnia y Herzegovina", "Rumanía", "Suecia"],
+  },
+  C: {
+    C1: ["Albania", "Finlandia", "Bielorrusia", "San Marino"],
+    C2: ["Montenegro", "Armenia", "Chipre", "Letonia"],
+    C3: ["Kazajistán", "Eslovaquia", "Islas Feroe", "Moldavia"],
+    C4: ["Islandia", "Bulgaria", "Estonia", "Luxemburgo"],
+  },
+  D: {
+    D1: ["Gibraltar", "Malta", "Andorra"],
+    D2: ["Lituania", "Azerbaiyán", "Liechtenstein"],
+  },
+};
+const NL_RANK = new Map(NL_RANKING.map((n, i) => [n, i + 1]));
+// Bombo dentro de la liga para A/B/C (cuartiles del ranking general: 1-4=B1,
+// 5-8=B2, etc.), verificado contra el sorteo real. La Liga D se sortea con una
+// clasificación de acceso propia que no se deriva del ranking general, así que
+// devuelve -1 (no se muestra bombo) en vez de inventar uno.
+function nlBomboDe(nombre) {
+  const r = NL_RANK.get(nombre);
+  if (r === undefined || r > 48) return -1;
+  const off = r <= 16 ? 0 : r <= 32 ? 16 : 32;
+  return Math.floor((r - off - 1) / 4);
+}
+const NL_LIGA_META = {
+  A: { color: "#D4A94C", nombre: "Liga A", sub: "16 selecciones · 4 grupos de 4 · 6 jornadas · Final a Cuatro (arriba) y descensos a B" },
+  B: { color: "#E8734A", nombre: "Liga B", sub: "16 selecciones · 4 grupos de 4 · 6 jornadas · ascensos a A y descensos a C" },
+  C: { color: "#4A90D4", nombre: "Liga C", sub: "16 selecciones · 4 grupos de 4 · 6 jornadas · ascensos a B y descensos a D" },
+  D: { color: "#5BBB7B", nombre: "Liga D", sub: "6 selecciones · 2 grupos de 3 · 6 jornadas · ascensos a C" },
+};
+const TEMA_NL = { fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C", acento: "#4A90D4", texto: "#F4F1E8", textoSuave: "#8A97A8", alerta: "#E8734A", inputBg: "#0A0E17", inputBorder: "#2A3A54" };
+
+// Calendario de un grupo: doble vuelta por el método del círculo (round-robin).
+// Con 3 equipos se añade un "descanso" (bye), de modo que cada jornada un equipo
+// no juega: 6 jornadas y 4 partidos por equipo, como marca el formato de Liga D.
+function nlRondasRoundRobin(n) {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  if (n % 2 === 1) arr.push(-1); // bye
+  const m = arr.length;
+  const rondas = [];
+  for (let r = 0; r < m - 1; r++) {
+    const ronda = [];
+    for (let k = 0; k < m / 2; k++) {
+      const a = arr[k], b = arr[m - 1 - k];
+      if (a !== -1 && b !== -1) ronda.push([a, b]);
+    }
+    rondas.push(ronda);
+    arr.splice(1, 0, arr.pop()); // rota dejando fijo el primero
+  }
+  return rondas;
+}
+function nlFixturesGrupo(gid, nombres) {
+  const rondas = nlRondasRoundRobin(nombres.length);
+  const partidos = [];
+  const push = (jornada, localIdx, visIdx) => {
+    const local = nombres[localIdx], visitante = nombres[visIdx];
+    partidos.push({ jornada, local, visitante, clave: `${gid}|${local}|${visitante}` });
+  };
+  rondas.forEach((ronda, r) => ronda.forEach(([a, b]) => push(r + 1, a, b)));       // ida
+  rondas.forEach((ronda, r) => ronda.forEach(([a, b]) => push(rondas.length + r + 1, b, a))); // vuelta (sedes invertidas)
+  return partidos;
+}
+
+// ============================================================
+// LÓGICA — NATIONS LEAGUE (independiente: no encadena con clubes)
+// ============================================================
+function useNationsLeague() {
+  const [res, setRes] = useState({}); // { [clavePartido]: { gl, gv } }
+  const grupos = useMemo(() => {
+    const out = [];
+    for (const liga of ["A", "B", "C", "D"]) {
+      for (const [gid, nombres] of Object.entries(NL_GRUPOS[liga])) {
+        const equipos = nombres.map((nombre) => ({ nombre, rank: NL_RANK.get(nombre), bombo: nlBomboDe(nombre) }));
+        out.push({ liga, id: gid, equipos, partidos: nlFixturesGrupo(gid, nombres) });
+      }
+    }
+    return out;
+  }, []);
+  const numJornadas = useMemo(() => grupos.reduce((max, g) => Math.max(max, ...g.partidos.map((m) => m.jornada)), 0), [grupos]);
+  const cambiar = (clave, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setRes((p) => ({ ...p, [clave]: { ...p[clave], [campo]: v } })); };
+  const reiniciar = (clave) => setRes((p) => { const n = { ...p }; delete n[clave]; return n; });
+  const rellenarPartidos = (partidos) => setRes((p) => { const n = { ...p }; partidos.forEach((m) => { n[m.clave] = { gl: rnd5(), gv: rnd5() }; }); return n; });
+  const rellenarGrupo = (g) => rellenarPartidos(g.partidos);
+  const rellenarJornadaGrupo = (g, j) => rellenarPartidos(g.partidos.filter((m) => m.jornada === j));
+  const rellenarTodo = () => rellenarPartidos(grupos.flatMap((g) => g.partidos));
+  return { grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo };
+}
+
+// ============================================================
+// VISTA — NATIONS LEAGUE (Sesión 1: grupos + resultados editables)
+// ============================================================
+function NLGrupoCard({ grupo, nl, colores }) {
+  const meta = NL_LIGA_META[grupo.liga];
+  const inputStyle = { width: 34, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: meta.color, padding: "2px 3px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
+  const jornadas = Array.from({ length: Math.max(...grupo.partidos.map((m) => m.jornada)) }, (_, j) => grupo.partidos.filter((m) => m.jornada === j + 1));
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Oswald', sans-serif", color: meta.color, fontSize: 18 }}>Grupo {grupo.id}</span>
+        <BotonAleatorio onClick={() => nl.rellenarGrupo(grupo)} label="Simular grupo" colores={{ ...colores, acento: meta.color }} />
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+        {grupo.equipos.map((e) => (
+          <span key={e.nombre} style={{ background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 6, padding: "3px 8px", fontSize: 12, color: colores.texto, whiteSpace: "nowrap" }}>
+            {e.bombo >= 0 && <span style={{ color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 9 }}>B{e.bombo + 1} </span>}{e.nombre}
+          </span>
+        ))}
+      </div>
+      {jornadas.map((partidos, j) => (
+        <div key={j} style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 10, letterSpacing: 1 }}>J{j + 1}</span>
+            <button onClick={() => nl.rellenarJornadaGrupo(grupo, j + 1)}
+              style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer", padding: 0 }}>🎲</button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {partidos.map((m) => {
+              const r = nl.res[m.clave];
+              return (
+                <div key={m.clave} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, textAlign: "right", minWidth: 90 }}>{m.local}</span>
+                  <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => nl.cambiar(m.clave, "gl", e.target.value)} style={inputStyle} />
+                  <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
+                  <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => nl.cambiar(m.clave, "gv", e.target.value)} style={inputStyle} />
+                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}>{m.visitante}</span>
+                  {r && (r.gl !== undefined || r.gv !== undefined) && (
+                    <button onClick={() => nl.reiniciar(m.clave)} title="Reiniciar resultado"
+                      style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NationsLeagueView({ nl }) {
+  const c = TEMA_NL;
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+        <div style={{ color: c.textoSuave, fontSize: 12, lineHeight: 1.6, maxWidth: 640 }}>
+          Los 14 grupos reales del sorteo de febrero de 2026. Introduce los resultados a mano o usa los dados para
+          simular. Los bombos (B1–B4) salen de la clasificación general de la Nations League 2024/25.
+        </div>
+        <BotonAleatorio onClick={nl.rellenarTodo} label="Simular todo" colores={c} />
+      </div>
+      {["A", "B", "C", "D"].map((liga) => {
+        const meta = NL_LIGA_META[liga];
+        const gruposLiga = nl.grupos.filter((g) => g.liga === liga);
+        return (
+          <div key={liga} style={{ marginTop: 22 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${meta.color}`, paddingLeft: 12, marginBottom: 12 }}>
+              <span style={{ fontFamily: "'Oswald', sans-serif", color: meta.color, fontSize: 22 }}>{meta.nombre}</span>
+              <span style={{ color: c.textoSuave, fontSize: 12 }}>{meta.sub}</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+              {gruposLiga.map((g) => <NLGrupoCard key={g.id} grupo={g} nl={nl} colores={c} />)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SimuladorNationsLeaguePage({ nl }) {
+  const c = TEMA_NL;
+  return (
+    <div style={{ minHeight: "100vh", background: c.fondo, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 10, background: c.fondo, borderBottom: `1px solid ${c.borde}`, padding: "16px 20px" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: c.acento, fontSize: 11, letterSpacing: 3 }}>SIMULADOR NATIONS LEAGUE 2026/27 · SELECCIONES</div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
+            <a href="#/nations-league" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Cómo funciona la Nations League</a>
+            <a href="#/simulador" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Simulador de clubes</a>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "24px 20px 40px" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+          <NationsLeagueView nl={nl} />
+          <footer style={{ borderTop: `1px solid ${c.borde}`, paddingTop: 16, marginTop: 28, color: "#5A6678", fontSize: 11, lineHeight: 1.6 }}>
+            <div>Modo Competición · Grupos del sorteo oficial de la UEFA (feb-2026); bombos según la clasificación general de la Nations League 2024/25.</div>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
 function useHashRoute() {
@@ -2408,10 +2630,11 @@ export default function App() {
   const cl = useChampions();
   const el = useEuropa(cl);
   const co = useConference(cl, el);
+  const nl = useNationsLeague();
   const [tab, setTab] = useState("CL");
   const hash = useHashRoute();
 
-  const vista = hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : "inicio";
+  const vista = hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -2436,6 +2659,7 @@ export default function App() {
       {vista === "formato" && <Articulo />}
       {vista === "formato-liga" && <ArticuloFaseLiga />}
       {vista === "nations-league" && <ArticuloNationsLeague />}
+      {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
           <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
@@ -2447,6 +2671,7 @@ export default function App() {
                   <a href="#/formato" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: fases previas</a>
                   <a href="#/formato-liga" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: liga y eliminatorias</a>
                   <a href="#/nations-league" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Nations League 2026/27</a>
+                  <a href="#/simulador-selecciones" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Simulador selecciones</a>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 4 }}>

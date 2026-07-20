@@ -123,7 +123,8 @@ export default function ArticuloNationsLeague() {
             <a href="#/" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>← Inicio</a>
             <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Formato: fases previas</a>
             <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Formato: liga y eliminatorias</a>
-            <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
+            <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador clubes</a>
+            <a href="#/simulador-selecciones" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador selecciones</a>
           </nav>
         </header>
 
