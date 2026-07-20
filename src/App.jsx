@@ -2703,8 +2703,10 @@ function useNationsLeague() {
   const tiesQF = useMemo(() => (sorteoQF && !sorteoQF.error ? sorteoQF.cruces.map((c) => nlTieCuartos(c.cabeza, c.rival)) : null), [sorteoQF]);
   const rellenarQF = () => { if (!tiesQF) return; const n = {}; tiesQF.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResQF(n); };
   const qfCompleta = useMemo(() => !!(tiesQF && tiesQF.every((t) => estadoEliminatoria(resQF[t.id]).fase === "resuelto")), [tiesQF, resQF]);
-  // Bracket fijo (QF1+QF2 → SF1, QF3+QF4 → SF2): la UEFA no ha publicado el criterio de
-  // emparejamiento de semifinales para esta edición, así que se fija por orden del sorteo.
+  // Bracket fijo (QF1+QF2 → SF1, QF3+QF4 → SF2): en la edición 2024/25 —la única jugada
+  // hasta ahora con este formato de 8 equipos— el sorteo de cuartos de noviembre de 2024
+  // fijó también qué cruce alimenta cada semifinal, sin sorteo aparte tras jugarse los
+  // cuartos en marzo. Se sigue el mismo criterio aquí, agrupando por orden del sorteo.
   const semis = useMemo(() => {
     if (!qfCompleta) return null;
     const g = tiesQF.map((t) => nlResolverGanador(t, resQF[t.id]));
