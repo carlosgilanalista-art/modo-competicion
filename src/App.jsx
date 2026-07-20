@@ -2398,7 +2398,11 @@ function ConferenceView({ co, cl, el }) {
 // liga, ranks 1-4 = bombo 1, 5-8 = bombo 2, 9-12 = bombo 3, 13-16 = bombo 4.
 // En la Liga D (2 grupos de 3, ranks 49-54) los bombos van de dos en dos.
 // ============================================================
-const NL_RANKING = [ // orden = clasificación general final NL 2024/25 (rank = índice + 1)
+// Orden = clasificación general final NL 2024/25 (rank = índice + 1). Verificado posición
+// por posición contra el Anexo C del reglamento UEFA 2026/27 ("2026/27 UEFA Nations League
+// Access List"). Rusia ocupa el puesto 55 en el anexo pero está suspendida y no compite:
+// no aparece aquí ni en los 54 equipos reales de NL_GRUPOS.
+const NL_RANKING = [
   "Portugal", "España", "Francia", "Alemania", "Italia", "Países Bajos", "Dinamarca", "Croacia",
   "Serbia", "Bélgica", "Inglaterra", "Noruega", "Gales", "Chequia", "Grecia", "Turquía",
   "Escocia", "Hungría", "Polonia", "Israel", "Suiza", "Bosnia y Herzegovina", "Austria", "Ucrania",
@@ -2703,10 +2707,11 @@ function useNationsLeague() {
   const tiesQF = useMemo(() => (sorteoQF && !sorteoQF.error ? sorteoQF.cruces.map((c) => nlTieCuartos(c.cabeza, c.rival)) : null), [sorteoQF]);
   const rellenarQF = () => { if (!tiesQF) return; const n = {}; tiesQF.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResQF(n); };
   const qfCompleta = useMemo(() => !!(tiesQF && tiesQF.every((t) => estadoEliminatoria(resQF[t.id]).fase === "resuelto")), [tiesQF, resQF]);
-  // Bracket fijo (QF1+QF2 → SF1, QF3+QF4 → SF2): en la edición 2024/25 —la única jugada
-  // hasta ahora con este formato de 8 equipos— el sorteo de cuartos de noviembre de 2024
-  // fijó también qué cruce alimenta cada semifinal, sin sorteo aparte tras jugarse los
-  // cuartos en marzo. Se sigue el mismo criterio aquí, agrupando por orden del sorteo.
+  // Bracket fijo (QF1+QF2 → SF1, QF3+QF4 → SF2): confirmado por el Anexo B (Sistema de
+  // Competición) del reglamento UEFA 2026/27 — el diagrama de la fase eliminatoria muestra
+  // cuartos→semis→final como un único flujo sin sorteo aparte entre cuartos y semis; el
+  // camino completo queda fijado en el sorteo de cuartos. El anexo no detalla qué cruce
+  // exacto alimenta cada semifinal, así que se agrupa por orden del sorteo.
   const semis = useMemo(() => {
     if (!qfCompleta) return null;
     const g = tiesQF.map((t) => nlResolverGanador(t, resQF[t.id]));
