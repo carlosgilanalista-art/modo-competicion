@@ -2735,7 +2735,8 @@ function useNationsLeague() {
   const reiniciar3P = (id) => setRes3P((p) => { const n = { ...p }; delete n[id]; return n; });
   const cambiarFinal = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResFinal((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
   const reiniciarFinal = (id) => setResFinal((p) => { const n = { ...p }; delete n[id]; return n; });
-  const rellenar3PYFinal = () => { if (!sfCompleta) return; setRes3P({ "3P": generarFinalAleatoria() }); setResFinal({ FINAL: generarFinalAleatoria() }); };
+  const rellenar3P = () => { if (!sfCompleta) return; setRes3P({ "3P": generarFinalAleatoria() }); };
+  const rellenarFinalPartido = () => { if (!finalistas) return; setResFinal({ FINAL: generarFinalAleatoria() }); };
   const campeon = useMemo(() => {
     if (!finalistas) return null;
     const est = estadoPartidoUnico(resFinal["FINAL"]);
@@ -2818,7 +2819,7 @@ function useNationsLeague() {
     sorteoBC, tiesBC, resBC, sortearBC, confirmarBC, cambiarBC, reiniciarBC, rellenarBC,
     finalFourPool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta,
     semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas,
-    res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, rellenar3PYFinal, campeon,
+    res3P, cambiar3P, reiniciar3P, rellenar3P, resFinal, cambiarFinal, reiniciarFinal, rellenarFinalPartido, campeon,
     rankingProvisional, rankingGeneral, ganadoresDeGrupo, yaClasificados, toggleClasificado, repesca,
   };
 }
@@ -3169,7 +3170,7 @@ function NLPartidoUnico({ titulo, a, b, resultado, onChange, onReset, colores, g
   );
 }
 function NLFinalFourSection({ nl, colores }) {
-  const { finalFourPool: pool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta, semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas, res3P, cambiar3P, reiniciar3P, resFinal, cambiarFinal, reiniciarFinal, rellenar3PYFinal, campeon } = nl;
+  const { finalFourPool: pool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta, semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas, res3P, cambiar3P, reiniciar3P, rellenar3P, resFinal, cambiarFinal, reiniciarFinal, rellenarFinalPartido, campeon } = nl;
   return (
     <div style={{ marginTop: 26 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${colores.acento}`, paddingLeft: 12, marginBottom: 10 }}>
@@ -3208,14 +3209,13 @@ function NLFinalFourSection({ nl, colores }) {
       )}
       {sfCompleta && (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0" }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2 }}>TERCER PUESTO Y FINAL</div>
-            <BotonAleatorio onClick={rellenar3PYFinal} label="Simular tercer puesto y final" colores={colores} />
-          </div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2, margin: "8px 0" }}>TERCER PUESTO Y FINAL</div>
+          <div style={{ marginBottom: 6 }}><BotonAleatorio onClick={rellenar3P} label="Simular tercer puesto" colores={colores} /></div>
           <NLPartidoUnico titulo="3P" a={terceristas.a} b={terceristas.b} resultado={res3P["3P"]}
             onChange={(_, c, v) => cambiar3P("3P", c, v)} onReset={() => reiniciar3P("3P")} colores={colores}
             ganador={estadoPartidoUnico(res3P["3P"]).fase === "resuelto" ? (estadoPartidoUnico(res3P["3P"]).ganador === "A" ? terceristas.a : terceristas.b) : null}
             notaExtra="Pierden ambas semifinales." />
+          <div style={{ marginBottom: 6 }}><BotonAleatorio onClick={rellenarFinalPartido} label="Simular final" colores={colores} /></div>
           <NLPartidoUnico titulo="FINAL" a={finalistas.a} b={finalistas.b} resultado={resFinal["FINAL"]}
             onChange={(_, c, v) => cambiarFinal("FINAL", c, v)} onReset={() => reiniciarFinal("FINAL")} colores={colores}
             ganador={campeon} notaExtra={campeon ? `🏆 Campeón de la UEFA Nations League 2026/27: ${campeon.nombre}` : null} />
