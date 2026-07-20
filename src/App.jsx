@@ -2480,6 +2480,66 @@ function nlFixturesGrupo(gid, nombres) {
   return partidos;
 }
 
+// ---- Clasificación de grupo (reglamento UEFA Nations League) ----
+// A diferencia de la fase liga de clubes, el PRIMER criterio de desempate es el
+// enfrentamiento directo (H2H): entre equipos empatados a puntos se aplican, solo
+// con los partidos entre ellos, (a) puntos, (b) diferencia de goles, (c) goles a
+// favor. Si tras eso algunos siguen igualados, se reaplica a/b/c solo entre los
+// que siguen empatados; y si el H2H no separa a nadie, se pasa a los criterios
+// globales del grupo: diferencia de goles, goles a favor, victorias, goles a
+// favor fuera y, en última instancia, la clasificación general 2024/25 (rank).
+function nlStats(equipos, partidos, res, filtro) {
+  const filas = new Map(equipos.map((e) => [e.nombre, { equipo: e, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, pts: 0, gfFuera: 0 }]));
+  for (const m of partidos) {
+    if (filtro && (!filtro.has(m.local) || !filtro.has(m.visitante))) continue;
+    const r = res[m.clave];
+    if (!r || r.gl === undefined || r.gv === undefined) continue;
+    const L = filas.get(m.local), V = filas.get(m.visitante);
+    if (!L || !V) continue;
+    const gl = Number(r.gl), gv = Number(r.gv);
+    L.pj++; V.pj++; L.gf += gl; L.gc += gv; V.gf += gv; V.gc += gl; V.gfFuera += gv;
+    if (gl > gv) { L.g++; L.pts += 3; V.p++; }
+    else if (gl < gv) { V.g++; V.pts += 3; L.p++; }
+    else { L.e++; V.e++; L.pts++; V.pts++; }
+  }
+  return filas;
+}
+const nlGlobalCmp = (a, b) =>
+  (b.gf - b.gc) - (a.gf - a.gc) || b.gf - a.gf || b.g - a.g || b.gfFuera - a.gfFuera || a.equipo.rank - b.equipo.rank;
+function clasificacionGrupoNL(equipos, partidos, res) {
+  const overall = nlStats(equipos, partidos, res);
+  const filas = equipos.map((e) => overall.get(e.nombre));
+  // Ordena un conjunto ya empatado a puntos aplicando H2H de forma recursiva.
+  const desempatar = (grupo) => {
+    if (grupo.length === 1) return grupo;
+    const nombres = new Set(grupo.map((f) => f.equipo.nombre));
+    const mini = nlStats(grupo.map((f) => f.equipo), partidos, res, nombres);
+    const clave = (f) => { const s = mini.get(f.equipo.nombre); return [s.pts, s.gf - s.gc, s.gf]; };
+    const ordenado = [...grupo].sort((a, b) => { const ka = clave(a), kb = clave(b); return kb[0] - ka[0] || kb[1] - ka[1] || kb[2] - ka[2]; });
+    const buckets = [];
+    for (const f of ordenado) {
+      const k = clave(f), last = buckets[buckets.length - 1];
+      if (last && JSON.stringify(clave(last[0])) === JSON.stringify(k)) last.push(f);
+      else buckets.push([f]);
+    }
+    if (buckets.length === 1) return [...grupo].sort(nlGlobalCmp); // el H2H no separó a nadie
+    return buckets.flatMap((b) => (b.length === 1 ? b : desempatar(b)));
+  };
+  // Primero por puntos; dentro de cada nivel de puntos, H2H.
+  const niveles = [];
+  for (const f of [...filas].sort((a, b) => b.pts - a.pts)) {
+    const last = niveles[niveles.length - 1];
+    if (last && last[0].pts === f.pts) last.push(f);
+    else niveles.push([f]);
+  }
+  return niveles.flatMap((n) => (n.length === 1 ? n : desempatar(n)));
+}
+// Ranking entre equipos que acaban en la MISMA posición en grupos distintos
+// (grupos de igual tamaño): puntos, DG, GF, victorias, GF fuera y rank general.
+function nlRankMismaPosicion(filas) {
+  return [...filas].sort((a, b) => b.pts - a.pts || nlGlobalCmp(a, b));
+}
+
 // ============================================================
 // LÓGICA — NATIONS LEAGUE (independiente: no encadena con clubes)
 // ============================================================
@@ -2502,14 +2562,93 @@ function useNationsLeague() {
   const rellenarGrupo = (g) => rellenarPartidos(g.partidos);
   const rellenarJornadaGrupo = (g, j) => rellenarPartidos(g.partidos.filter((m) => m.jornada === j));
   const rellenarTodo = () => rellenarPartidos(grupos.flatMap((g) => g.partidos));
-  return { grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo };
+
+  const grupoCompleto = (g) => g.partidos.every((m) => { const r = res[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; });
+  const clasificaciones = useMemo(() => {
+    const map = new Map();
+    grupos.forEach((g) => map.set(g.id, { grupo: g, filas: clasificacionGrupoNL(g.equipos, g.partidos, res), completa: grupoCompleto(g) }));
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grupos, res]);
+
+  // Ascensos y descensos directos (los play-offs y la Final a Cuatro son sesiones
+  // posteriores). Cross-grupo donde hace falta: los 2 peores cuartos de la Liga C
+  // descienden directos a D; el resto de cuartos de C van a play-off C/D.
+  const movimientos = useMemo(() => {
+    const gruposDe = (liga) => grupos.filter((g) => g.liga === liga);
+    const ligaCompleta = (liga) => gruposDe(liga).every((g) => clasificaciones.get(g.id).completa);
+    const posEnLiga = (liga, i) => gruposDe(liga).map((g) => ({ g: g.id, fila: clasificaciones.get(g.id).filas[i] }));
+    const nombres = (arr) => arr.map((x) => ({ nombre: x.fila.equipo.nombre, grupo: x.g }));
+    const cuartosC = ligaCompleta("C") ? nlRankMismaPosicion(posEnLiga("C", 3).map((x) => x.fila)) : null;
+    return {
+      ascensos: {
+        A: ligaCompleta("B") ? nombres(posEnLiga("B", 0)) : null, // ganadores de B → A
+        B: ligaCompleta("C") ? nombres(posEnLiga("C", 0)) : null, // ganadores de C → B
+        C: ligaCompleta("D") ? nombres(posEnLiga("D", 0)) : null, // ganadores de D → C
+      },
+      descensos: {
+        B: ligaCompleta("A") ? nombres(posEnLiga("A", 3)) : null, // 4º de A → B
+        C: ligaCompleta("B") ? nombres(posEnLiga("B", 3)) : null, // 4º de B → C
+        D: cuartosC ? cuartosC.slice(-2).map((f) => ({ nombre: f.equipo.nombre, grupo: null })) : null, // 2 peores 4º de C → D
+      },
+    };
+  }, [grupos, clasificaciones]);
+
+  return { grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, clasificaciones, movimientos };
 }
 
 // ============================================================
-// VISTA — NATIONS LEAGUE (Sesión 1: grupos + resultados editables)
+// VISTA — NATIONS LEAGUE (grupos, resultados y clasificaciones)
 // ============================================================
+// Zona de cada posición dentro del grupo: color del borde/posición y etiqueta.
+// Los play-offs y la Final a Cuatro se resuelven en sesiones posteriores; aquí
+// solo se marca a qué opción da acceso cada plaza.
+const NL_ZONA_COLOR = {
+  A: ["#D4A94C", "#D4A94C", "#E8734A", "#C0392B"],
+  B: ["#5BBB7B", "#4A90D4", "#E8734A", "#C0392B"],
+  C: ["#5BBB7B", "#4A90D4", "#E8734A", "#C0392B"],
+  D: ["#5BBB7B", "#8A97A8", "#8A97A8"],
+};
+const NL_ZONA_LABEL = {
+  A: ["Cuartos (Final a Cuatro)", "Cuartos (Final a Cuatro)", "Play-off descenso A/B", "Descenso directo a B"],
+  B: ["Ascenso directo a A", "Play-off ascenso A/B", "Play-off descenso B/C", "Descenso directo a C"],
+  C: ["Ascenso directo a B", "Play-off ascenso B/C", "Play-off descenso C/D", "Descenso a D / play-off C/D"],
+  D: ["Ascenso directo a C", "Play-off C/D o permanencia", "Play-off C/D o permanencia"],
+};
+function NLTablaGrupo({ liga, filas, completa, colores }) {
+  const th = { color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "2px 4px", textAlign: "right" };
+  const td = { color: colores.texto, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: "2px 4px", textAlign: "right" };
+  const zonas = NL_ZONA_COLOR[liga];
+  return (
+    <div style={{ overflowX: "auto", marginBottom: 12 }}>
+      <table style={{ borderCollapse: "collapse", width: "100%" }}>
+        <thead>
+          <tr>
+            <th style={{ ...th, textAlign: "left" }}>#</th>
+            <th style={{ ...th, textAlign: "left" }}>Selección</th>
+            <th style={th}>PJ</th><th style={th}>G</th><th style={th}>E</th><th style={th}>P</th>
+            <th style={th}>DG</th><th style={th}>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((f, idx) => (
+            <tr key={f.equipo.nombre} style={{ borderLeft: `3px solid ${zonas[idx]}` }} title={NL_ZONA_LABEL[liga][idx]}>
+              <td style={{ ...td, textAlign: "left", color: zonas[idx], fontWeight: 600 }}>{idx + 1}</td>
+              <td style={{ ...td, textAlign: "left", fontFamily: "'Inter', sans-serif" }}>{f.equipo.nombre}</td>
+              <td style={td}>{f.pj}</td><td style={td}>{f.g}</td><td style={td}>{f.e}</td><td style={td}>{f.p}</td>
+              <td style={td}>{f.gf - f.gc > 0 ? "+" : ""}{f.gf - f.gc}</td>
+              <td style={{ ...td, color: colores.acento, fontWeight: 600 }}>{f.pts}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!completa && <div style={{ color: colores.textoSuave, fontSize: 10, marginTop: 3, fontStyle: "italic" }}>Provisional — faltan resultados por introducir.</div>}
+    </div>
+  );
+}
 function NLGrupoCard({ grupo, nl, colores }) {
   const meta = NL_LIGA_META[grupo.liga];
+  const clasif = nl.clasificaciones.get(grupo.id);
   const inputStyle = { width: 34, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: meta.color, padding: "2px 3px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
   const jornadas = Array.from({ length: Math.max(...grupo.partidos.map((m) => m.jornada)) }, (_, j) => grupo.partidos.filter((m) => m.jornada === j + 1));
   return (
@@ -2518,13 +2657,7 @@ function NLGrupoCard({ grupo, nl, colores }) {
         <span style={{ fontFamily: "'Oswald', sans-serif", color: meta.color, fontSize: 18 }}>Grupo {grupo.id}</span>
         <BotonAleatorio onClick={() => nl.rellenarGrupo(grupo)} label="Simular grupo" colores={{ ...colores, acento: meta.color }} />
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-        {grupo.equipos.map((e) => (
-          <span key={e.nombre} style={{ background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 6, padding: "3px 8px", fontSize: 12, color: colores.texto, whiteSpace: "nowrap" }}>
-            {e.bombo >= 0 && <span style={{ color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 9 }}>B{e.bombo + 1} </span>}{e.nombre}
-          </span>
-        ))}
-      </div>
+      <NLTablaGrupo liga={grupo.liga} filas={clasif.filas} completa={clasif.completa} colores={colores} />
       {jornadas.map((partidos, j) => (
         <div key={j} style={{ marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -2582,6 +2715,47 @@ function NationsLeagueView({ nl }) {
           </div>
         );
       })}
+      <NLResumenMovimientos mov={nl.movimientos} colores={c} />
+    </div>
+  );
+}
+
+function NLResumenMovimientos({ mov, colores }) {
+  const linea = (etiqueta, equipos) => (
+    <div style={{ display: "flex", gap: 8, alignItems: "baseline", padding: "5px 0", borderBottom: `1px solid ${colores.borde}` }}>
+      <span style={{ color: colores.textoSuave, fontSize: 12, minWidth: 150 }}>{etiqueta}</span>
+      <span style={{ color: colores.texto, fontSize: 13 }}>
+        {equipos === null
+          ? <span style={{ color: colores.textoSuave, fontStyle: "italic" }}>pendiente — completa todos sus grupos</span>
+          : equipos.map((e, i) => <span key={i}>{e.nombre}{e.grupo ? <span style={{ color: colores.textoSuave, fontSize: 10 }}> ({e.grupo})</span> : null}{i < equipos.length - 1 ? ", " : ""}</span>)}
+      </span>
+    </div>
+  );
+  const columna = (titulo, color, filas) => (
+    <div style={{ flex: 1, minWidth: 300, background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px" }}>
+      <div style={{ fontFamily: "'Oswald', sans-serif", color, fontSize: 17, marginBottom: 8 }}>{titulo}</div>
+      {filas}
+    </div>
+  );
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>ASCENSOS Y DESCENSOS DIRECTOS</div>
+      <div style={{ color: colores.textoSuave, fontSize: 12, lineHeight: 1.6, marginBottom: 12, maxWidth: 720 }}>
+        Solo los movimientos directos (ganadores de grupo suben; últimos bajan). Los play-offs entre ligas
+        contiguas, la Final a Cuatro de la Liga A y la repesca para la Euro 2028 llegan en las próximas versiones.
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        {columna("Ascensos directos", "#5BBB7B", <>
+          {linea("A ← ganadores de B", mov.ascensos.A)}
+          {linea("B ← ganadores de C", mov.ascensos.B)}
+          {linea("C ← ganadores de D", mov.ascensos.C)}
+        </>)}
+        {columna("Descensos directos", "#C0392B", <>
+          {linea("B ← 4.º de A", mov.descensos.B)}
+          {linea("C ← 4.º de B", mov.descensos.C)}
+          {linea("D ← 2 peores 4.º de C", mov.descensos.D)}
+        </>)}
+      </div>
     </div>
   );
 }
