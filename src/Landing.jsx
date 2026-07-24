@@ -101,7 +101,7 @@ function NavDropdown({ label, children }) {
         {label} <span style={{ fontSize: 10 }}>▾</span>
       </button>
       {abierto && (
-        <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 10, background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 10, padding: 10, minWidth: 220, zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
+        <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 10, background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 10, padding: 10, minWidth: 220, maxWidth: "calc(100vw - 40px)", width: "max-content", zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
           {children}
         </div>
       )}
