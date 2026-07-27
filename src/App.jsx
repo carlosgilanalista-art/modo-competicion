@@ -3,6 +3,7 @@ import Landing from "./Landing.jsx";
 import Articulo from "./Articulo.jsx";
 import ArticuloFaseLiga from "./ArticuloFaseLiga.jsx";
 import ArticuloNationsLeague from "./ArticuloNationsLeague.jsx";
+import ArticuloEuro2028 from "./ArticuloEuro2028.jsx";
 
 // ============================================================
 // FUNCIONES COMPARTIDAS
@@ -3319,6 +3320,7 @@ function SimuladorNationsLeaguePage({ nl }) {
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
             <a href="#/nations-league" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Cómo funciona la Nations League</a>
+            <a href="#/euro2028" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>EURO 2028</a>
             <a href="#/simulador" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Simulador de clubes</a>
           </div>
         </div>
@@ -3356,7 +3358,7 @@ export default function App() {
   const [tab, setTab] = useState("CL");
   const hash = useHashRoute();
 
-  const vista = hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : "inicio";
+  const vista = hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -3393,6 +3395,7 @@ export default function App() {
       {vista === "formato" && <Articulo />}
       {vista === "formato-liga" && <ArticuloFaseLiga />}
       {vista === "nations-league" && <ArticuloNationsLeague />}
+      {vista === "euro2028" && <ArticuloEuro2028 />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
@@ -3405,6 +3408,7 @@ export default function App() {
                   <a href="#/formato" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: fases previas</a>
                   <a href="#/formato-liga" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: liga y eliminatorias</a>
                   <a href="#/nations-league" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Nations League 2026/27</a>
+                  <a href="#/euro2028" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>EURO 2028</a>
                   <a href="#/simulador-selecciones" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Simulador selecciones</a>
                 </div>
               </div>

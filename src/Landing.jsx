@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
 // PÁGINA DE INICIO — presentación genérica del sitio
@@ -179,6 +180,10 @@ function SelectorCompeticion({ abierto, onClose }) {
 }
 
 export default function Landing() {
+  useDocumentMeta({
+    title: "Modo Competición · Simuladores y formatos de competición",
+    description: "Explicaciones claras y simuladores interactivos, competición a competición. Empezamos por las fases previas europeas de la temporada 2026/27.",
+  });
   const [selectorAbierto, setSelectorAbierto] = useState(false);
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
@@ -201,6 +206,8 @@ export default function Landing() {
               <NavDropdownEtiqueta>NATIONS LEAGUE 2026/27</NavDropdownEtiqueta>
               <NavDropdownEnlace href="#/simulador-selecciones">Simulador</NavDropdownEnlace>
               <NavDropdownEnlace href="#/nations-league">Explicación</NavDropdownEnlace>
+              <NavDropdownEtiqueta>EURO 2028</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/euro2028">Clasificación</NavDropdownEnlace>
             </NavDropdown>
           </nav>
         </header>

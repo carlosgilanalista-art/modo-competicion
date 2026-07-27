@@ -1,4 +1,5 @@
 import React from "react";
+import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
 // ARTÍCULO — "Entiende el formato, parte 2": la fase de liga y
@@ -142,6 +143,10 @@ function GraficoCuadro() {
 }
 
 export default function ArticuloFaseLiga() {
+  useDocumentMeta({
+    title: "De la fase de liga a la final: así funciona lo que viene después de la previa · Modo Competición",
+    description: "Cómo funciona el formato desde que un equipo entra en la fase de liga hasta que alguien levanta el trofeo: tabla única, sorteo por bombos, playoff y cuadro final.",
+  });
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 60px" }}>
@@ -152,6 +157,7 @@ export default function ArticuloFaseLiga() {
             <a href="#/" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>← Inicio</a>
             <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Parte 1: fases previas</a>
             <a href="#/nations-league" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Nations League 2026/27</a>
+            <a href="#/euro2028" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>EURO 2028</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
           </nav>
         </header>

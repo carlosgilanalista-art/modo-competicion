@@ -1,4 +1,5 @@
 import React from "react";
+import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
 // ARTÍCULO — Nations League 2026/27: el mecanismo que reparte
@@ -113,6 +114,10 @@ function GraficoPrecedentes() {
 }
 
 export default function ArticuloNationsLeague() {
+  useDocumentMeta({
+    title: "Nations League 2026/27: el torneo que decide media Eurocopa 2028 · Modo Competición",
+    description: "La Nations League 2026/27 no es solo ascensos y descensos: reparte plazas de repesca para la Euro 2028. El mecanismo explicado y qué se juega España.",
+  });
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 60px" }}>
@@ -124,6 +129,7 @@ export default function ArticuloNationsLeague() {
             <a href="#/formato" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Formato: fases previas</a>
             <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Formato: liga y eliminatorias</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador clubes</a>
+            <a href="#/euro2028" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>EURO 2028</a>
             <a href="#/simulador-selecciones" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador selecciones</a>
           </nav>
         </header>
