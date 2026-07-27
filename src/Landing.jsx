@@ -237,10 +237,10 @@ export default function Landing() {
         {/* Qué puedes hacer */}
         <Seccion etiqueta="02" titulo="¿Qué puedes hacer?">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
-            <TarjetaAccion icono="📖" titulo="Entiende el formato" onClick={() => setSelectorAbierto(true)}
-              texto="Dos artículos con gráficos y ejemplos: las fases previas del verano, y la fase de liga y las eliminatorias que vienen después." />
             <TarjetaAccion icono="🏆" titulo="Elige tu competición" onClick={() => setSelectorAbierto(true)}
               texto="De clubes a selecciones: cada competición tiene su propia explicación y su propio simulador, y se irán sumando más." />
+            <TarjetaAccion icono="📖" titulo="Entiende el formato" onClick={() => setSelectorAbierto(true)}
+              texto="Dos artículos con gráficos y ejemplos: las fases previas del verano, y la fase de liga y las eliminatorias que vienen después." />
             <TarjetaAccion icono="⚽" titulo="Simula las rondas"
               texto="Introduce los resultados que quieras o genera simulaciones automáticas partido a partido." />
             <TarjetaAccion icono="🎲" titulo="Sortea los cruces"
