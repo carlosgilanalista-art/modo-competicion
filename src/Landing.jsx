@@ -25,15 +25,22 @@ function Parrafo({ children }) {
   return <p style={{ color: C.textoSuave, fontSize: 15, lineHeight: 1.7, margin: "0 0 12px", maxWidth: 720 }}>{children}</p>;
 }
 
-function TarjetaAccion({ icono, titulo, texto, href }) {
+function TarjetaAccion({ icono, titulo, texto, href, onClick }) {
   const contenido = (
     <div style={{ background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 12, padding: 20, height: "100%", boxSizing: "border-box" }}>
       <div style={{ fontSize: 24, marginBottom: 10 }}>{icono}</div>
       <div style={{ fontFamily: OSWALD, color: C.texto, fontSize: 17, marginBottom: 6 }}>{titulo}</div>
       <div style={{ color: C.textoSuave, fontSize: 13, lineHeight: 1.6 }}>{texto}</div>
-      {href && <div style={{ color: C.azul, fontSize: 12, marginTop: 10 }}>Ir ahora →</div>}
+      {(href || onClick) && <div style={{ color: C.azul, fontSize: 12, marginTop: 10 }}>Ir ahora →</div>}
     </div>
   );
+  if (onClick) {
+    return (
+      <button onClick={onClick} style={{ textDecoration: "none", background: "none", border: "none", padding: 0, margin: 0, textAlign: "left", cursor: "pointer", width: "100%", font: "inherit" }}>
+        {contenido}
+      </button>
+    );
+  }
   return href ? <a href={href} style={{ textDecoration: "none" }}>{contenido}</a> : contenido;
 }
 
@@ -121,7 +128,58 @@ function NavDropdownEnlace({ href, children }) {
   );
 }
 
+// Modal que se abre desde cualquier enlace "ambiguo" del sitio (uno que no
+// nombra una competición concreta) para que el usuario elija a qué
+// competición se refiere, en vez de asumir Champions League por defecto.
+function SelectorCompeticion({ abierto, onClose }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!abierto) return;
+    const onTecla = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onTecla);
+    return () => document.removeEventListener("keydown", onTecla);
+  }, [abierto, onClose]);
+
+  if (!abierto) return null;
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, background: "rgba(5,8,14,0.75)", zIndex: 100, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "40px 20px", overflowY: "auto" }}
+    >
+      <div ref={ref} style={{ background: C.fondo, border: `1px solid ${C.borde}`, borderRadius: 14, padding: 24, maxWidth: 640, width: "100%", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18 }}>
+          <div>
+            <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 6 }}>ELIGE COMPETICIÓN</div>
+            <h3 style={{ fontFamily: OSWALD, color: C.texto, fontSize: 20, margin: 0 }}>¿Cuál te interesa?</h3>
+          </div>
+          <button onClick={onClose} aria-label="Cerrar" style={{ background: "none", border: "none", color: C.textoSuave, fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 4 }}>✕</button>
+        </div>
+
+        <GrupoCompeticiones etiqueta="CLUBES · FASE PREVIA Y FASE DE LIGA 2026/27">
+          <TarjetaCompeticion color={C.oro} titulo="Champions League"
+            explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
+            simulador="#/simulador/cl" />
+          <TarjetaCompeticion color={C.naranja} titulo="Europa League"
+            explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
+            simulador="#/simulador/el" />
+          <TarjetaCompeticion color={C.azul} titulo="Conference League"
+            explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
+            simulador="#/simulador/co" />
+        </GrupoCompeticiones>
+
+        <GrupoCompeticiones etiqueta="SELECCIONES">
+          <TarjetaCompeticion color={C.azul} titulo="Nations League 2026/27"
+            explicacion={[{ href: "#/nations-league", label: "Cómo funciona" }]}
+            simulador="#/simulador-selecciones" />
+        </GrupoCompeticiones>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
+  const [selectorAbierto, setSelectorAbierto] = useState(false);
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 20px 60px" }}>
@@ -157,8 +215,8 @@ export default function Landing() {
             Empezamos por las fases previas europeas de la temporada 2026/27.
           </p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <a href="#/formato" style={{ background: C.azul, color: C.fondo, borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 600, fontFamily: OSWALD, textDecoration: "none" }}>Entiende el formato</a>
-            <a href="#/simulador" style={{ background: "transparent", color: C.azul, border: `1px solid ${C.azul}`, borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 600, fontFamily: OSWALD, textDecoration: "none" }}>Abrir el simulador</a>
+            <button onClick={() => setSelectorAbierto(true)} style={{ background: C.azul, color: C.fondo, border: "none", borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 600, fontFamily: OSWALD, cursor: "pointer" }}>Entiende el formato</button>
+            <button onClick={() => setSelectorAbierto(true)} style={{ background: "transparent", color: C.azul, border: `1px solid ${C.azul}`, borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 600, fontFamily: OSWALD, cursor: "pointer" }}>Abrir el simulador</button>
           </div>
         </div>
 
@@ -179,10 +237,10 @@ export default function Landing() {
         {/* Qué puedes hacer */}
         <Seccion etiqueta="02" titulo="¿Qué puedes hacer?">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
-            <TarjetaAccion icono="📖" titulo="Entiende el formato" href="#/formato"
+            <TarjetaAccion icono="🏆" titulo="Elige tu competición" onClick={() => setSelectorAbierto(true)}
+              texto="De clubes a selecciones: cada competición tiene su propia explicación y su propio simulador, y se irán sumando más." />
+            <TarjetaAccion icono="📖" titulo="Entiende el formato" onClick={() => setSelectorAbierto(true)}
               texto="Dos artículos con gráficos y ejemplos: las fases previas del verano, y la fase de liga y las eliminatorias que vienen después." />
-            <TarjetaAccion icono="🏆" titulo="Nations League 2026/27" href="#/nations-league"
-              texto="Cómo el torneo de selecciones reparte plazas de repesca para la Eurocopa 2028, y qué se juega España." />
             <TarjetaAccion icono="⚽" titulo="Simula las rondas"
               texto="Introduce los resultados que quieras o genera simulaciones automáticas partido a partido." />
             <TarjetaAccion icono="🎲" titulo="Sortea los cruces"
@@ -210,7 +268,7 @@ export default function Landing() {
         <Seccion etiqueta="04" titulo="Empieza por aquí">
           <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 720 }}>
             {[
-              { n: "1", texto: <>Lee <a href="#/formato" style={{ color: C.azul }}>Entiende el formato</a> para saber cómo funcionan las fases previas: rondas, rutas y caminos entre competiciones.</> },
+              { n: "1", texto: <>Lee <button onClick={() => setSelectorAbierto(true)} style={{ color: C.azul, background: "none", border: "none", padding: 0, font: "inherit", cursor: "pointer", textDecoration: "underline" }}>Entiende el formato</button> de la competición que te interese: rondas, rutas y caminos entre competiciones.</> },
               { n: "2", texto: <>Abre el simulador de la competición que te interese: cada partido está numerado (R1-1, EL1-2, CO1-3…) para que puedas localizar cualquier referencia.</> },
               { n: "3", texto: <>Introduce resultados reales o pulsa «Simular» en cada ronda, y sortea las rondas siguientes cuando se completen.</> },
             ].map((paso) => (
@@ -262,6 +320,8 @@ export default function Landing() {
           </div>
         </footer>
       </div>
+
+      <SelectorCompeticion abierto={selectorAbierto} onClose={() => setSelectorAbierto(false)} />
     </div>
   );
 }

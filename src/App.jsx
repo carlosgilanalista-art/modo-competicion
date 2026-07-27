@@ -3377,6 +3377,18 @@ export default function App() {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');`}</style>
 
+      <a href="https://forms.gle/Vyqkoy7G6daEJdX27" target="_blank" rel="noopener noreferrer" style={{
+        position: "fixed", bottom: 20, right: 20, zIndex: 1000,
+        display: "inline-flex", alignItems: "center", gap: 8,
+        background: vista === "simulador" ? tabs.find((tb) => tb.id === tab).color : TEMA_CL.acento,
+        color: "#0B1420",
+        borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 700,
+        fontFamily: "'Oswald', sans-serif", textDecoration: "none",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
+      }}>
+        💬 Danos tu opinión
+      </a>
+
       {vista === "inicio" && <Landing />}
       {vista === "formato" && <Articulo />}
       {vista === "formato-liga" && <ArticuloFaseLiga />}
@@ -3423,17 +3435,6 @@ export default function App() {
               {tab === "CL" && <ChampionsView cl={cl} />}
               {tab === "EL" && <EuropaView el={el} cl={cl} />}
               {tab === "CO" && <ConferenceView co={co} cl={cl} el={el} />}
-
-              <div style={{ display: "flex", justifyContent: "center", margin: "28px 0 8px" }}>
-                <a href="mailto:feedback@modocompeticion.com" style={{
-                  display: "inline-flex", alignItems: "center", gap: 8,
-                  background: tabs.find((tb) => tb.id === tab).color, color: "#0B1420",
-                  borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 700,
-                  fontFamily: "'Oswald', sans-serif", textDecoration: "none",
-                }}>
-                  💬 Danos tu opinión
-                </a>
-              </div>
 
               <div style={{ borderTop: "1px solid #333", paddingTop: 16, marginTop: 12, color: "#666", fontSize: 11, lineHeight: 1.6 }}>
                 Los datos fluyen en directo entre pestañas — resuelve un resultado en Champions y verás el efecto
