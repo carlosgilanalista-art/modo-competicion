@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
 // PÁGINA DE INICIO — presentación genérica del sitio
@@ -173,7 +174,7 @@ function SelectorCompeticion({ abierto, onClose }) {
             explicacion={[{ href: "#/nations-league", label: "Cómo funciona" }]}
             simulador="#/simulador-selecciones" />
           <TarjetaCompeticion color={C.azul} titulo="Clasificación Euro 2028"
-            explicacion={[{ href: "#/nations-league", label: "Cómo funciona la Nations League" }]}
+            explicacion={[{ href: "#/euro2028", label: "Cómo funciona" }, { href: "#/nations-league", label: "Nations League" }]}
             simulador="#/simulador-clasificacion-euro2028" />
         </GrupoCompeticiones>
       </div>
@@ -182,6 +183,10 @@ function SelectorCompeticion({ abierto, onClose }) {
 }
 
 export default function Landing() {
+  useDocumentMeta({
+    title: "Modo Competición · Simuladores y formatos de competición",
+    description: "Explicaciones claras y simuladores interactivos, competición a competición. Empezamos por las fases previas europeas de la temporada 2026/27.",
+  });
   const [selectorAbierto, setSelectorAbierto] = useState(false);
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
@@ -206,6 +211,7 @@ export default function Landing() {
               <NavDropdownEnlace href="#/nations-league">Explicación</NavDropdownEnlace>
               <NavDropdownEtiqueta>CLASIFICACIÓN EURO 2028</NavDropdownEtiqueta>
               <NavDropdownEnlace href="#/simulador-clasificacion-euro2028">Simulador</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/euro2028">Explicación</NavDropdownEnlace>
             </NavDropdown>
           </nav>
         </header>
@@ -312,7 +318,7 @@ export default function Landing() {
               simulador="#/simulador-selecciones" />
             <TarjetaCompeticion color={C.azul} titulo="Clasificación Euro 2028"
               sub="Las 5 etapas hasta los 24 clasificados: fase de liga NL, ranking provisional, sorteo, fase de grupos y repesca de marzo de 2028."
-              explicacion={[{ href: "#/nations-league", label: "Cómo funciona la Nations League" }]}
+              explicacion={[{ href: "#/euro2028", label: "Cómo funciona" }, { href: "#/nations-league", label: "Nations League" }]}
               simulador="#/simulador-clasificacion-euro2028" />
           </GrupoCompeticiones>
 

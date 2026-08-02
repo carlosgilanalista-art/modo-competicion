@@ -3,6 +3,8 @@ import Landing from "./Landing.jsx";
 import Articulo from "./Articulo.jsx";
 import ArticuloFaseLiga from "./ArticuloFaseLiga.jsx";
 import ArticuloNationsLeague from "./ArticuloNationsLeague.jsx";
+import ArticuloEuro2028 from "./ArticuloEuro2028.jsx";
+import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
 // FUNCIONES COMPARTIDAS
@@ -3320,6 +3322,7 @@ function SimuladorNationsLeaguePage({ nl }) {
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
             <a href="#/nations-league" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Cómo funciona la Nations League</a>
+            <a href="#/euro2028" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>EURO 2028</a>
             <a href="#/simulador" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Simulador de clubes</a>
           </div>
         </div>
@@ -4368,6 +4371,10 @@ function EQEtapaFinal({ eq, colores }) {
 
 function SimuladorEuro2028Page({ eq }) {
   const c = TEMA_EQ;
+  useDocumentMeta({
+    title: "Simulador de la clasificación para la EURO 2028 · Modo Competición",
+    description: "Simula la clasificación para la EURO 2028 etapa a etapa: fase de liga de la Nations League, ranking provisional, sorteo de los 12 grupos, fase de grupos y repesca de marzo de 2028.",
+  });
   return (
     <div style={{ minHeight: "100vh", background: c.fondo, fontFamily: "'Inter', sans-serif" }}>
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 20px 60px" }}>
@@ -4375,6 +4382,7 @@ function SimuladorEuro2028Page({ eq }) {
           <div style={{ fontFamily: "'JetBrains Mono', monospace", color: c.textoSuave, fontSize: 11, letterSpacing: 3 }}>SIMULADOR EURO 2028 · CLASIFICACIÓN</div>
           <div style={{ display: "flex", gap: 14 }}>
             <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
+            <a href="#/euro2028" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Cómo funciona</a>
             <a href="#/simulador-selecciones" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Nations League</a>
           </div>
         </div>
@@ -4431,7 +4439,9 @@ export default function App() {
   const [tab, setTab] = useState("CL");
   const hash = useHashRoute();
 
-  const vista = hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : "inicio";
+  // El simulador se comprueba antes que el artículo: "#/simulador-clasificacion-euro2028"
+  // empieza por "#/simulador", así que el orden de las ramas es lo que las separa.
+  const vista = hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -4468,6 +4478,7 @@ export default function App() {
       {vista === "formato" && <Articulo />}
       {vista === "formato-liga" && <ArticuloFaseLiga />}
       {vista === "nations-league" && <ArticuloNationsLeague />}
+      {vista === "euro2028" && <ArticuloEuro2028 />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
       {vista === "simulador" && (
@@ -4481,6 +4492,7 @@ export default function App() {
                   <a href="#/formato" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: fases previas</a>
                   <a href="#/formato-liga" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Formato: liga y eliminatorias</a>
                   <a href="#/nations-league" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Nations League 2026/27</a>
+                  <a href="#/euro2028" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>EURO 2028</a>
                   <a href="#/simulador-selecciones" style={{ color: "#888", fontSize: 12, textDecoration: "none" }}>Simulador selecciones</a>
                 </div>
               </div>
