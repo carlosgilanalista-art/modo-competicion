@@ -3514,11 +3514,30 @@ function eqConstruirBombos(rankingProvisional, cfg) {
   for (const tam of cfg.tamanos) { bombos.push(rankingProvisional.slice(i, i + tam)); i += tam; }
   return bombos;
 }
+// Contexto de restricciones del sorteo, derivado del ranking provisional.
+function eqContextoRestricciones(rankingProvisional, cfg = EQ_BOMBOS_CFG, anfitriones = EQ_ANFITRIONES, prohibidos = EQ_PROHIBIDOS) {
+  return { cfg, anfitriones, prohibidos, qfLigaA: new Set(rankingProvisional.slice(0, 8).map((e) => e.nombre)) };
+}
+// Única fuente de verdad de las restricciones del sorteo: la usan tanto el
+// sorteo automático (backtracking) como la edición manual, para que ninguna
+// de las dos pueda producir un sorteo que la otra consideraría ilegal.
+// `grupo` es { equipos: [...], tamano }. Devuelve null si el equipo puede
+// entrar, o el motivo (texto para la UI) por el que no puede.
+function eqMotivoBloqueo(equipo, grupo, ctx) {
+  const { cfg, anfitriones, prohibidos, qfLigaA } = ctx;
+  if (grupo.equipos.length >= grupo.tamano) return "Grupo completo";
+  if (cfg.qfLigaAForzadoAGruposDe4 && qfLigaA.has(equipo.nombre) && grupo.tamano !== 4)
+    return "Cuartofinalista de Liga A: solo puede caer en un grupo de cuatro";
+  if (anfitriones.includes(equipo.nombre) && grupo.equipos.some((e) => anfitriones.includes(e.nombre)))
+    return "Ya hay un anfitrión en este grupo";
+  const choque = grupo.equipos.find((e) => prohibidos.some(([x, y]) => (x === equipo.nombre && y === e.nombre) || (y === equipo.nombre && x === e.nombre)));
+  if (choque) return `Emparejamiento prohibido con ${choque.nombre}`;
+  return null;
+}
 function eqSortearGrupos(rankingProvisional, cfg = EQ_BOMBOS_CFG, tamanos = EQ_TAMANOS_GRUPO, anfitriones = EQ_ANFITRIONES, prohibidos = EQ_PROHIBIDOS) {
   const bombos = eqConstruirBombos(rankingProvisional, cfg);
   const idsGrupos = Array.from({ length: tamanos.totalGrupos }, (_, i) => `G${i + 1}`);
-  const qfLigaA = new Set(rankingProvisional.slice(0, 8).map((e) => e.nombre));
-  const esProhibido = (a, b) => prohibidos.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+  const ctx = eqContextoRestricciones(rankingProvisional, cfg, anfitriones, prohibidos);
   const bomboExtra = cfg.bombo5SoloGruposDe5 ? bombos[bombos.length - 1] : null;
   const bombosPrincipales = bomboExtra ? bombos.slice(0, -1) : bombos;
 
@@ -3542,14 +3561,7 @@ function eqSortearGrupos(rankingProvisional, cfg = EQ_BOMBOS_CFG, tamanos = EQ_T
     // artificial — queda anotado como limitación conocida de esta Fase 3.
     const secuencia = bombosPrincipales.flatMap((b) => shuffleCopy(b));
 
-    function valido(equipo, gid) {
-      const grupo = grupos.get(gid);
-      if (grupo.length >= tamanoDe(gid)) return false;
-      if (cfg.qfLigaAForzadoAGruposDe4 && qfLigaA.has(equipo.nombre) && tamanoDe(gid) !== 4) return false;
-      if (anfitriones.includes(equipo.nombre) && grupo.some((e) => anfitriones.includes(e.nombre))) return false;
-      if (grupo.some((e) => esProhibido(equipo.nombre, e.nombre))) return false;
-      return true;
-    }
+    const valido = (equipo, gid) => eqMotivoBloqueo(equipo, { equipos: grupos.get(gid), tamano: tamanoDe(gid) }, ctx) === null;
     let nodos = 0;
     const LIMITE_NODOS = 20000;
     function backtrack(pos) {
@@ -3822,6 +3834,7 @@ export {
   EQ_PROHIBIDOS, EQ_FUENTE_FUERZA,
   eqSimularFaseLigaNL, eqRankingProvisional, eqObtenerRankingProvisional,
   eqSortearGrupos, eqObtenerSorteo, eqCalendarioGrupo, eqStats, eqCriteriosCmp,
+  eqContextoRestricciones, eqMotivoBloqueo,
   eqRepescaPool, eqSimularRepescaBracket,
   eqClasificacionGrupo, eqRankMismaPosicion, eqRankingGeneralClasificacion, eqPlazasAnfitrion,
   eqPoolNLGanadoresABC, eqGanadorD49, eqMejoresLibres, eqRepesca, eqSimularPipelineCompleto,
@@ -3891,13 +3904,27 @@ function useEuro2028(nl) {
     setSorteo((prev) => (Array.isArray(prev) ? prev.map((g) => ({ ...g, equipos: g.equipos.filter((e) => e.nombre !== nombre) })) : prev));
     setSeleccionMovimiento(nombre);
   };
+  // Motivo por el que el equipo seleccionado no podría entrar en un grupo
+  // (null = sí puede). Aplica exactamente las mismas restricciones que el
+  // sorteo automático — misma función eqMotivoBloqueo — evaluadas sobre el
+  // grupo ya sin el equipo, para que mover un equipo dentro de su propio
+  // grupo no se bloquee a sí mismo.
+  const motivoBloqueo = (nombre, gid) => {
+    if (!Array.isArray(sorteo) || !rankingProvisional) return "Sorteo no disponible";
+    const equipo = rankingProvisional.find((e) => e.nombre === nombre);
+    const grupo = sorteo.find((g) => g.id === gid);
+    if (!equipo || !grupo) return "Grupo no encontrado";
+    const ctx = eqContextoRestricciones(rankingProvisional);
+    return eqMotivoBloqueo(equipo, { ...grupo, equipos: grupo.equipos.filter((e) => e.nombre !== nombre) }, ctx);
+  };
   const colocarEnGrupo = (gid) => {
     if (!seleccionMovimiento || !Array.isArray(sorteo) || !rankingProvisional) return;
     const equipoObj = rankingProvisional.find((e) => e.nombre === seleccionMovimiento);
     if (!equipoObj) return;
+    if (motivoBloqueo(seleccionMovimiento, gid)) return; // nunca se construye un sorteo ilegal desde la UI
     setSorteo((prev) => {
       const sinEquipo = prev.map((g) => ({ ...g, equipos: g.equipos.filter((e) => e.nombre !== seleccionMovimiento) }));
-      return sinEquipo.map((g) => (g.id === gid && g.equipos.length < g.tamano ? { ...g, equipos: [...g.equipos, equipoObj] } : g));
+      return sinEquipo.map((g) => (g.id === gid ? { ...g, equipos: [...g.equipos, equipoObj] } : g));
     });
     setSeleccionMovimiento(null);
   };
@@ -3965,7 +3992,7 @@ function useEuro2028(nl) {
     nl, nlGrupos, resNL, rellenarNL: nl.rellenarTodo, reiniciarNL: nl.reiniciarTodo, nlClasificaciones, nlCompleta,
     rankingProvisional, origenRanking, origenSorteo,
     sorteo, sortear, reiniciarSorteo, iniciarSorteoManual, sorteoListo,
-    poolSorteo, seleccionMovimiento, seleccionarParaMover, quitarDelGrupo, colocarEnGrupo,
+    poolSorteo, seleccionMovimiento, seleccionarParaMover, quitarDelGrupo, colocarEnGrupo, motivoBloqueo,
     gruposCal, resClasif, cambiarClasif, reiniciarPartidoClasif, rellenarClasif, rellenarTodoClasif, tablas, quintos, clasifCompleta,
     rankingGeneral, directos20, plazasAnfitrion,
     repescaPool, repescaGanadores, simularRepesca,
@@ -4200,7 +4227,7 @@ function EQEtapa3Sorteo({ eq, colores }) {
       <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 8 }}>
         Bombos por defecto (5: cuatro de 12 + uno de 6 solo para grupos de cinco), separación de anfitriones y lista de
         prohibidos son SUPUESTOS documentados en la capa de datos, pendientes de confirmación oficial (sorteo real: 6/12/2026).
-        {editando && " Modo edición: pulsa un equipo para seleccionarlo, luego pulsa otro equipo (o el nombre de un grupo con hueco) para moverlo ahí. El botón × lo manda de vuelta al pool."}
+        {editando && " Modo edición: pulsa un equipo para seleccionarlo y luego el grupo de destino. Se aplican las mismas restricciones que en el sorteo automático (anfitriones en grupos distintos, emparejamientos prohibidos y cuartofinalistas de Liga A en grupos de cuatro): los grupos que las incumplirían aparecen atenuados con el motivo y no admiten el equipo. El botón × lo manda de vuelta al pool."}
       </div>
       {editando && eq.poolSorteo.length > 0 && (
         <div style={{ border: `1px dashed ${colores.borde}`, borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
@@ -4218,19 +4245,28 @@ function EQEtapa3Sorteo({ eq, colores }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
           {eq.sorteo.map((g) => {
             // Toda la tarjeta del grupo es zona de destino mientras haya un
-            // equipo seleccionado y quede hueco: pulsar en cualquier punto de
-            // ella (no solo en el título) coloca el equipo ahí.
-            const admite = editando && !!eq.seleccionMovimiento && g.equipos.length < g.tamano;
+            // equipo seleccionado y las restricciones lo permitan: pulsar en
+            // cualquier punto de ella (no solo en el título) coloca el equipo.
+            // Los grupos que violarían una restricción se marcan y no aceptan
+            // el clic, así que desde la UI no se puede armar un sorteo ilegal.
+            const seleccion = editando ? eq.seleccionMovimiento : null;
+            const motivo = seleccion ? eq.motivoBloqueo(seleccion, g.id) : null;
+            const admite = !!seleccion && !motivo;
+            const bloqueado = !!seleccion && !!motivo;
             return (
               <div key={g.id}
                 onClick={admite ? () => eq.colocarEnGrupo(g.id) : undefined}
+                title={bloqueado ? motivo : undefined}
                 style={{
-                  border: `1px ${admite ? "dashed" : "solid"} ${admite ? colores.acento : colores.borde}`,
+                  border: `1px ${admite ? "dashed" : "solid"} ${admite ? colores.acento : bloqueado ? `${colores.alerta}66` : colores.borde}`,
                   background: admite ? `${colores.acento}11` : "transparent",
-                  borderRadius: 8, padding: "8px 10px", cursor: admite ? "pointer" : "default", minHeight: 40,
+                  opacity: bloqueado ? 0.55 : 1,
+                  borderRadius: 8, padding: "8px 10px", cursor: admite ? "pointer" : bloqueado ? "not-allowed" : "default", minHeight: 40,
                 }}>
                 <div style={{ color: colores.acento, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
-                  Grupo {g.id} ({g.equipos.length}/{g.tamano}){admite && <span style={{ color: colores.textoSuave, fontWeight: 400 }}> · pulsa para colocar</span>}
+                  Grupo {g.id} ({g.equipos.length}/{g.tamano})
+                  {admite && <span style={{ color: colores.textoSuave, fontWeight: 400 }}> · pulsa para colocar</span>}
+                  {bloqueado && <span style={{ color: colores.alerta, fontWeight: 400, fontSize: 10 }}> · {motivo}</span>}
                 </div>
                 {g.equipos.map((e) => (
                   <div key={e.nombre} style={{ ...chipEstilo(e.nombre, false), display: "flex", justifyContent: "space-between", width: "100%" }}>
