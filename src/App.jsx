@@ -2612,6 +2612,7 @@ function useNationsLeague() {
   const rellenarGrupo = (g) => rellenarPartidos(g.partidos);
   const rellenarJornadaGrupo = (g, j) => rellenarPartidos(g.partidos.filter((m) => m.jornada === j));
   const rellenarTodo = () => rellenarPartidos(grupos.flatMap((g) => g.partidos));
+  const reiniciarTodo = () => setRes({});
 
   const grupoCompleto = (g) => g.partidos.every((m) => { const r = res[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; });
   const clasificaciones = useMemo(() => {
@@ -2814,7 +2815,7 @@ function useNationsLeague() {
   }, [rankingGeneral, ganadoresDeGrupo, yaClasificados]);
 
   return {
-    grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, clasificaciones, movimientos,
+    grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, reiniciarTodo, clasificaciones, movimientos,
     playoffPools, sorteoAB, tiesAB, resAB, sortearAB, confirmarAB, cambiarAB, reiniciarAB, rellenarAB,
     sorteoBC, tiesBC, resBC, sortearBC, confirmarBC, cambiarBC, reiniciarBC, rellenarBC,
     finalFourPool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta,
@@ -3833,26 +3834,21 @@ export {
 // independiente (no comparte estado con useNationsLeague ni con los de
 // clubes), aunque reutiliza sus mismas funciones puras para la etapa 1.
 // ============================================================
-function useEuro2028() {
+// Recibe el hook del simulador de Nations League (`nl`) y lo usa como etapa 1:
+// los dos simuladores comparten un único estado de resultados, así que lo que
+// se edite en `#/simulador-selecciones` se refleja aquí y viceversa.
+function useEuro2028(nl) {
   // ---- Etapa 1: fase de liga NL 2026/27 (prerrequisito de la etapa 2) ----
-  const nlGrupos = useMemo(() => {
-    const out = [];
-    for (const liga of ["A", "B", "C", "D"]) {
-      for (const [gid, nombres] of Object.entries(NL_GRUPOS[liga])) {
-        const equipos = nombres.map((nombre) => ({ nombre, rank: NL_RANK.get(nombre) }));
-        out.push({ liga, id: gid, equipos, partidos: nlFixturesGrupo(gid, nombres) });
-      }
-    }
-    return out;
-  }, []);
-  const [resNL, setResNL] = useState({});
-  const rellenarNL = (partidos) => setResNL((p) => { const n = { ...p }; partidos.forEach((m) => { n[m.clave] = { gl: rnd5(), gv: rnd5() }; }); return n; });
-  const reiniciarNL = () => setResNL({});
-  const nlClasificaciones = useMemo(() => new Map(nlGrupos.map((g) => [g.id, clasificacionGrupoNL(g.equipos, g.partidos, resNL)])), [nlGrupos, resNL]);
-  const nlCompleta = useMemo(
-    () => nlGrupos.every((g) => g.partidos.every((m) => { const r = resNL[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; })),
-    [nlGrupos, resNL]
+  // La forma de los grupos difiere ligeramente entre hooks: useNationsLeague
+  // guarda {nombre, rank, bombo} y aquí solo hace falta {nombre, rank}, así
+  // que se reusa tal cual (rank es lo único que consultan las funciones puras).
+  const nlGrupos = nl.grupos;
+  const resNL = nl.res;
+  const nlClasificaciones = useMemo(
+    () => new Map(nlGrupos.map((g) => [g.id, nl.clasificaciones.get(g.id).filas])),
+    [nlGrupos, nl.clasificaciones]
   );
+  const nlCompleta = useMemo(() => nlGrupos.every((g) => nl.clasificaciones.get(g.id).completa), [nlGrupos, nl.clasificaciones]);
 
   // ---- Etapa 2: ranking provisional. E1: si hay dato real, se usa tal cual. ----
   const origenRanking = EQ_RANKING_PROVISIONAL_REAL ? "real" : "simulado";
@@ -3963,10 +3959,10 @@ function useEuro2028() {
     [directos20, plazasAnfitrion, repescaGanadores]
   );
 
-  const reiniciarTodo = () => { setResNL({}); setSorteo(EQ_SORTEO_REAL ?? null); setSeleccionMovimiento(null); setResClasif(EQ_RESULTADOS_REALES_PARCIALES); setRepescaGanadores(null); };
+  const reiniciarTodo = () => { nl.reiniciarTodo(); setSorteo(EQ_SORTEO_REAL ?? null); setSeleccionMovimiento(null); setResClasif(EQ_RESULTADOS_REALES_PARCIALES); setRepescaGanadores(null); };
 
   return {
-    nlGrupos, resNL, rellenarNL, reiniciarNL, nlClasificaciones, nlCompleta,
+    nl, nlGrupos, resNL, rellenarNL: nl.rellenarTodo, reiniciarNL: nl.reiniciarTodo, nlClasificaciones, nlCompleta,
     rankingProvisional, origenRanking, origenSorteo,
     sorteo, sortear, reiniciarSorteo, iniciarSorteoManual, sorteoListo,
     poolSorteo, seleccionMovimiento, seleccionarParaMover, quitarDelGrupo, colocarEnGrupo,
@@ -3982,7 +3978,12 @@ function useEuro2028() {
 // ============================================================
 const TEMA_EQ = TEMA_NL; // mismo tema oscuro que el resto de simuladores de selecciones
 
-// ---- Banderas (emoji Unicode, sin dependencias ni llamadas externas) ----
+// ---- Banderas (imágenes SVG de flagcdn.com) ----
+// Se usan imágenes en vez de emoji Unicode porque los emoji de bandera no se
+// renderizan en Windows (se ven como el código de dos letras) y porque
+// Inglaterra/Escocia/Gales/Irlanda del Norte y Kosovo no tienen emoji fiable
+// en todas las plataformas. flagcdn.com sirve los códigos ISO y también los
+// de las cuatro naciones británicas (gb-eng, gb-sct, gb-wls, gb-nir).
 // Código ISO 3166-1 alpha-2 por selección. Formato exacto de NL_RANKING.
 const EQ_ISO = {
   Portugal: "PT", España: "ES", Francia: "FR", Alemania: "DE", Italia: "IT", "Países Bajos": "NL",
@@ -3996,25 +3997,34 @@ const EQ_ISO = {
   Gibraltar: "GI", Malta: "MT", Liechtenstein: "LI", Andorra: "AD", "Islas Feroe": "FO",
   "República de Irlanda": "IE", Kosovo: "XK",
 };
-// Inglaterra/Escocia/Gales no tienen código ISO de país (son parte de GB): se
-// usan las banderas de subdivisión del Reino Unido soportadas por Unicode
-// (secuencias de "tag"). Irlanda del Norte no tiene bandera propia en
-// Unicode — se usa la de Reino Unido como aproximación, marcado aquí porque
-// no es una bandera "oficial" de esa selección. El renderizado de estas
-// banderas y el de Kosovo (código XK, no ISO estándar) depende de que la
-// fuente de emoji del sistema operativo las soporte — en algunos sistemas
-// (notablemente Windows) pueden verse como texto en vez de la bandera.
-const EQ_BANDERA_ESPECIAL = {
-  Inglaterra: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-  Escocia: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-  Gales: "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
-  "Irlanda del Norte": "🇬🇧",
+// Las cuatro naciones británicas no tienen código ISO de país propio (son
+// parte de GB), pero flagcdn.com sirve sus banderas oficiales con estos
+// códigos de subdivisión.
+const EQ_ISO_BRITANICAS = {
+  Inglaterra: "gb-eng",
+  Escocia: "gb-sct",
+  Gales: "gb-wls",
+  "Irlanda del Norte": "gb-nir",
 };
-function eqBandera(nombre) {
-  if (EQ_BANDERA_ESPECIAL[nombre]) return EQ_BANDERA_ESPECIAL[nombre];
-  const codigo = EQ_ISO[nombre];
-  if (!codigo) return "";
-  return [...codigo].map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)).join("");
+function eqCodigoBandera(nombre) {
+  return EQ_ISO_BRITANICAS[nombre] ?? EQ_ISO[nombre]?.toLowerCase() ?? null;
+}
+function Bandera({ nombre, alto = 11 }) {
+  const codigo = eqCodigoBandera(nombre);
+  if (!codigo) return null;
+  return (
+    <img src={`https://flagcdn.com/h20/${codigo}.png`} alt="" title={nombre} loading="lazy"
+      style={{ height: alto, width: alto * 1.5, objectFit: "cover", borderRadius: 2, verticalAlign: "middle", flexShrink: 0 }} />
+  );
+}
+// Nombre precedido de su bandera, para usarlo en línea en cualquier listado.
+function ConBandera({ nombre, alto, children }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+      <Bandera nombre={nombre} alto={alto} />
+      <span>{children ?? nombre}</span>
+    </span>
+  );
 }
 
 function Supuesto({ children, colores = TEMA_EQ }) {
@@ -4046,7 +4056,7 @@ function EQTablaGrupo({ filas, quinto, completa, colores }) {
               title={f.nombre === quinto ? "5º puesto: sus resultados se descartan al comparar con otros grupos (Art. clasificación)" : undefined}>
               <td style={{ ...td, textAlign: "left", fontWeight: 600 }}>{idx + 1}</td>
               <td style={{ ...td, textAlign: "left", fontFamily: "'Inter', sans-serif" }}>
-                {eqBandera(f.nombre)} {f.nombre}{f.nombre === quinto && <span style={{ color: colores.textoSuave, fontSize: 9 }}> (5º, descartado en comparativas)</span>}
+                <ConBandera nombre={f.nombre} />{f.nombre === quinto && <span style={{ color: colores.textoSuave, fontSize: 9 }}> (5º, descartado en comparativas)</span>}
               </td>
               <td style={td}>{f.pj}</td><td style={td}>{f.g}</td><td style={td}>{f.e}</td><td style={td}>{f.p}</td>
               <td style={td}>{f.gf - f.gc > 0 ? "+" : ""}{f.gf - f.gc}</td>
@@ -4085,11 +4095,11 @@ function EQGrupoCard({ grupo, eq, colores }) {
               const r = eq.resClasif[m.clave];
               return (
                 <div key={m.clave} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, textAlign: "right", minWidth: 90 }}>{m.local} {eqBandera(m.local)}</span>
+                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, textAlign: "right", minWidth: 90 }}><ConBandera nombre={m.local} /></span>
                   <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => eq.cambiarClasif(m.clave, "gl", e.target.value)} style={inputStyle} />
                   <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
                   <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => eq.cambiarClasif(m.clave, "gv", e.target.value)} style={inputStyle} />
-                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}>{eqBandera(m.visitante)} {m.visitante}</span>
+                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}><ConBandera nombre={m.visitante} /></span>
                   {r && (r.gl !== undefined || r.gv !== undefined) && (
                     <button onClick={() => eq.reiniciarPartidoClasif(m.clave)} title="Reiniciar resultado"
                       style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
@@ -4105,24 +4115,36 @@ function EQGrupoCard({ grupo, eq, colores }) {
 }
 
 function EQEtapa1NL({ eq, colores }) {
+  const [abierto, setAbierto] = useState(false);
   return (
     <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16 }}>Etapa 1 · Fase de liga Nations League 2026/27</div>
-          <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: 2, maxWidth: 560 }}>
-            Prerrequisito del ranking provisional. Detalle completo (14 grupos, jornada a jornada) en el{" "}
-            <a href="#/simulador-selecciones" style={{ color: colores.acento }}>simulador de Nations League</a>; aquí solo se resuelve para poder encadenar la etapa 2.
+          <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: 2, maxWidth: 620 }}>
+            Prerrequisito del ranking provisional. Puedes simularla con los dados o introducir los resultados a mano,
+            grupo a grupo. Comparte los resultados con el{" "}
+            <a href="#/simulador-selecciones" style={{ color: colores.acento }}>simulador de Nations League</a>: lo que
+            cambies aquí se ve allí y viceversa.
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <BotonAleatorio onClick={() => eq.rellenarNL(eq.nlGrupos.flatMap((g) => g.partidos))} label="Simular fase de liga NL" colores={colores} />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <BotonAleatorio onClick={eq.rellenarNL} label="Simular fase de liga NL" colores={colores} />
+          <button onClick={() => setAbierto((v) => !v)}
+            style={{ background: abierto ? colores.acento : "none", color: abierto ? "#0B1420" : colores.texto, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+            {abierto ? "Ocultar grupos" : "✏️ Editar resultados"}
+          </button>
           {eq.nlCompleta && <button onClick={eq.reiniciarNL} style={{ background: "none", border: `1px solid ${colores.borde}`, color: colores.textoSuave, borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>↺ Reiniciar</button>}
         </div>
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: 8 }}>
-        {eq.nlCompleta ? "✓ Fase de liga NL completa — ranking provisional calculado." : "Pendiente de simular."}
+        {eq.nlCompleta ? "✓ Fase de liga NL completa — ranking provisional calculado." : "Pendiente: faltan resultados para calcular el ranking provisional."}
       </div>
+      {abierto && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14, marginTop: 14 }}>
+          {eq.nlGrupos.map((g) => <NLGrupoCard key={g.id} grupo={g} nl={eq.nl} colores={colores} />)}
+        </div>
+      )}
     </div>
   );
 }
@@ -4136,7 +4158,7 @@ function EQEtapa2Ranking({ eq, colores }) {
         {eq.origenRanking === "simulado" && <Supuesto colores={colores}>SIMULADO</Supuesto>}
       </summary>
       <ol style={{ columns: 2, color: colores.texto, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginTop: 10, paddingLeft: 18 }}>
-        {eq.rankingProvisional.map((e) => <li key={e.nombre}>{eqBandera(e.nombre)} {e.nombre}</li>)}
+        {eq.rankingProvisional.map((e) => <li key={e.nombre}><ConBandera nombre={e.nombre} /></li>)}
       </ol>
     </details>
   );
@@ -4186,7 +4208,7 @@ function EQEtapa3Sorteo({ eq, colores }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
             {eq.poolSorteo.map((e) => (
               <span key={e.nombre} style={chipEstilo(e.nombre, true)} onClick={() => eq.seleccionarParaMover(e.nombre)}>
-                {eqBandera(e.nombre)} {e.nombre}
+                <ConBandera nombre={e.nombre} />
               </span>
             ))}
           </div>
@@ -4194,26 +4216,36 @@ function EQEtapa3Sorteo({ eq, colores }) {
       )}
       {hayGrupos && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
-          {eq.sorteo.map((g) => (
-            <div key={g.id} style={{ border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "8px 10px" }}>
-              <div
-                onClick={editando && eq.seleccionMovimiento && g.equipos.length < g.tamano ? () => eq.colocarEnGrupo(g.id) : undefined}
-                style={{ color: colores.acento, fontSize: 12, fontWeight: 700, marginBottom: 4, cursor: editando && eq.seleccionMovimiento && g.equipos.length < g.tamano ? "pointer" : "default" }}>
-                Grupo {g.id} ({g.equipos.length}/{g.tamano})
-              </div>
-              {g.equipos.map((e) => (
-                <div key={e.nombre} style={{ ...chipEstilo(e.nombre, false), display: "flex", justifyContent: "space-between", width: "100%" }}>
-                  <span onClick={editando ? () => eq.seleccionarParaMover(e.nombre) : undefined} style={{ color: colores.texto }}>
-                    {eqBandera(e.nombre)} {e.nombre}
-                  </span>
-                  {editando && (
-                    <button onClick={() => eq.quitarDelGrupo(e.nombre)} title="Quitar del grupo"
-                      style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer", padding: "0 0 0 4px" }}>×</button>
-                  )}
+          {eq.sorteo.map((g) => {
+            // Toda la tarjeta del grupo es zona de destino mientras haya un
+            // equipo seleccionado y quede hueco: pulsar en cualquier punto de
+            // ella (no solo en el título) coloca el equipo ahí.
+            const admite = editando && !!eq.seleccionMovimiento && g.equipos.length < g.tamano;
+            return (
+              <div key={g.id}
+                onClick={admite ? () => eq.colocarEnGrupo(g.id) : undefined}
+                style={{
+                  border: `1px ${admite ? "dashed" : "solid"} ${admite ? colores.acento : colores.borde}`,
+                  background: admite ? `${colores.acento}11` : "transparent",
+                  borderRadius: 8, padding: "8px 10px", cursor: admite ? "pointer" : "default", minHeight: 40,
+                }}>
+                <div style={{ color: colores.acento, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                  Grupo {g.id} ({g.equipos.length}/{g.tamano}){admite && <span style={{ color: colores.textoSuave, fontWeight: 400 }}> · pulsa para colocar</span>}
                 </div>
-              ))}
-            </div>
-          ))}
+                {g.equipos.map((e) => (
+                  <div key={e.nombre} style={{ ...chipEstilo(e.nombre, false), display: "flex", justifyContent: "space-between", width: "100%" }}>
+                    <span onClick={editando ? (ev) => { ev.stopPropagation(); eq.seleccionarParaMover(e.nombre); } : undefined} style={{ color: colores.texto }}>
+                      <ConBandera nombre={e.nombre} />
+                    </span>
+                    {editando && (
+                      <button onClick={(ev) => { ev.stopPropagation(); eq.quitarDelGrupo(e.nombre); }} title="Quitar del grupo"
+                        style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer", padding: "0 0 0 4px" }}>×</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
       {eq.sorteo?.error && <div style={{ color: colores.alerta, fontSize: 12 }}>{eq.sorteo.error}</div>}
@@ -4242,11 +4274,11 @@ function EQEtapa4Resumen({ eq, colores }) {
     <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
       <div style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16, marginBottom: 8 }}>Clasificados directos (20) + plazas de anfitrión</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-        {eq.directos20.map((e) => <span key={e.nombre} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "3px 8px", fontSize: 11 }}>{eqBandera(e.nombre)} {e.nombre}</span>)}
+        {eq.directos20.map((e) => <span key={e.nombre} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "3px 8px", fontSize: 11 }}><ConBandera nombre={e.nombre} /></span>)}
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 12 }}>
         Plazas de anfitrión usadas: <strong style={{ color: colores.texto }}>{eq.plazasAnfitrion.usadas}</strong>
-        {eq.plazasAnfitrion.asignados.length > 0 && <> — {eq.plazasAnfitrion.asignados.map((n) => `${eqBandera(n)} ${n}`).join(", ")}</>}
+        {eq.plazasAnfitrion.asignados.map((n) => <span key={n} style={{ marginLeft: 8 }}><ConBandera nombre={n} /></span>)}
       </div>
     </div>
   );
@@ -4268,13 +4300,13 @@ function EQEtapa5Repesca({ eq, colores }) {
         Escenario: {pool.cfg.plazas} plazas, {pool.cfg.equipos} equipos ({pool.repartoSegundos} peores segundos + {pool.repartoNL} vía Nations League) — {pool.cfg.formato}.
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-        {pool.equipos.map((n) => <span key={n} style={{ background: colores.inputBg, color: colores.texto, borderRadius: 6, padding: "3px 8px", fontSize: 11, border: `1px solid ${colores.borde}` }}>{eqBandera(n)} {n}</span>)}
+        {pool.equipos.map((n) => <span key={n} style={{ background: colores.inputBg, color: colores.texto, borderRadius: 6, padding: "3px 8px", fontSize: 11, border: `1px solid ${colores.borde}` }}><ConBandera nombre={n} /></span>)}
       </div>
       {eq.repescaGanadores && (
         <div style={{ marginTop: 8 }}>
           <div style={{ color: colores.textoSuave, fontSize: 12, marginBottom: 4 }}>Plazas ganadas:</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {eq.repescaGanadores.map((n) => <span key={n} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "3px 8px", fontSize: 12, fontWeight: 700 }}>{eqBandera(n)} {n}</span>)}
+            {eq.repescaGanadores.map((n) => <span key={n} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "3px 8px", fontSize: 12, fontWeight: 700 }}><ConBandera nombre={n} /></span>)}
           </div>
         </div>
       )}
@@ -4290,7 +4322,7 @@ function EQEtapaFinal({ eq, colores }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {eq.clasificadosFinales.map((n) => (
           <span key={n} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 700 }}>
-            {eqBandera(n)} {n}
+            <ConBandera nombre={n} />
           </span>
         ))}
       </div>
@@ -4359,7 +4391,7 @@ export default function App() {
   const el = useEuropa(cl);
   const co = useConference(cl, el);
   const nl = useNationsLeague();
-  const eq = useEuro2028();
+  const eq = useEuro2028(nl);
   const [tab, setTab] = useState("CL");
   const hash = useHashRoute();
 
