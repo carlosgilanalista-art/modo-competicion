@@ -3443,6 +3443,390 @@ const EQ_SORTEO_REAL = null; // disponible desde el 7/12/2026 (día después del
 const EQ_RESULTADOS_REALES_PARCIALES = {}; // { [clavePartido]: { gl, gv } } — se va rellenando durante 2027
 
 // ============================================================
+// LÓGICA — CLASIFICACIÓN EURO 2028, motor por etapas (funciones puras)
+// Nada aquí depende de React: cada función es entrada→salida, para que una
+// etapa simulada se pueda sustituir por un archivo de datos real sin tocar
+// las demás (ver Fase 1). El motor de partido es el mismo aleatorio uniforme
+// (rnd5) que el resto del repo — decisión explícita de la Fase 1: el ranking
+// NL se usa como "fuerza" solo para desempates, bombos y siembra, nunca para
+// sesgar el resultado de un partido.
+// ============================================================
+
+// ---- Etapa 1: fase de liga de la Nations League 2026/27 ----
+// Reutiliza NL_GRUPOS/NL_RANK y las funciones puras ya existentes del
+// simulador de Nations League (nlFixturesGrupo, clasificacionGrupoNL) — no se
+// duplican ni se tocan; solo se llaman con resultados generados aquí, sin
+// pasar por el hook useNationsLeague() (que es exclusivo de ese simulador).
+function eqSimularFaseLigaNL() {
+  const resultados = {};
+  const grupos = [];
+  for (const liga of ["A", "B", "C", "D"]) {
+    for (const [gid, nombres] of Object.entries(NL_GRUPOS[liga])) {
+      const equipos = nombres.map((nombre) => ({ nombre, rank: NL_RANK.get(nombre) }));
+      const partidos = nlFixturesGrupo(gid, nombres);
+      partidos.forEach((m) => { resultados[m.clave] = { gl: rnd5(), gv: rnd5() }; });
+      grupos.push({ liga, id: gid, equipos, partidos });
+    }
+  }
+  const clasificaciones = new Map(grupos.map((g) => [g.id, clasificacionGrupoNL(g.equipos, g.partidos, resultados)]));
+  return { grupos, resultados, clasificaciones };
+}
+
+// ---- Etapa 2: ranking provisional (Art. 19) ----
+// Mismo algoritmo de bandas que `rankingProvisional` dentro de useNationsLeague
+// (liga A puestos 1-16, B 17-32, C 33-48, D 49-54; dentro de cada banda de
+// posición se usa nlRankMismaPosicion, ya existente). Se reimplementa aquí como
+// función pura porque el original vive dentro de un hook de React y no se
+// puede llamar desde fuera sin refactorizarlo — decisión de la Fase 1 (no
+// tocar los simuladores existentes).
+function eqRankingProvisional(grupos, clasificaciones) {
+  const gruposDe = (liga) => grupos.filter((g) => g.liga === liga);
+  const bucket = (liga, i) => nlRankMismaPosicion(gruposDe(liga).map((g) => clasificaciones.get(g.id)[i])).map((f) => f.equipo);
+  const orden = [];
+  for (const liga of ["A", "B", "C"]) for (let i = 0; i < 4; i++) orden.push(...bucket(liga, i));
+  for (let i = 0; i < 3; i++) orden.push(...bucket("D", i));
+  return orden; // 54 {nombre, rank} — índice 0 = puesto 1 del ranking provisional
+}
+
+// Punto de entrada E1: si hay ranking provisional real inyectado, se usa tal
+// cual y no se simula la etapa 1. NOTA para cuando se rellene EQ_RANKING_
+// PROVISIONAL_REAL: además del ranking plano hace falta la lista de
+// ganadores de grupo NL por liga (para la regla de entrada a la repesca vía
+// Nations League, etapa 5) — si no se aporta, esa vía de la repesca queda
+// vacía hasta que se complete el dato.
+function eqObtenerRankingProvisional() {
+  if (EQ_RANKING_PROVISIONAL_REAL) return { ranking: EQ_RANKING_PROVISIONAL_REAL.ranking ?? EQ_RANKING_PROVISIONAL_REAL, origen: "real", fase1: null };
+  const fase1 = eqSimularFaseLigaNL();
+  return { ranking: eqRankingProvisional(fase1.grupos, fase1.clasificaciones), origen: "simulado", fase1 };
+}
+
+// ---- Etapa 3: sorteo de los 12 grupos de clasificación ----
+// Bombos secuenciales por ranking provisional según EQ_BOMBOS_CFG (SUPUESTO,
+// ver capa de datos). El bombo extra (6 equipos) decide, al entrar, cuáles de
+// los 12 grupos son "de cinco"; el resto quedan "de cuatro". Backtracking con
+// reintento aleatorio — mismo patrón que sortear()/nlSortearEmparejamiento —
+// generalizado a N bombos y a un predicado de validez en vez de la
+// comprobación fija de país.
+function eqConstruirBombos(rankingProvisional, cfg) {
+  const bombos = [];
+  let i = 0;
+  for (const tam of cfg.tamanos) { bombos.push(rankingProvisional.slice(i, i + tam)); i += tam; }
+  return bombos;
+}
+function eqSortearGrupos(rankingProvisional, cfg = EQ_BOMBOS_CFG, tamanos = EQ_TAMANOS_GRUPO, anfitriones = EQ_ANFITRIONES, prohibidos = EQ_PROHIBIDOS) {
+  const bombos = eqConstruirBombos(rankingProvisional, cfg);
+  const idsGrupos = Array.from({ length: tamanos.totalGrupos }, (_, i) => `G${i + 1}`);
+  const qfLigaA = new Set(rankingProvisional.slice(0, 8).map((e) => e.nombre));
+  const esProhibido = (a, b) => prohibidos.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+  const bomboExtra = cfg.bombo5SoloGruposDe5 ? bombos[bombos.length - 1] : null;
+  const bombosPrincipales = bomboExtra ? bombos.slice(0, -1) : bombos;
+
+  function intentar() {
+    const grupos = new Map(idsGrupos.map((id) => [id, []]));
+    let gruposDe5 = new Set();
+    if (bomboExtra) {
+      const elegidos = shuffleCopy(idsGrupos).slice(0, tamanos.gruposDe5);
+      const equiposExtra = shuffleCopy(bomboExtra);
+      elegidos.forEach((gid, idx) => grupos.get(gid).push(equiposExtra[idx]));
+      gruposDe5 = new Set(elegidos);
+    }
+    const tamanoDe = (gid) => (gruposDe5.has(gid) ? 5 : 4);
+    // NOTA (Fase 3): NO se exige "máximo un equipo por bombo en cada grupo".
+    // Se probó, pero con la estructura de bombos acordada (bombo 1 = ranks
+    // 1-12, que contiene los 8 cuartofinalistas de Liga A) esa regla adicional
+    // es matemáticamente irreconciliable con "los QF caen siempre en grupos de
+    // cuatro": 8 equipos de un mismo bombo no caben en solo 6 grupos a razón
+    // de 1 por grupo. La separación por bombo no la exige el reglamento (solo
+    // las de más abajo), así que se retira en vez de forzar un EQ_BOMBOS_CFG
+    // artificial — queda anotado como limitación conocida de esta Fase 3.
+    const secuencia = bombosPrincipales.flatMap((b) => shuffleCopy(b));
+
+    function valido(equipo, gid) {
+      const grupo = grupos.get(gid);
+      if (grupo.length >= tamanoDe(gid)) return false;
+      if (cfg.qfLigaAForzadoAGruposDe4 && qfLigaA.has(equipo.nombre) && tamanoDe(gid) !== 4) return false;
+      if (anfitriones.includes(equipo.nombre) && grupo.some((e) => anfitriones.includes(e.nombre))) return false;
+      if (grupo.some((e) => esProhibido(equipo.nombre, e.nombre))) return false;
+      return true;
+    }
+    let nodos = 0;
+    const LIMITE_NODOS = 20000;
+    function backtrack(pos) {
+      if (pos === secuencia.length) return true;
+      if (++nodos > LIMITE_NODOS) return false;
+      const equipo = secuencia[pos];
+      for (const gid of shuffleCopy(idsGrupos.filter((g) => valido(equipo, g)))) {
+        grupos.get(gid).push(equipo);
+        if (backtrack(pos + 1)) return true;
+        grupos.get(gid).pop();
+        if (nodos > LIMITE_NODOS) return false;
+      }
+      return false;
+    }
+    return backtrack(0) ? { grupos, gruposDe5 } : null;
+  }
+
+  for (let intento = 0; intento < 2000; intento++) {
+    const r = intentar();
+    if (r) return idsGrupos.map((gid) => ({ id: gid, tamano: r.gruposDe5.has(gid) ? 5 : 4, equipos: r.grupos.get(gid) }));
+  }
+  return { error: "No se pudo completar el sorteo con las restricciones dadas tras 300 intentos." };
+}
+// Punto de entrada E2: si hay sorteo real inyectado, se usa tal cual y no se
+// simula la etapa 3.
+function eqObtenerSorteo(rankingProvisional) {
+  if (EQ_SORTEO_REAL) return { sorteo: EQ_SORTEO_REAL, origen: "real" };
+  return { sorteo: eqSortearGrupos(rankingProvisional), origen: "simulado" };
+}
+
+// ---- Etapa 4: fase de grupos de clasificación ----
+// Calendario ida y vuelta genérico (método del círculo), válido para grupos
+// de 4 o de 5 — no reutiliza las plantillas fijas de la Nations League
+// (NL_PLANTILLA_G4/NL_CALENDARIO_G3) porque esas son específicas de sus
+// calendarios reales publicados; aquí no hay calendario real jornada a
+// jornada publicado, solo las ventanas de fechas (EQ_CALENDARIO, informativo).
+function eqCalendarioGrupo(gid, nombres) {
+  const impar = nombres.length % 2 !== 0;
+  const lista = impar ? [...nombres, null] : [...nombres];
+  const m = lista.length, rondas = m - 1;
+  let actuales = [...lista];
+  const ida = [];
+  for (let r = 0; r < rondas; r++) {
+    for (let i = 0; i < m / 2; i++) {
+      const a = actuales[i], b = actuales[m - 1 - i];
+      if (a !== null && b !== null) {
+        const [local, visitante] = r % 2 === 0 ? [a, b] : [b, a];
+        ida.push({ jornada: r + 1, local, visitante, clave: `${gid}|${local}|${visitante}` });
+      }
+    }
+    actuales = [actuales[0], actuales[m - 1], ...actuales.slice(1, m - 1)];
+  }
+  const vuelta = ida.map((p) => ({ jornada: p.jornada + rondas, local: p.visitante, visitante: p.local, clave: `${gid}|${p.visitante}|${p.local}` }));
+  return [...ida, ...vuelta];
+}
+
+// Estadísticas de un grupo, con exclusión opcional de partidos contra un
+// equipo dado (usada para el descarte de resultados contra el 5º, DATOS).
+function eqStats(nombres, partidos, res, excluir) {
+  const filas = new Map(nombres.map((n) => [n, { nombre: n, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0, gfFuera: 0, victoriasFuera: 0, pts: 0 }]));
+  for (const m of partidos) {
+    if (excluir && (excluir.has(m.local) || excluir.has(m.visitante))) continue;
+    const r = res[m.clave];
+    if (!r || r.gl === undefined || r.gv === undefined) continue;
+    const L = filas.get(m.local), V = filas.get(m.visitante);
+    const gl = Number(r.gl), gv = Number(r.gv);
+    L.pj++; V.pj++; L.gf += gl; L.gc += gv; V.gf += gv; V.gc += gl; V.gfFuera += gv;
+    if (gl > gv) { L.g++; L.pts += 3; V.p++; }
+    else if (gl < gv) { V.g++; V.pts += 3; V.victoriasFuera++; L.p++; }
+    else { L.e++; V.e++; L.pts++; V.pts++; }
+  }
+  return filas;
+}
+// Compara según EQ_CRITERIOS_DESEMPATE. "fairPlay" no se modela (no hay datos
+// de tarjetas en el simulador): se omite siempre y se pasa directo al último
+// criterio (ranking provisional NL) — asunción de motor, sin dato oficial que
+// lo sustituya.
+function eqCriteriosCmp(a, b, rankNL, criterios) {
+  for (const c of criterios) {
+    let diff = 0;
+    switch (c) {
+      case "posicionGrupo": continue;
+      case "puntos": diff = b.pts - a.pts; break;
+      case "difGoles": diff = (b.gf - b.gc) - (a.gf - a.gc); break;
+      case "golesFavor": diff = b.gf - a.gf; break;
+      case "golesFavorFuera": diff = b.gfFuera - a.gfFuera; break;
+      case "victorias": diff = b.g - a.g; break;
+      case "victoriasFuera": diff = b.victoriasFuera - a.victoriasFuera; break;
+      case "fairPlay": diff = 0; break;
+      case "rankingProvisionalNL": diff = rankNL.get(a.nombre) - rankNL.get(b.nombre); break;
+      default: diff = 0;
+    }
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+// Clasificación interna de un grupo (con todos sus partidos, sin descarte).
+function eqClasificacionGrupo(gid, nombres, partidos, res, rankNL) {
+  const stats = eqStats(nombres, partidos, res);
+  const filas = nombres.map((n) => stats.get(n));
+  return [...filas].sort((a, b) => eqCriteriosCmp(a, b, rankNL, EQ_CRITERIOS_DESEMPATE));
+}
+// Ranking entre equipos que ocupan la MISMA posición en grupos distintos.
+function eqRankMismaPosicion(filas, rankNL) {
+  return [...filas].sort((a, b) => eqCriteriosCmp(a, b, rankNL, EQ_CRITERIOS_DESEMPATE.filter((c) => c !== "posicionGrupo")));
+}
+// Banda de posición i (0=primeros, 1=segundos...) descartando, en cada grupo,
+// los partidos contra su propio 5º clasificado (si lo tiene).
+function eqBandaSinQuinto(gruposCal, tablas, quintos, res, i, rankNL) {
+  const candidatos = gruposCal
+    .filter((g) => tablas.get(g.id).length > i)
+    .map((g) => {
+      const nombreEnI = tablas.get(g.id)[i].nombre;
+      const nombres = g.equipos.map((e) => e.nombre);
+      const excluir = quintos.get(g.id) ? new Set([quintos.get(g.id)]) : null;
+      return eqStats(nombres, g.partidos, res, excluir).get(nombreEnI);
+    });
+  return eqRankMismaPosicion(candidatos, rankNL);
+}
+// La banda de 5º puesto no se compara contra sí misma (no tiene sentido
+// descartar los partidos contra el propio 5º), así que usa estadísticas
+// completas.
+function eqBandaQuintos(gruposCal, tablas, rankNL) {
+  const candidatos = gruposCal.filter((g) => tablas.get(g.id).length > 4).map((g) => tablas.get(g.id)[4]);
+  return eqRankMismaPosicion(candidatos, rankNL);
+}
+function eqRankingGeneralClasificacion(gruposCal, tablas, quintos, res, rankNL) {
+  const banda1 = eqBandaSinQuinto(gruposCal, tablas, quintos, res, 0, rankNL);
+  const banda2 = eqBandaSinQuinto(gruposCal, tablas, quintos, res, 1, rankNL);
+  const banda3 = eqBandaSinQuinto(gruposCal, tablas, quintos, res, 2, rankNL);
+  const banda4 = eqBandaSinQuinto(gruposCal, tablas, quintos, res, 3, rankNL);
+  const banda5 = eqBandaQuintos(gruposCal, tablas, rankNL);
+  return { banda1, banda2, banda3, banda4, banda5, todas: [...banda1, ...banda2, ...banda3, ...banda4, ...banda5] };
+}
+// 2 plazas reservadas a los 2 mejores anfitriones no clasificados ya como
+// primeros ni como mejores segundos, por orden del ranking general completo.
+function eqPlazasAnfitrion(directos20, rankingGeneralTodas, anfitriones, plazasCfg) {
+  const yaNombres = new Set(directos20.map((e) => e.nombre));
+  const restantes = anfitriones.filter((h) => !yaNombres.has(h));
+  const posicion = (n) => rankingGeneralTodas.findIndex((e) => e.nombre === n);
+  const ordenados = [...restantes].sort((a, b) => posicion(a) - posicion(b));
+  const asignados = ordenados.slice(0, plazasCfg);
+  return { asignados, usadas: asignados.length };
+}
+
+// ---- Etapa 5: repesca de marzo de 2028 ----
+// Orden estricto de entrada por Nations League (EQ_ORDEN_ENTRADA_NL):
+// ganadores de grupo A/B/C libres por ranking provisional → ganador de Liga D
+// del puesto 49 → mejores libres del ranking provisional.
+function eqPoolNLGanadoresABC(fase1Grupos, fase1Clasificaciones, yaClasificados, rankNL) {
+  if (!fase1Grupos || !fase1Clasificaciones) return []; // sin fase 1 (p.ej. entrada E1 sin dato de ganadores NL)
+  const ganadores = fase1Grupos.filter((g) => g.liga !== "D").map((g) => fase1Clasificaciones.get(g.id)[0].equipo.nombre);
+  return ganadores.filter((n) => !yaClasificados.has(n)).sort((a, b) => rankNL.get(a) - rankNL.get(b));
+}
+function eqGanadorD49(rankingProvisional, yaClasificados) {
+  const equipo = rankingProvisional[48]; // puesto 49 = mejor de los 2 ganadores de grupo de Liga D
+  return equipo && !yaClasificados.has(equipo.nombre) ? equipo.nombre : null;
+}
+function eqMejoresLibres(rankingProvisional, yaClasificados, excluidos) {
+  return rankingProvisional.map((e) => e.nombre).filter((n) => !yaClasificados.has(n) && !excluidos.has(n));
+}
+function eqRepescaPool(cfg, peoresSegundos, poolABC, ganadorD49, mejoresLibres) {
+  const necesitaNL = cfg.equipos - peoresSegundos.length;
+  const poolNL = [];
+  for (const n of poolABC) { if (poolNL.length >= necesitaNL) break; poolNL.push(n); }
+  if (poolNL.length < necesitaNL && ganadorD49 && !poolNL.includes(ganadorD49)) poolNL.push(ganadorD49);
+  for (const n of mejoresLibres) { if (poolNL.length >= necesitaNL) break; if (!poolNL.includes(n)) poolNL.push(n); }
+  return { equipos: [...peoresSegundos, ...poolNL], repartoSegundos: peoresSegundos.length, repartoNL: poolNL.length };
+}
+// Simula el cruce que reduce el pool de la repesca a sus 2/3/4 plazas reales.
+// Reutiliza las funciones de partido ya existentes en el archivo (no se
+// duplican): generarFinalAleatoria + estadoPartidoUnico para las semis/final a
+// partido único (escenarios de 2 y 3 sendas); generarResultadoAleatorio +
+// estadoEliminatoria para las 4 eliminatorias a ida y vuelta (escenario de 0
+// plazas de anfitrión usadas).
+// Siembra (SUPUESTO, EQ_SIEMBRA_REPESCA_CFG): el pool ya llega ordenado —
+// primero segundos por ranking general, luego NL por ranking provisional
+// (DATOS) — y se reparte en bloques secuenciales de tamaño `sendas` por
+// bombo; no se especifica en el reglamento si el reparto es en bloques o
+// "serpiente", así que se documenta como bloques secuenciales.
+function eqSimularRepescaBracket(pool, cfgEscenario, cfgSiembra = EQ_SIEMBRA_REPESCA_CFG) {
+  // Distingue por formato, no por el número de "sendas": en el escenario de 0
+  // plazas de anfitrión usadas, EQ_REPESCA_CFG[0].sendas=4 cuenta las 4
+  // eliminatorias ida-vuelta, no 4 sendas de semis+final — son estructuras
+  // distintas aunque compartan el mismo nombre de campo en la capa de datos.
+  if (!cfgEscenario.formato.includes("ida y vuelta")) {
+    const sendas = cfgEscenario.sendas;
+    const bombos = Array.from({ length: cfgSiembra.bombos }, (_, b) => pool.slice(b * sendas, (b + 1) * sendas));
+    const [b1, b4] = cfgSiembra.cruces[0], [b2, b3] = cfgSiembra.cruces[1];
+    const campeones = [];
+    for (let i = 0; i < sendas; i++) {
+      const resSFA = generarFinalAleatoria();
+      const ganA = estadoPartidoUnico(resSFA).ganador === "A" ? bombos[b1][i] : bombos[b4][i];
+      const resSFB = generarFinalAleatoria();
+      const ganB = estadoPartidoUnico(resSFB).ganador === "A" ? bombos[b2][i] : bombos[b3][i];
+      const resFinal = generarFinalAleatoria(); // el ganador del cruce del Bombo1 (ganA) juega la final en casa → lado A
+      const campeon = estadoPartidoUnico(resFinal).ganador === "A" ? ganA : ganB;
+      campeones.push(campeon);
+    }
+    return campeones;
+  }
+  // Escenario de 4 eliminatorias ida-vuelta: los segundos (mitad inicial del
+  // pool) son cabeza de serie y juegan la vuelta en casa → lado B.
+  const mitad = pool.length / 2;
+  const segundos = pool.slice(0, mitad), nl = pool.slice(mitad);
+  return segundos.map((seg, i) => {
+    const est = estadoEliminatoria(generarResultadoAleatorio());
+    return est.ganador === "A" ? nl[i] : seg;
+  });
+}
+function eqRepesca(cfg, peoresSegundos, poolABC, ganadorD49, mejoresLibres) {
+  const pool = eqRepescaPool(cfg, peoresSegundos, poolABC, ganadorD49, mejoresLibres);
+  const ganadores = eqSimularRepescaBracket(pool.equipos, cfg);
+  return { ...pool, ganadores };
+}
+
+// ---- Orquestador: simulación/composición completa del pipeline de 5 etapas ----
+// El punto de entrada activo no se fija a mano: cada etapa mira primero si
+// existe su propio dato real (EQ_*_REAL) y, si no, encadena desde la salida
+// (real o simulada) de la etapa anterior.
+function eqSimularPipelineCompleto() {
+  const { ranking: rankingProvisional, origen: origenRanking, fase1 } = eqObtenerRankingProvisional();
+  const rankNL = new Map(rankingProvisional.map((e, i) => [e.nombre, i + 1]));
+
+  const { sorteo, origen: origenSorteo } = eqObtenerSorteo(rankingProvisional);
+  if (sorteo.error) return { error: sorteo.error };
+
+  const gruposCal = sorteo.map((g) => ({ ...g, partidos: eqCalendarioGrupo(g.id, g.equipos.map((e) => e.nombre)) }));
+  const resultados = { ...EQ_RESULTADOS_REALES_PARCIALES };
+  gruposCal.forEach((g) => g.partidos.forEach((m) => { if (!resultados[m.clave]) resultados[m.clave] = { gl: rnd5(), gv: rnd5() }; }));
+
+  const tablas = new Map(gruposCal.map((g) => [g.id, eqClasificacionGrupo(g.id, g.equipos.map((e) => e.nombre), g.partidos, resultados, rankNL)]));
+  const quintos = new Map(gruposCal.map((g) => [g.id, tablas.get(g.id).length === 5 ? tablas.get(g.id)[4].nombre : null]));
+
+  const rankingGeneral = eqRankingGeneralClasificacion(gruposCal, tablas, quintos, resultados, rankNL);
+  const directos20 = [...rankingGeneral.banda1, ...rankingGeneral.banda2.slice(0, 8)];
+  const { asignados: anfitrionesAsignados, usadas: plazasAnfitrionUsadas } =
+    eqPlazasAnfitrion(directos20, rankingGeneral.todas, EQ_ANFITRIONES, EQ_PLAZAS_ANFITRION);
+  const clasificadosEtapa4 = [...directos20.map((e) => e.nombre), ...anfitrionesAsignados];
+
+  const yaClasificados = new Set(clasificadosEtapa4);
+  const peoresSegundos = rankingGeneral.banda2.slice(8, 12).filter((e) => !yaClasificados.has(e.nombre)).map((e) => e.nombre);
+  const cfgRepesca = EQ_REPESCA_CFG[plazasAnfitrionUsadas];
+  // Un equipo no puede ocupar dos plazas del pool de repesca a la vez: la vía
+  // NL excluye también a los que ya entran por la vía de "peor segundo".
+  const noDisponiblesParaNL = new Set([...yaClasificados, ...peoresSegundos]);
+  const poolABC = eqPoolNLGanadoresABC(fase1 ? fase1.grupos : null, fase1 ? fase1.clasificaciones : null, noDisponiblesParaNL, rankNL);
+  const ganadorD49 = eqGanadorD49(rankingProvisional, noDisponiblesParaNL);
+  const excluidosDeLibres = new Set([...poolABC, ganadorD49].filter(Boolean));
+  const mejoresLibres = eqMejoresLibres(rankingProvisional, noDisponiblesParaNL, excluidosDeLibres);
+  const repesca = eqRepesca(cfgRepesca, peoresSegundos, poolABC, ganadorD49, mejoresLibres);
+
+  return {
+    origen: { ranking: origenRanking, sorteo: origenSorteo },
+    rankingProvisional, sorteo, gruposCal, resultados, tablas, quintos, rankingGeneral,
+    directos20: directos20.map((e) => e.nombre), anfitrionesAsignados, plazasAnfitrionUsadas,
+    peoresSegundos, cfgRepesca, poolABC, ganadorD49, mejoresLibres, repesca,
+    clasificadosFinales: [...clasificadosEtapa4, ...repesca.ganadores],
+  };
+}
+
+// Exports nombrados para el script de validación por consola (scripts/euro2028-sim.mjs)
+// y para futura reutilización en Fase 5. No cambian el comportamiento de la
+// app (el export default de App sigue siendo el único punto de entrada de la SPA).
+export {
+  rnd5, shuffleCopy, NL_GRUPOS, NL_RANK, nlFixturesGrupo, clasificacionGrupoNL, nlRankMismaPosicion,
+  estadoEliminatoria, estadoPartidoUnico, generarResultadoAleatorio, generarFinalAleatoria,
+  EQ_ANFITRIONES, EQ_CLASIFICADOS_DIRECTOS_CFG, EQ_PLAZAS_ANFITRION, EQ_CRITERIOS_DESEMPATE,
+  EQ_REPESCA_CFG, EQ_ORDEN_ENTRADA_NL, EQ_SIEMBRA_REPESCA_CFG, EQ_TAMANOS_GRUPO, EQ_BOMBOS_CFG,
+  EQ_PROHIBIDOS, EQ_FUENTE_FUERZA,
+  eqSimularFaseLigaNL, eqRankingProvisional, eqObtenerRankingProvisional,
+  eqSortearGrupos, eqObtenerSorteo, eqCalendarioGrupo, eqStats, eqCriteriosCmp,
+  eqRepescaPool, eqSimularRepescaBracket,
+  eqClasificacionGrupo, eqRankMismaPosicion, eqRankingGeneralClasificacion, eqPlazasAnfitrion,
+  eqPoolNLGanadoresABC, eqGanadorD49, eqMejoresLibres, eqRepesca, eqSimularPipelineCompleto,
+};
+
+// ============================================================
 // APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
 function useHashRoute() {
