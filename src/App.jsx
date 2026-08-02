@@ -3336,6 +3336,113 @@ function SimuladorNationsLeaguePage({ nl }) {
 }
 
 // ============================================================
+// DATOS — CLASIFICACIÓN EURO 2028 (54 selecciones, 12 grupos)
+// Estado de los datos a 27/07/2026. Fuente: reglamento UEFA de la EURO
+// 2026-28 (publicado 1/6/2026) y "Nations League/docs/datos/nations-league-
+// 2026-27-grupos.md" para la composición de la fase de liga NL (etapa 1 del
+// pipeline). Cada bloque está etiquetado CONFIRMADO / DERIVADO / SUPUESTO —
+// lo SUPUESTO es un valor por defecto configurable, no un dato oficial, y se
+// marcará como tal en la UI cuando se construya (Fase 4).
+// ============================================================
+
+// ---- CONFIRMADO ----
+// No tienen plaza automática: juegan la clasificación como cualquier otra
+// selección y se sortean en grupos distintos entre sí.
+const EQ_ANFITRIONES = ["Inglaterra", "Escocia", "Gales", "República de Irlanda"];
+
+const EQ_CLASIFICADOS_DIRECTOS_CFG = { primeros: 12, mejoresSegundos: 8 }; // = 20 directos
+const EQ_PLAZAS_ANFITRION = 2; // reservadas a los 2 mejores anfitriones no clasificados ya
+
+// Orden de criterios para el ranking de segundos y el ranking general de la
+// clasificación (idéntico para ambos). Los resultados contra el equipo que
+// acaba 5º de su grupo se descartan antes de aplicar estos criterios, para
+// que todos los grupos se comparen sobre el mismo número de partidos.
+const EQ_CRITERIOS_DESEMPATE = [
+  "posicionGrupo", "puntos", "difGoles", "golesFavor", "golesFavorFuera",
+  "victorias", "victoriasFuera", "fairPlay", "rankingProvisionalNL",
+];
+
+// Repesca de marzo de 2028: el escenario se dispara según cuántas de las
+// EQ_PLAZAS_ANFITRION se hayan usado. El reparto segundos/NL de cada
+// escenario debe ser uno de los combosValidos.
+const EQ_REPESCA_CFG = {
+  2: { plazas: 2, equipos: 8, sendas: 2, combosValidos: [[4, 4], [3, 5], [2, 6]], formato: "semis y final a partido único" },
+  1: { plazas: 3, equipos: 12, sendas: 3, combosValidos: [[4, 8], [3, 9]], formato: "semis y final a partido único" },
+  0: { plazas: 4, equipos: 8, sendas: 4, combosValidos: [[4, 4]], formato: "4 eliminatorias a ida y vuelta; los segundos son cabeza de serie y juegan la vuelta en casa" },
+};
+// Orden estricto de entrada por Nations League a la repesca: (1) ganadores de
+// grupo de Ligas A/B/C no clasificados ya, por ranking provisional; (2) si
+// faltan, el ganador de grupo de Liga D del puesto 49; (3) si aún faltan, los
+// mejores libres del ranking provisional.
+const EQ_ORDEN_ENTRADA_NL = ["ganadoresABC", "ganadorD49", "mejoresLibres"];
+
+// Siembra de sendas (escenarios de 2 y 3 sendas): segundos de grupo ordenados
+// por el ranking general de la clasificación, luego los de NL por el ranking
+// provisional; reparto en 4 bombos; Bombo1 vs Bombo4, Bombo2 vs Bombo3; el
+// ganador del cruce del Bombo1 juega la final en casa.
+const EQ_SIEMBRA_REPESCA_CFG = { bombos: 4, cruces: [[0, 3], [1, 2]], localFinalBombo: 0 };
+
+// Calendario real (solo informativo — no altera la simulación).
+const EQ_CALENDARIO = {
+  sorteoClasificacion: "6/12/2026 (Belfast)",
+  grupos5Jornadas1a4: ["26-30 mar 2027", "11-15 jun 2027"],
+  todosJornadas5a8: "23 sept - 5 oct 2027",
+  todosJornadas9y10: "11-16 nov 2027",
+  repescaSemis: "23-25 mar 2028",
+  repescaFinales: "26-28 mar 2028",
+};
+
+// ---- DERIVADO (aritmética; no publicado explícitamente así) ----
+// 54 equipos en 12 grupos de 4 o 5 → 6 de cinco + 6 de cuatro es la única
+// solución entera posible, pero UEFA no lo ha publicado como tal. Configurable
+// por si el reparto real difiere.
+const EQ_TAMANOS_GRUPO = { totalGrupos: 12, gruposDe5: 6, gruposDe4: 6 };
+
+// ---- SUPUESTO (no publicado — valor por defecto configurable; marcar en UI) ----
+// Estructura de bombos del sorteo de clasificación: no hay procedimiento
+// oficial publicado (se espera antes del sorteo real del 6/12/2026). Por
+// defecto: 5 bombos — 4 de 12 selecciones (una plaza en cada uno de los 12
+// grupos) + 1 de 6 (solo para la 5ª plaza de los seis grupos de cinco) —:
+// ordenados por ranking provisional NL, forzando que los 8 cuartofinalistas
+// de Liga A (ranks 1-8 del ranking provisional, ver Fase 1) caigan siempre en
+// los 6 grupos de cuatro.
+const EQ_BOMBOS_CFG = {
+  numBombos: 5,
+  tamanos: [12, 12, 12, 12, 6],
+  bombo5SoloGruposDe5: true,
+  qfLigaAForzadoAGruposDe4: true,
+};
+
+// Emparejamientos prohibidos del sorteo: no hay lista oficial publicada para
+// esta clasificación. Semilla = las mismas restricciones ya documentadas para
+// la Nations League 2026/27 (motivos políticos), pendiente de confirmación
+// oficial específica para la Euro 2028. Parametrizable: añadir/quitar pares
+// según se vaya confirmando.
+const EQ_PROHIBIDOS = [
+  ["Kosovo", "Serbia"],
+  ["Armenia", "Azerbaiyán"],
+  ["Gibraltar", "España"],
+  ["Bosnia y Herzegovina", "Kosovo"],
+];
+
+// Fuente de la "fuerza" de cada selección: por defecto, la posición en el
+// ranking provisional de la Nations League (única métrica intrínseca a esta
+// competición). Documentada y sustituible, pero NO sesga el resultado del
+// partido — el motor sigue siendo el mismo aleatorio uniforme que el resto de
+// simuladores del repo (decisión explícita de la Fase 1); se usa solo para
+// desempates, bombos y siembra de repesca, igual que "coef" en clubes.
+const EQ_FUENTE_FUERZA = "rankingProvisionalNL";
+
+// ---- NO CONFIRMADO — puntos de entrada por datos reales (null = sin dato aún) ----
+// Cada constante sustituye la salida de una etapa del pipeline de 5 etapas
+// (ver Fase 1). Se rellenan a mano cuando el dato oficial exista; el motor
+// decide qué etapas simular mirando cuál es la primera, en orden, que sigue
+// siendo null/vacía — el punto de entrada no se fija a mano en ningún sitio.
+const EQ_RANKING_PROVISIONAL_REAL = null; // disponible desde el 18/11/2026 (fin fase de liga NL)
+const EQ_SORTEO_REAL = null; // disponible desde el 7/12/2026 (día después del sorteo real)
+const EQ_RESULTADOS_REALES_PARCIALES = {}; // { [clavePartido]: { gl, gv } } — se va rellenando durante 2027
+
+// ============================================================
 // APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
 function useHashRoute() {
