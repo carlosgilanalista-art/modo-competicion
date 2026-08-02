@@ -3827,6 +3827,403 @@ export {
 };
 
 // ============================================================
+// ESTADO — CLASIFICACIÓN EURO 2028 (hook de React)
+// Mismo patrón que useFaseLiga()/useNationsLeague(): useState + useMemo
+// encadenados, sin persistencia, reset granular partido a partido. Hook
+// independiente (no comparte estado con useNationsLeague ni con los de
+// clubes), aunque reutiliza sus mismas funciones puras para la etapa 1.
+// ============================================================
+function useEuro2028() {
+  // ---- Etapa 1: fase de liga NL 2026/27 (prerrequisito de la etapa 2) ----
+  const nlGrupos = useMemo(() => {
+    const out = [];
+    for (const liga of ["A", "B", "C", "D"]) {
+      for (const [gid, nombres] of Object.entries(NL_GRUPOS[liga])) {
+        const equipos = nombres.map((nombre) => ({ nombre, rank: NL_RANK.get(nombre) }));
+        out.push({ liga, id: gid, equipos, partidos: nlFixturesGrupo(gid, nombres) });
+      }
+    }
+    return out;
+  }, []);
+  const [resNL, setResNL] = useState({});
+  const rellenarNL = (partidos) => setResNL((p) => { const n = { ...p }; partidos.forEach((m) => { n[m.clave] = { gl: rnd5(), gv: rnd5() }; }); return n; });
+  const reiniciarNL = () => setResNL({});
+  const nlClasificaciones = useMemo(() => new Map(nlGrupos.map((g) => [g.id, clasificacionGrupoNL(g.equipos, g.partidos, resNL)])), [nlGrupos, resNL]);
+  const nlCompleta = useMemo(
+    () => nlGrupos.every((g) => g.partidos.every((m) => { const r = resNL[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; })),
+    [nlGrupos, resNL]
+  );
+
+  // ---- Etapa 2: ranking provisional. E1: si hay dato real, se usa tal cual. ----
+  const origenRanking = EQ_RANKING_PROVISIONAL_REAL ? "real" : "simulado";
+  const rankingProvisional = useMemo(() => {
+    if (EQ_RANKING_PROVISIONAL_REAL) return EQ_RANKING_PROVISIONAL_REAL.ranking ?? EQ_RANKING_PROVISIONAL_REAL;
+    if (!nlCompleta) return null;
+    return eqRankingProvisional(nlGrupos, nlClasificaciones);
+  }, [nlCompleta, nlGrupos, nlClasificaciones]);
+  const rankNL = useMemo(() => (rankingProvisional ? new Map(rankingProvisional.map((e, i) => [e.nombre, i + 1])) : null), [rankingProvisional]);
+
+  // ---- Etapa 3: sorteo. E2: si hay dato real, se usa tal cual. ----
+  const [sorteo, setSorteo] = useState(EQ_SORTEO_REAL);
+  const origenSorteo = EQ_SORTEO_REAL ? "real" : "simulado";
+  const sortear = () => { if (rankingProvisional) setSorteo(eqSortearGrupos(rankingProvisional)); };
+  const reiniciarSorteo = () => setSorteo(EQ_SORTEO_REAL ?? null);
+
+  // ---- Etapa 4: fase de grupos de clasificación ----
+  const gruposCal = useMemo(
+    () => (sorteo && !sorteo.error ? sorteo.map((g) => ({ ...g, partidos: eqCalendarioGrupo(g.id, g.equipos.map((e) => e.nombre)) })) : null),
+    [sorteo]
+  );
+  const [resClasif, setResClasif] = useState(EQ_RESULTADOS_REALES_PARCIALES);
+  useEffect(() => { setResClasif(EQ_RESULTADOS_REALES_PARCIALES); }, [sorteo]);
+  const cambiarClasif = (clave, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResClasif((p) => ({ ...p, [clave]: { ...p[clave], [campo]: v } })); };
+  const reiniciarPartidoClasif = (clave) => setResClasif((p) => { const n = { ...p }; delete n[clave]; return n; });
+  const rellenarClasif = (partidos) => setResClasif((p) => { const n = { ...p }; partidos.forEach((m) => { if (!n[m.clave]) n[m.clave] = { gl: rnd5(), gv: rnd5() }; }); return n; });
+  const rellenarTodoClasif = () => { if (gruposCal) rellenarClasif(gruposCal.flatMap((g) => g.partidos)); };
+
+  const tablas = useMemo(
+    () => (gruposCal && rankNL ? new Map(gruposCal.map((g) => [g.id, eqClasificacionGrupo(g.id, g.equipos.map((e) => e.nombre), g.partidos, resClasif, rankNL)])) : null),
+    [gruposCal, resClasif, rankNL]
+  );
+  const quintos = useMemo(
+    () => (tablas ? new Map(gruposCal.map((g) => [g.id, tablas.get(g.id).length === 5 ? tablas.get(g.id)[4].nombre : null])) : null),
+    [tablas, gruposCal]
+  );
+  const grupoCompleto = (g) => g.partidos.every((m) => { const r = resClasif[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; });
+  const clasifCompleta = useMemo(() => (gruposCal ? gruposCal.every(grupoCompleto) : false), [gruposCal, resClasif]);
+
+  const rankingGeneral = useMemo(
+    () => (clasifCompleta ? eqRankingGeneralClasificacion(gruposCal, tablas, quintos, resClasif, rankNL) : null),
+    [clasifCompleta, gruposCal, tablas, quintos, resClasif, rankNL]
+  );
+  const directos20 = useMemo(() => (rankingGeneral ? [...rankingGeneral.banda1, ...rankingGeneral.banda2.slice(0, 8)] : null), [rankingGeneral]);
+  const plazasAnfitrion = useMemo(
+    () => (rankingGeneral ? eqPlazasAnfitrion(directos20, rankingGeneral.todas, EQ_ANFITRIONES, EQ_PLAZAS_ANFITRION) : null),
+    [rankingGeneral, directos20]
+  );
+
+  // ---- Etapa 5: repesca ----
+  const repescaPool = useMemo(() => {
+    if (!rankingGeneral || !directos20 || !plazasAnfitrion) return null;
+    const yaClasificados = new Set([...directos20.map((e) => e.nombre), ...plazasAnfitrion.asignados]);
+    const peoresSegundos = rankingGeneral.banda2.slice(8, 12).filter((e) => !yaClasificados.has(e.nombre)).map((e) => e.nombre);
+    const noDisponiblesParaNL = new Set([...yaClasificados, ...peoresSegundos]);
+    const poolABC = eqPoolNLGanadoresABC(nlGrupos, nlClasificaciones, noDisponiblesParaNL, rankNL);
+    const ganadorD49 = eqGanadorD49(rankingProvisional, noDisponiblesParaNL);
+    const excluidos = new Set([...poolABC, ganadorD49].filter(Boolean));
+    const mejoresLibres = eqMejoresLibres(rankingProvisional, noDisponiblesParaNL, excluidos);
+    const cfg = EQ_REPESCA_CFG[plazasAnfitrion.usadas];
+    return { cfg, peoresSegundos, poolABC, ganadorD49, ...eqRepescaPool(cfg, peoresSegundos, poolABC, ganadorD49, mejoresLibres) };
+  }, [rankingGeneral, directos20, plazasAnfitrion, nlGrupos, nlClasificaciones, rankNL, rankingProvisional]);
+
+  const [repescaGanadores, setRepescaGanadores] = useState(null);
+  useEffect(() => { setRepescaGanadores(null); }, [repescaPool]);
+  const simularRepesca = () => { if (repescaPool) setRepescaGanadores(eqSimularRepescaBracket(repescaPool.equipos, repescaPool.cfg)); };
+
+  const clasificadosFinales = useMemo(
+    () => (directos20 && plazasAnfitrion && repescaGanadores ? [...directos20.map((e) => e.nombre), ...plazasAnfitrion.asignados, ...repescaGanadores] : null),
+    [directos20, plazasAnfitrion, repescaGanadores]
+  );
+
+  const reiniciarTodo = () => { setResNL({}); setSorteo(EQ_SORTEO_REAL ?? null); setResClasif(EQ_RESULTADOS_REALES_PARCIALES); setRepescaGanadores(null); };
+
+  return {
+    nlGrupos, resNL, rellenarNL, reiniciarNL, nlClasificaciones, nlCompleta,
+    rankingProvisional, origenRanking, origenSorteo,
+    sorteo, sortear, reiniciarSorteo,
+    gruposCal, resClasif, cambiarClasif, reiniciarPartidoClasif, rellenarClasif, rellenarTodoClasif, tablas, quintos, clasifCompleta,
+    rankingGeneral, directos20, plazasAnfitrion,
+    repescaPool, repescaGanadores, simularRepesca,
+    clasificadosFinales, reiniciarTodo,
+  };
+}
+
+// ============================================================
+// VISTA — CLASIFICACIÓN EURO 2028
+// ============================================================
+const TEMA_EQ = TEMA_NL; // mismo tema oscuro que el resto de simuladores de selecciones
+function Supuesto({ children, colores = TEMA_EQ }) {
+  return (
+    <span title="Valor por defecto configurable — no es un dato oficial de la UEFA" style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: "2px 6px", borderRadius: 4,
+      background: `${colores.alerta}22`, color: colores.alerta, border: `1px solid ${colores.alerta}55`, marginLeft: 8, whiteSpace: "nowrap",
+    }}>{children ?? "SUPUESTO"}</span>
+  );
+}
+
+function EQTablaGrupo({ filas, quinto, completa, colores }) {
+  const th = { color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: "2px 4px", textAlign: "right" };
+  const td = { color: colores.texto, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: "2px 4px", textAlign: "right" };
+  return (
+    <div style={{ overflowX: "auto", marginBottom: 10 }}>
+      <table style={{ borderCollapse: "collapse", width: "100%" }}>
+        <thead>
+          <tr>
+            <th style={{ ...th, textAlign: "left" }}>#</th>
+            <th style={{ ...th, textAlign: "left" }}>Selección</th>
+            <th style={th}>PJ</th><th style={th}>G</th><th style={th}>E</th><th style={th}>P</th>
+            <th style={th}>DG</th><th style={th}>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((f, idx) => (
+            <tr key={f.nombre} style={{ borderLeft: `3px solid ${idx === 0 ? colores.acento : idx === 1 ? "#5BBB7B" : idx === 4 ? "#5A6678" : "transparent"}` }}
+              title={f.nombre === quinto ? "5º puesto: sus resultados se descartan al comparar con otros grupos (Art. clasificación)" : undefined}>
+              <td style={{ ...td, textAlign: "left", fontWeight: 600 }}>{idx + 1}</td>
+              <td style={{ ...td, textAlign: "left", fontFamily: "'Inter', sans-serif" }}>
+                {f.nombre}{f.nombre === quinto && <span style={{ color: colores.textoSuave, fontSize: 9 }}> (5º, descartado en comparativas)</span>}
+              </td>
+              <td style={td}>{f.pj}</td><td style={td}>{f.g}</td><td style={td}>{f.e}</td><td style={td}>{f.p}</td>
+              <td style={td}>{f.gf - f.gc > 0 ? "+" : ""}{f.gf - f.gc}</td>
+              <td style={{ ...td, color: colores.acento, fontWeight: 600 }}>{f.pts}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!completa && <div style={{ color: colores.textoSuave, fontSize: 10, marginTop: 3, fontStyle: "italic" }}>Provisional — faltan resultados por introducir.</div>}
+    </div>
+  );
+}
+
+function EQGrupoCard({ grupo, eq, colores }) {
+  const tabla = eq.tablas.get(grupo.id);
+  const quinto = eq.quintos.get(grupo.id);
+  const inputStyle = { width: 34, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "2px 3px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
+  const jornadas = Array.from({ length: Math.max(...grupo.partidos.map((m) => m.jornada)) }, (_, j) => grupo.partidos.filter((m) => m.jornada === j + 1));
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 18 }}>
+          Grupo {grupo.id} <span style={{ color: colores.textoSuave, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>({grupo.tamano})</span>
+        </span>
+        <BotonAleatorio onClick={() => eq.rellenarClasif(grupo.partidos)} label="Simular grupo" colores={colores} />
+      </div>
+      <EQTablaGrupo filas={tabla} quinto={quinto} completa={grupo.partidos.every((m) => { const r = eq.resClasif[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; })} colores={colores} />
+      {jornadas.map((partidos, j) => (
+        <div key={j} style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 10, letterSpacing: 1 }}>J{j + 1}</span>
+            <button onClick={() => eq.rellenarClasif(partidos)} style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer", padding: 0 }}>🎲</button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {partidos.map((m) => {
+              const r = eq.resClasif[m.clave];
+              return (
+                <div key={m.clave} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, textAlign: "right", minWidth: 90 }}>{m.local}</span>
+                  <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => eq.cambiarClasif(m.clave, "gl", e.target.value)} style={inputStyle} />
+                  <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
+                  <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => eq.cambiarClasif(m.clave, "gv", e.target.value)} style={inputStyle} />
+                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}>{m.visitante}</span>
+                  {r && (r.gl !== undefined || r.gv !== undefined) && (
+                    <button onClick={() => eq.reiniciarPartidoClasif(m.clave)} title="Reiniciar resultado"
+                      style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EQEtapa1NL({ eq, colores }) {
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16 }}>Etapa 1 · Fase de liga Nations League 2026/27</div>
+          <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: 2, maxWidth: 560 }}>
+            Prerrequisito del ranking provisional. Detalle completo (14 grupos, jornada a jornada) en el{" "}
+            <a href="#/simulador-selecciones" style={{ color: colores.acento }}>simulador de Nations League</a>; aquí solo se resuelve para poder encadenar la etapa 2.
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BotonAleatorio onClick={() => eq.rellenarNL(eq.nlGrupos.flatMap((g) => g.partidos))} label="Simular fase de liga NL" colores={colores} />
+          {eq.nlCompleta && <button onClick={eq.reiniciarNL} style={{ background: "none", border: `1px solid ${colores.borde}`, color: colores.textoSuave, borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>↺ Reiniciar</button>}
+        </div>
+      </div>
+      <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: 8 }}>
+        {eq.nlCompleta ? "✓ Fase de liga NL completa — ranking provisional calculado." : "Pendiente de simular."}
+      </div>
+    </div>
+  );
+}
+
+function EQEtapa2Ranking({ eq, colores }) {
+  if (!eq.rankingProvisional) return null;
+  return (
+    <details style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "12px 18px", marginBottom: 16 }}>
+      <summary style={{ cursor: "pointer", fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16 }}>
+        Etapa 2 · Ranking provisional NL (54)
+        {eq.origenRanking === "simulado" && <Supuesto colores={colores}>SIMULADO</Supuesto>}
+      </summary>
+      <ol style={{ columns: 2, color: colores.texto, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginTop: 10, paddingLeft: 18 }}>
+        {eq.rankingProvisional.map((e) => <li key={e.nombre}>{e.nombre}</li>)}
+      </ol>
+    </details>
+  );
+}
+
+function EQEtapa3Sorteo({ eq, colores }) {
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+        <div>
+          <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16 }}>Etapa 3 · Sorteo de los 12 grupos</span>
+          {eq.origenSorteo === "simulado" && <Supuesto colores={colores}>ESTRUCTURA DE BOMBOS NO OFICIAL</Supuesto>}
+        </div>
+        <button disabled={!eq.rankingProvisional} onClick={eq.sortear}
+          style={{ background: eq.rankingProvisional ? colores.acento : colores.borde, color: "#0B1420", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: eq.rankingProvisional ? "pointer" : "not-allowed" }}>
+          {eq.sorteo ? "🎲 Repetir sorteo" : "🎲 Sortear grupos"}
+        </button>
+      </div>
+      <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 8 }}>
+        Bombos por defecto (5: cuatro de 12 + uno de 6 solo para grupos de cinco), separación de anfitriones y lista de
+        prohibidos son SUPUESTOS documentados en la capa de datos, pendientes de confirmación oficial (sorteo real: 6/12/2026).
+      </div>
+      {eq.sorteo && !eq.sorteo.error && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
+          {eq.sorteo.map((g) => (
+            <div key={g.id} style={{ border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "8px 10px" }}>
+              <div style={{ color: colores.acento, fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Grupo {g.id} ({g.tamano})</div>
+              {g.equipos.map((e) => (
+                <div key={e.nombre} style={{ color: EQ_ANFITRIONES.includes(e.nombre) ? colores.acento : colores.texto, fontSize: 11 }}>
+                  {e.nombre}{EQ_ANFITRIONES.includes(e.nombre) && " 🏟️"}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+      {eq.sorteo?.error && <div style={{ color: colores.alerta, fontSize: 12 }}>{eq.sorteo.error}</div>}
+    </div>
+  );
+}
+
+function EQEtapa4Grupos({ eq, colores }) {
+  if (!eq.gruposCal) return null;
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+        <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 18 }}>Etapa 4 · Fase de grupos de clasificación</span>
+        <BotonAleatorio onClick={eq.rellenarTodoClasif} label="Simular todos los grupos" colores={colores} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 }}>
+        {eq.gruposCal.map((g) => <EQGrupoCard key={g.id} grupo={g} eq={eq} colores={colores} />)}
+      </div>
+    </div>
+  );
+}
+
+function EQEtapa4Resumen({ eq, colores }) {
+  if (!eq.rankingGeneral) return null;
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+      <div style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16, marginBottom: 8 }}>Clasificados directos (20) + plazas de anfitrión</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+        {eq.directos20.map((e) => <span key={e.nombre} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "3px 8px", fontSize: 11 }}>{e.nombre}</span>)}
+      </div>
+      <div style={{ color: colores.textoSuave, fontSize: 12 }}>
+        Plazas de anfitrión usadas: <strong style={{ color: colores.texto }}>{eq.plazasAnfitrion.usadas}</strong>
+        {eq.plazasAnfitrion.asignados.length > 0 && <> — {eq.plazasAnfitrion.asignados.join(", ")}</>}
+      </div>
+    </div>
+  );
+}
+
+function EQEtapa5Repesca({ eq, colores }) {
+  if (!eq.repescaPool) return null;
+  const pool = eq.repescaPool;
+  return (
+    <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+        <div>
+          <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16 }}>Etapa 5 · Repesca de marzo 2028</span>
+          <Supuesto colores={colores}>SIEMBRA NO OFICIAL</Supuesto>
+        </div>
+        <BotonAleatorio onClick={eq.simularRepesca} label="Simular repesca" colores={colores} />
+      </div>
+      <div style={{ color: colores.textoSuave, fontSize: 12, marginBottom: 6 }}>
+        Escenario: {pool.cfg.plazas} plazas, {pool.cfg.equipos} equipos ({pool.repartoSegundos} peores segundos + {pool.repartoNL} vía Nations League) — {pool.cfg.formato}.
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+        {pool.equipos.map((n) => <span key={n} style={{ background: colores.inputBg, color: colores.texto, borderRadius: 6, padding: "3px 8px", fontSize: 11, border: `1px solid ${colores.borde}` }}>{n}</span>)}
+      </div>
+      {eq.repescaGanadores && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ color: colores.textoSuave, fontSize: 12, marginBottom: 4 }}>Plazas ganadas:</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {eq.repescaGanadores.map((n) => <span key={n} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "3px 8px", fontSize: 12, fontWeight: 700 }}>{n}</span>)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EQEtapaFinal({ eq, colores }) {
+  if (!eq.clasificadosFinales) return null;
+  return (
+    <div style={{ background: colores.tarjeta, border: `2px solid ${colores.acento}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+      <div style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 18, marginBottom: 8 }}>🏆 24 clasificados a la Euro 2028</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {eq.clasificadosFinales.map((n) => (
+          <span key={n} style={{ background: `${colores.acento}22`, color: colores.acento, borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 700 }}>
+            {n}{EQ_ANFITRIONES.includes(n) && " 🏟️"}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SimuladorEuro2028Page({ eq }) {
+  const c = TEMA_EQ;
+  return (
+    <div style={{ minHeight: "100vh", background: c.fondo, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 20px 60px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: c.textoSuave, fontSize: 11, letterSpacing: 3 }}>SIMULADOR EURO 2028 · CLASIFICACIÓN</div>
+          <div style={{ display: "flex", gap: 14 }}>
+            <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
+            <a href="#/simulador-selecciones" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Nations League</a>
+          </div>
+        </div>
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", color: c.texto, fontSize: 28, margin: "8px 0 6px" }}>Clasificación para la Euro 2028</h1>
+        <p style={{ color: c.textoSuave, fontSize: 13, lineHeight: 1.6, maxWidth: 700, marginBottom: 6 }}>
+          54 selecciones, 12 grupos (6 de cinco + 6 de cuatro), 20 clasificados directos + hasta 2 plazas de anfitrión +
+          repesca de marzo de 2028 hasta completar 24. Los anfitriones (Inglaterra, Escocia, Gales, República de Irlanda)
+          no tienen plaza automática. Estado de datos a 27/07/2026 — todo lo marcado <Supuesto colores={c} /> es un valor
+          por defecto configurable, no un dato oficial de la UEFA.
+        </p>
+        <div style={{ marginBottom: 16 }}>
+          <button onClick={eq.reiniciarTodo} style={{ background: "none", border: `1px solid ${c.borde}`, color: c.textoSuave, borderRadius: 8, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+            ↺ Reiniciar toda la clasificación
+          </button>
+        </div>
+
+        <EQEtapa1NL eq={eq} colores={c} />
+        <EQEtapa2Ranking eq={eq} colores={c} />
+        <EQEtapa3Sorteo eq={eq} colores={c} />
+        <EQEtapa4Grupos eq={eq} colores={c} />
+        <EQEtapa4Resumen eq={eq} colores={c} />
+        <EQEtapa5Repesca eq={eq} colores={c} />
+        <EQEtapaFinal eq={eq} colores={c} />
+
+        <footer style={{ borderTop: `1px solid ${c.borde}`, paddingTop: 16, marginTop: 16, color: c.textoSuave, fontSize: 11, lineHeight: 1.6 }}>
+          Modo Competición · Reglamento UEFA de clasificación para la EURO 2026-28 (publicado 1/6/2026). El motor de
+          partido es el mismo aleatorio uniforme que el resto de simuladores del sitio; el ranking de la Nations League
+          se usa solo para desempates, bombos y siembra de la repesca, nunca para sesgar un resultado.
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
 function useHashRoute() {
@@ -3844,10 +4241,11 @@ export default function App() {
   const el = useEuropa(cl);
   const co = useConference(cl, el);
   const nl = useNationsLeague();
+  const eq = useEuro2028();
   const [tab, setTab] = useState("CL");
   const hash = useHashRoute();
 
-  const vista = hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : "inicio";
+  const vista = hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -3885,6 +4283,7 @@ export default function App() {
       {vista === "formato-liga" && <ArticuloFaseLiga />}
       {vista === "nations-league" && <ArticuloNationsLeague />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
+      {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
           <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
