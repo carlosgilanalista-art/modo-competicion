@@ -1,4 +1,5 @@
 import React from "react";
+import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
 // ARTÍCULO — "Entiende el formato": las fases previas europeas
@@ -189,6 +190,10 @@ function GraficoSorteo() {
 }
 
 export default function Articulo() {
+  useDocumentMeta({
+    title: "Las fases previas europeas, explicadas para todos los públicos · Modo Competición",
+    description: "Qué son las fases previas europeas, cómo funcionan y por qué perder una eliminatoria no siempre significa quedar eliminado de Europa. Con gráficos y ejemplos.",
+  });
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 60px" }}>
@@ -199,6 +204,7 @@ export default function Articulo() {
             <a href="#/" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>← Inicio</a>
             <a href="#/formato-liga" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Parte 2: liga y eliminatorias</a>
             <a href="#/nations-league" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Nations League 2026/27</a>
+            <a href="#/euro2028" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>EURO 2028</a>
             <a href="#/simulador" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Simulador</a>
           </nav>
         </header>

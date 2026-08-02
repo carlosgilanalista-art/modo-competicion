@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
 // PÁGINA DE INICIO — presentación genérica del sitio
@@ -172,6 +173,9 @@ function SelectorCompeticion({ abierto, onClose }) {
           <TarjetaCompeticion color={C.azul} titulo="Nations League 2026/27"
             explicacion={[{ href: "#/nations-league", label: "Cómo funciona" }]}
             simulador="#/simulador-selecciones" />
+          <TarjetaCompeticion color={C.azul} titulo="Clasificación Euro 2028"
+            explicacion={[{ href: "#/euro2028", label: "Cómo funciona" }, { href: "#/nations-league", label: "Nations League" }]}
+            simulador="#/simulador-clasificacion-euro2028" />
         </GrupoCompeticiones>
       </div>
     </div>
@@ -179,6 +183,10 @@ function SelectorCompeticion({ abierto, onClose }) {
 }
 
 export default function Landing() {
+  useDocumentMeta({
+    title: "Modo Competición · Simuladores y formatos de competición",
+    description: "Explicaciones claras y simuladores interactivos, competición a competición. Empezamos por las fases previas europeas de la temporada 2026/27.",
+  });
   const [selectorAbierto, setSelectorAbierto] = useState(false);
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
@@ -201,6 +209,9 @@ export default function Landing() {
               <NavDropdownEtiqueta>NATIONS LEAGUE 2026/27</NavDropdownEtiqueta>
               <NavDropdownEnlace href="#/simulador-selecciones">Simulador</NavDropdownEnlace>
               <NavDropdownEnlace href="#/nations-league">Explicación</NavDropdownEnlace>
+              <NavDropdownEtiqueta>CLASIFICACIÓN EURO 2028</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador-clasificacion-euro2028">Simulador</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/euro2028">Explicación</NavDropdownEnlace>
             </NavDropdown>
           </nav>
         </header>
@@ -305,6 +316,10 @@ export default function Landing() {
               sub="El mecanismo que conecta la Nations League con la repesca de la Eurocopa 2028: formato, ascensos y descensos, y qué se juega cada selección."
               explicacion={[{ href: "#/nations-league", label: "Cómo funciona" }]}
               simulador="#/simulador-selecciones" />
+            <TarjetaCompeticion color={C.azul} titulo="Clasificación Euro 2028"
+              sub="Las 5 etapas hasta los 24 clasificados: fase de liga NL, ranking provisional, sorteo, fase de grupos y repesca de marzo de 2028."
+              explicacion={[{ href: "#/euro2028", label: "Cómo funciona" }, { href: "#/nations-league", label: "Nations League" }]}
+              simulador="#/simulador-clasificacion-euro2028" />
           </GrupoCompeticiones>
 
           <div style={{ border: `1px dashed ${C.borde}`, borderRadius: 12, padding: 20, color: C.textoSuave, fontSize: 13 }}>
