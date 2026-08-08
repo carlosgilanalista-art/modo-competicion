@@ -7,7 +7,7 @@ import useDocumentMeta from "./useDocumentMeta.js";
 const C = {
   fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C",
   texto: "#F4F1E8", textoSuave: "#8A97A8",
-  oro: "#D4A94C", naranja: "#E8734A", azul: "#4A90D4",
+  oro: "#D4A94C", naranja: "#E8734A", azul: "#4A90D4", verde: "#5BBB7B",
 };
 const MONO = "'JetBrains Mono', monospace";
 const OSWALD = "'Oswald', sans-serif";
@@ -71,7 +71,9 @@ function TarjetaCompeticion({ color, titulo, sub, explicacion, simulador }) {
         </div>
         <div>
           <div style={{ fontFamily: MONO, color: C.textoSuave, fontSize: 10, letterSpacing: 2, marginBottom: 6 }}>SIMULADOR</div>
-          <BotonEnlace href={simulador} label="🎮 Abrir simulador" color={color} />
+          {simulador
+            ? <BotonEnlace href={simulador} label="🎮 Abrir simulador" color={color} />
+            : <div style={{ color: C.textoSuave, fontSize: 13, border: `1px dashed ${C.borde}`, borderRadius: 8, padding: "10px 18px" }}>Próximamente</div>}
         </div>
       </div>
     </div>
@@ -154,6 +156,96 @@ function NavDropdownEnlace({ href, children }) {
   );
 }
 
+// Nivel superior del desplegable: la confederación. Va por encima de los bloques
+// de competición y se distingue de ellos por color y por el filete separador.
+function NavDropdownConfederacion({ children }) {
+  return <div style={{ fontFamily: MONO, color: C.texto, fontSize: 11, letterSpacing: 3, padding: "2px 10px 8px" }}>{children}</div>;
+}
+
+// ------------------------------------------------------------
+// ESTRUCTURA DEL MENÚ
+// Un nivel de confederación y, dentro, un bloque por competición con los
+// enlaces que esa competición tenga: solo simulador, solo explicación o ambos.
+// Añadir una competición nueva es añadir un objeto aquí, no tocar el render.
+// Una confederación sin competiciones no se pinta.
+// ------------------------------------------------------------
+const MENU_CLUBES = [
+  {
+    confederacion: "UEFA",
+    competiciones: [
+      { nombre: "Champions League", simulador: "#/simulador/cl" },
+      { nombre: "Europa League", simulador: "#/simulador/el" },
+      { nombre: "Conference League", simulador: "#/simulador/co" },
+      // Las tres competiciones UEFA comparten los mismos dos artículos de
+      // formato, así que van en su propio bloque en vez de repetidos bajo cada una.
+      {
+        nombre: "Formato UEFA",
+        explicaciones: [
+          { href: "#/formato", label: "Fases previas" },
+          { href: "#/formato-liga", label: "Liga y eliminatorias" },
+        ],
+      },
+    ],
+  },
+  {
+    confederacion: "AFC",
+    competiciones: [
+      {
+        nombre: "Champions League Elite 2026/27",
+        // Hueco del simulador: cuando exista, añadir aquí
+        // `simulador: "#/simulador-afc-champions-elite"` y su rama en App.jsx
+        // ANTES de la de "#/simulador" (ver comentario en App.jsx).
+        explicaciones: [{ href: "#/afc-champions-elite", label: "Explicación" }],
+      },
+    ],
+  },
+  // CAF: sin competiciones publicadas todavía. Aparecerá sola en cuanto tenga la primera.
+  { confederacion: "CAF", competiciones: [] },
+];
+
+const MENU_SELECCIONES = [
+  {
+    confederacion: "UEFA",
+    // Mientras solo haya competiciones de selecciones de la UEFA, el nivel de
+    // confederación sería una jerarquía de un solo hijo: se oculta. Al añadir
+    // una segunda confederación, quitar esta línea.
+    ocultarConfederacion: true,
+    competiciones: [
+      {
+        nombre: "Nations League 2026/27",
+        simulador: "#/simulador-selecciones",
+        explicaciones: [{ href: "#/nations-league", label: "Explicación" }],
+      },
+      {
+        nombre: "Clasificación Euro 2028",
+        simulador: "#/simulador-clasificacion-euro2028",
+        explicaciones: [{ href: "#/euro2028", label: "Explicación" }],
+      },
+    ],
+  },
+];
+
+function NavDropdownGrupos({ grupos }) {
+  const visibles = grupos.filter((g) => g.competiciones.length > 0);
+  return visibles.map((grupo, i) => (
+    <div
+      key={grupo.confederacion}
+      style={i === 0 ? undefined : { marginTop: 8, paddingTop: 10, borderTop: `1px solid ${C.borde}` }}
+    >
+      {!grupo.ocultarConfederacion && <NavDropdownConfederacion>{grupo.confederacion}</NavDropdownConfederacion>}
+      {grupo.competiciones.map((comp) => (
+        <div key={comp.nombre} style={{ paddingLeft: grupo.ocultarConfederacion ? 0 : 8 }}>
+          <NavDropdownEtiqueta>{comp.nombre.toUpperCase()}</NavDropdownEtiqueta>
+          {comp.simulador && <NavDropdownEnlace href={comp.simulador}>Simulador</NavDropdownEnlace>}
+          {(comp.explicaciones || []).map((e) => (
+            <NavDropdownEnlace key={e.href} href={e.href}>{e.label}</NavDropdownEnlace>
+          ))}
+        </div>
+      ))}
+    </div>
+  ));
+}
+
 // Modal que se abre desde cualquier enlace "ambiguo" del sitio (uno que no
 // nombra una competición concreta) para que el usuario elija a qué
 // competición se refiere, en vez de asumir Champions League por defecto.
@@ -182,7 +274,7 @@ function SelectorCompeticion({ abierto, onClose }) {
           <button onClick={onClose} aria-label="Cerrar" style={{ background: "none", border: "none", color: C.textoSuave, fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 4 }}>✕</button>
         </div>
 
-        <GrupoCompeticiones etiqueta="CLUBES · FASE PREVIA Y FASE DE LIGA 2026/27">
+        <GrupoCompeticiones etiqueta="CLUBES · UEFA · FASE PREVIA Y FASE DE LIGA 2026/27">
           <TarjetaCompeticion color={C.oro} titulo="Champions League"
             explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
             simulador="#/simulador/cl" />
@@ -192,6 +284,11 @@ function SelectorCompeticion({ abierto, onClose }) {
           <TarjetaCompeticion color={C.azul} titulo="Conference League"
             explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
             simulador="#/simulador/co" />
+        </GrupoCompeticiones>
+
+        <GrupoCompeticiones etiqueta="CLUBES · AFC 2026/27">
+          <TarjetaCompeticion color={C.verde} titulo="AFC Champions League Elite"
+            explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]} />
         </GrupoCompeticiones>
 
         <GrupoCompeticiones etiqueta="SELECCIONES">
@@ -222,21 +319,10 @@ export default function Landing() {
           <div style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3 }}>MODO COMPETICIÓN</div>
           <nav style={{ display: "flex", gap: 22, flexWrap: "wrap", alignItems: "center" }}>
             <NavDropdown label="Clubes">
-              <NavDropdownEtiqueta>SIMULADOR</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/simulador/cl">Champions League</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/simulador/el">Europa League</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/simulador/co">Conference League</NavDropdownEnlace>
-              <NavDropdownEtiqueta>EXPLICACIÓN</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/formato">Fases previas</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/formato-liga">Liga y eliminatorias</NavDropdownEnlace>
+              <NavDropdownGrupos grupos={MENU_CLUBES} />
             </NavDropdown>
             <NavDropdown label="Selecciones">
-              <NavDropdownEtiqueta>NATIONS LEAGUE 2026/27</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/simulador-selecciones">Simulador</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/nations-league">Explicación</NavDropdownEnlace>
-              <NavDropdownEtiqueta>CLASIFICACIÓN EURO 2028</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/simulador-clasificacion-euro2028">Simulador</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/euro2028">Explicación</NavDropdownEnlace>
+              <NavDropdownGrupos grupos={MENU_SELECCIONES} />
             </NavDropdown>
           </nav>
         </header>
@@ -324,7 +410,7 @@ export default function Landing() {
             reglas oficiales.
           </Parrafo>
 
-          <GrupoCompeticiones etiqueta="CLUBES · FASE PREVIA Y FASE DE LIGA 2026/27">
+          <GrupoCompeticiones etiqueta="CLUBES · UEFA · FASE PREVIA Y FASE DE LIGA 2026/27">
             <TarjetaCompeticion color={C.oro} titulo="Champions League"
               explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
               simulador="#/simulador/cl" />
@@ -334,6 +420,12 @@ export default function Landing() {
             <TarjetaCompeticion color={C.azul} titulo="Conference League"
               explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
               simulador="#/simulador/co" />
+          </GrupoCompeticiones>
+
+          <GrupoCompeticiones etiqueta="CLUBES · AFC 2026/27">
+            <TarjetaCompeticion color={C.verde} titulo="AFC Champions League Elite"
+              sub="La Champions asiática pasa de 24 a 32 equipos: dos ligas paralelas por región, ocho jornadas, corte seco en el top 8 y un play-off aprobado que no se aplica todavía."
+              explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]} />
           </GrupoCompeticiones>
 
           <GrupoCompeticiones etiqueta="SELECCIONES">
