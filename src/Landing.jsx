@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
@@ -88,18 +88,43 @@ function GrupoCompeticiones({ etiqueta, children }) {
   );
 }
 
+const MARGEN_PANEL = 20; // aire mínimo entre el panel y los bordes del viewport
+
 // Enlace del nav con un panel desplegable, por clic (funciona igual en escritorio y táctil).
 // Agrupa páginas relacionadas — p. ej. las competiciones de clubes o los simuladores —
 // bajo una sola entrada del menú. Se cierra al hacer clic fuera.
 function NavDropdown({ label, children }) {
   const [abierto, setAbierto] = useState(false);
+  const [desplazamiento, setDesplazamiento] = useState(0);
   const ref = useRef(null);
+  const panelRef = useRef(null);
+
   useEffect(() => {
     if (!abierto) return;
     const onClickFuera = (e) => { if (ref.current && !ref.current.contains(e.target)) setAbierto(false); };
     document.addEventListener("click", onClickFuera);
     return () => document.removeEventListener("click", onClickFuera);
   }, [abierto]);
+
+  // El panel se ancla al botón, así que el hueco que le queda a la derecha depende
+  // de dónde caiga ese botón: limitar solo su ancho no basta — cuando el menú no
+  // envuelve, el botón está a la derecha y el panel se sale de la pantalla. Se mide
+  // la posición real y se desplaza lo justo para que quepa. Como `maxWidth` ya lo
+  // deja en 100vw - 2·margen, siempre existe una posición válida.
+  useLayoutEffect(() => {
+    if (!abierto) return;
+    const ajustar = () => {
+      if (!ref.current || !panelRef.current) return;
+      const izqBoton = ref.current.getBoundingClientRect().left;
+      const anchoPanel = panelRef.current.offsetWidth;
+      const maxIzq = window.innerWidth - MARGEN_PANEL - anchoPanel;
+      setDesplazamiento(Math.max(MARGEN_PANEL, Math.min(izqBoton, maxIzq)) - izqBoton);
+    };
+    ajustar();
+    window.addEventListener("resize", ajustar);
+    return () => window.removeEventListener("resize", ajustar);
+  }, [abierto]);
+
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button
@@ -109,7 +134,7 @@ function NavDropdown({ label, children }) {
         {label} <span style={{ fontSize: 10 }}>▾</span>
       </button>
       {abierto && (
-        <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 10, background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 10, padding: 10, minWidth: 220, maxWidth: "calc(100vw - 40px)", width: "max-content", zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
+        <div ref={panelRef} style={{ position: "absolute", top: "100%", left: desplazamiento, marginTop: 10, background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 10, padding: 10, minWidth: 220, maxWidth: `calc(100vw - ${MARGEN_PANEL * 2}px)`, width: "max-content", maxHeight: "calc(100vh - 120px)", overflowY: "auto", zIndex: 20, boxShadow: "0 8px 24px rgba(0,0,0,0.35)" }}>
           {children}
         </div>
       )}
