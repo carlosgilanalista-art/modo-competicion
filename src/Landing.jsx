@@ -129,6 +129,17 @@ function NavDropdownEnlace({ href, children }) {
   );
 }
 
+// Entrada de dropdown sin enlace, para confederaciones que aún no tienen
+// ninguna ruta publicada (ver inventario-rutas-pre-menu.md).
+function NavDropdownProximamente({ children }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, color: C.textoSuave, fontSize: 13, padding: "8px 10px", borderRadius: 6, opacity: 0.6, cursor: "default" }}>
+      <span>{children}</span>
+      <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1 }}>PRÓXIMAMENTE</span>
+    </div>
+  );
+}
+
 // Modal que se abre desde cualquier enlace "ambiguo" del sitio (uno que no
 // nombra una competición concreta) para que el usuario elija a qué
 // competición se refiere, en vez de asumir Champions League por defecto.
@@ -197,13 +208,19 @@ export default function Landing() {
           <div style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3 }}>MODO COMPETICIÓN</div>
           <nav style={{ display: "flex", gap: 22, flexWrap: "wrap", alignItems: "center" }}>
             <NavDropdown label="Clubes">
-              <NavDropdownEtiqueta>SIMULADOR</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/simulador/cl">Champions League</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/simulador/el">Europa League</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/simulador/co">Conference League</NavDropdownEnlace>
-              <NavDropdownEtiqueta>EXPLICACIÓN</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/formato">Fases previas</NavDropdownEnlace>
-              <NavDropdownEnlace href="#/formato-liga">Liga y eliminatorias</NavDropdownEnlace>
+              <NavDropdownEtiqueta>UEFA</NavDropdownEtiqueta>
+              <NavDropdownEtiqueta>Champions League</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador/cl">Simulador</NavDropdownEnlace>
+              <NavDropdownEtiqueta>Europa League</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador/el">Simulador</NavDropdownEnlace>
+              <NavDropdownEtiqueta>Conference League</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador/co">Simulador</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/formato">Explicación: fases previas</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/formato-liga">Explicación: liga y eliminatorias</NavDropdownEnlace>
+              <NavDropdownEtiqueta>AFC</NavDropdownEtiqueta>
+              <NavDropdownProximamente>Competiciones asiáticas</NavDropdownProximamente>
+              <NavDropdownEtiqueta>CAF</NavDropdownEtiqueta>
+              <NavDropdownProximamente>Competiciones africanas</NavDropdownProximamente>
             </NavDropdown>
             <NavDropdown label="Selecciones">
               <NavDropdownEtiqueta>NATIONS LEAGUE 2026/27</NavDropdownEtiqueta>
