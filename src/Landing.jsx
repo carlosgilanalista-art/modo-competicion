@@ -7,7 +7,7 @@ import useDocumentMeta from "./useDocumentMeta.js";
 const C = {
   fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C",
   texto: "#F4F1E8", textoSuave: "#8A97A8",
-  oro: "#D4A94C", naranja: "#E8734A", azul: "#4A90D4",
+  oro: "#D4A94C", naranja: "#E8734A", azul: "#4A90D4", verde: "#5BBB7B",
 };
 const MONO = "'JetBrains Mono', monospace";
 const OSWALD = "'Oswald', sans-serif";
@@ -71,7 +71,9 @@ function TarjetaCompeticion({ color, titulo, sub, explicacion, simulador }) {
         </div>
         <div>
           <div style={{ fontFamily: MONO, color: C.textoSuave, fontSize: 10, letterSpacing: 2, marginBottom: 6 }}>SIMULADOR</div>
-          <BotonEnlace href={simulador} label="🎮 Abrir simulador" color={color} />
+          {simulador
+            ? <BotonEnlace href={simulador} label="🎮 Abrir simulador" color={color} />
+            : <div style={{ color: C.textoSuave, fontSize: 13, border: `1px dashed ${C.borde}`, borderRadius: 8, padding: "10px 18px" }}>Próximamente</div>}
         </div>
       </div>
     </div>
@@ -180,6 +182,11 @@ function SelectorCompeticion({ abierto, onClose }) {
             simulador="#/simulador/co" />
         </GrupoCompeticiones>
 
+        <GrupoCompeticiones etiqueta="CLUBES · AFC 2026/27">
+          <TarjetaCompeticion color={C.verde} titulo="AFC Champions League Elite"
+            explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]} />
+        </GrupoCompeticiones>
+
         <GrupoCompeticiones etiqueta="SELECCIONES">
           <TarjetaCompeticion color={C.azul} titulo="Nations League 2026/27"
             explicacion={[{ href: "#/nations-league", label: "Cómo funciona" }]}
@@ -218,7 +225,8 @@ export default function Landing() {
               <NavDropdownEnlace href="#/formato">Explicación: fases previas</NavDropdownEnlace>
               <NavDropdownEnlace href="#/formato-liga">Explicación: liga y eliminatorias</NavDropdownEnlace>
               <NavDropdownEtiqueta>AFC</NavDropdownEtiqueta>
-              <NavDropdownProximamente>Competiciones asiáticas</NavDropdownProximamente>
+              <NavDropdownEtiqueta>Champions League Elite 2026/27</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/afc-champions-elite">Explicación</NavDropdownEnlace>
               <NavDropdownEtiqueta>CAF</NavDropdownEtiqueta>
               <NavDropdownProximamente>Competiciones africanas</NavDropdownProximamente>
             </NavDropdown>
@@ -326,6 +334,12 @@ export default function Landing() {
             <TarjetaCompeticion color={C.azul} titulo="Conference League"
               explicacion={[{ href: "#/formato", label: "Fases previas" }, { href: "#/formato-liga", label: "Liga y eliminatorias" }]}
               simulador="#/simulador/co" />
+          </GrupoCompeticiones>
+
+          <GrupoCompeticiones etiqueta="CLUBES · AFC 2026/27">
+            <TarjetaCompeticion color={C.verde} titulo="AFC Champions League Elite"
+              sub="La Champions asiática pasa de 24 a 32 equipos: dos ligas paralelas por región, ocho jornadas, corte seco en el top 8 y un play-off aprobado que no se aplica todavía."
+              explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]} />
           </GrupoCompeticiones>
 
           <GrupoCompeticiones etiqueta="SELECCIONES">
