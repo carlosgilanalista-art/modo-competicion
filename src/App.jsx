@@ -43,6 +43,21 @@ function perdedorTie(tie, resultado) {
 function estadoOrigenReal(resultado) {
   return estadoEliminatoria(resultado).fase === "resuelto" ? "real" : "real-incompleto";
 }
+// ¿Hay algún cruce con base real que ahora mismo no esté en su estado real (fue
+// invalidado por cascada, editado, o su marcador difiere del real)? Sirve tanto
+// para habilitar el botón "Restaurar todos los reales" como para calcular a
+// quién le toca.
+const CAMPOS_RESULTADO = ["idaA", "idaB", "vueltaA", "vueltaB", "etA", "etB", "penA", "penB"];
+function idsDivergentesDeReal(real, resActual, origen) {
+  if (!real) return [];
+  return Object.keys(real).filter((id) => {
+    const o = origen[id];
+    if (o !== "real" && o !== "real-incompleto") return true;
+    const r = resActual[id] || {};
+    const b = real[id];
+    return CAMPOS_RESULTADO.some((k) => b[k] !== r[k]);
+  });
+}
 // Recalcula, para los cruces de una ronda con lados "aRef/bRef" que pueden ser
 // referencias a un tie de la ronda anterior (prefijo refPrefix, p. ej. "R1-"),
 // qué cruces confirmados/reales-incompletos ya no corresponden al cruce real
@@ -1222,6 +1237,12 @@ function useOrigenResultados() {
     setOrigen((p) => ({ ...p, [id]: estado }));
     setDesbloqueados((p) => { if (!p.has(id)) return p; const n = new Set(p); n.delete(id); return n; });
   };
+  // Igual que restaurar pero para varios cruces a la vez (botón "Restaurar todos").
+  const restaurarTodos = (mapa) => {
+    setOrigen((p) => ({ ...p, ...mapa }));
+    const ids = Object.keys(mapa);
+    setDesbloqueados((p) => { if (!ids.some((id) => p.has(id))) return p; const n = new Set(p); ids.forEach((id) => n.delete(id)); return n; });
+  };
   // Cuando un cambio en una ronda anterior hace que un cruce ya no corresponda
   // al cruce real (cambia quién avanza de ruta), el resultado precargado deja
   // de ser válido: se retira del seguimiento (vuelve a comportarse como un
@@ -1233,7 +1254,7 @@ function useOrigenResultados() {
   };
   const esBloqueado = (id) => origen[id] === "real" && !desbloqueados.has(id);
   const tieneBaseReal = (id) => origen[id] === "real" || origen[id] === "real-incompleto";
-  return { origen, marcarOrigen, marcarEditado, desbloquear, restaurar, invalidar, esBloqueado, tieneBaseReal };
+  return { origen, marcarOrigen, marcarEditado, desbloquear, restaurar, restaurarTodos, invalidar, esBloqueado, tieneBaseReal };
 }
 
 function useChampions(datosReales) {
@@ -1301,6 +1322,18 @@ function useChampions(datosReales) {
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
   const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id, estadoOrigenReal(realR1[id])); } };
   const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id, estadoOrigenReal(realR2[id])); } };
+  const divergentesR1 = useMemo(() => idsDivergentesDeReal(realR1, resR1, oR1.origen), [realR1, resR1, oR1.origen]);
+  const divergentesR2 = useMemo(() => idsDivergentesDeReal(realR2, resR2, oR2.origen), [realR2, resR2, oR2.origen]);
+  const restaurarTodoR1 = () => {
+    if (!divergentesR1.length) return;
+    setResR1((p) => { const n = { ...p }; divergentesR1.forEach((id) => { n[id] = realR1[id]; }); return n; });
+    oR1.restaurarTodos(Object.fromEntries(divergentesR1.map((id) => [id, estadoOrigenReal(realR1[id])])));
+  };
+  const restaurarTodoR2 = () => {
+    if (!divergentesR2.length) return;
+    setResR2((p) => { const n = { ...p }; divergentesR2.forEach((id) => { n[id] = realR2[id]; }); return n; });
+    oR2.restaurarTodos(Object.fromEntries(divergentesR2.map((id) => [id, estadoOrigenReal(realR2[id])])));
+  };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1448,9 +1481,9 @@ function useChampions(datosReales) {
   return {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1, realR1,
-    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1,
+    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1, restaurarTodoR1, hayDivergenciaR1: divergentesR1.length > 0,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
-    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2,
+    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2, restaurarTodoR2, hayDivergenciaR2: divergentesR2.length > 0,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, confirmarR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, confirmarPO,
     clasificados, resolverGenerico,
@@ -1521,6 +1554,18 @@ function useEuropa(cl, datosReales) {
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
   const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id, estadoOrigenReal(realR1[id])); } };
   const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id, estadoOrigenReal(realR2[id])); } };
+  const divergentesR1 = useMemo(() => idsDivergentesDeReal(realR1, resR1, oR1.origen), [realR1, resR1, oR1.origen]);
+  const divergentesR2 = useMemo(() => idsDivergentesDeReal(realR2, resR2, oR2.origen), [realR2, resR2, oR2.origen]);
+  const restaurarTodoR1 = () => {
+    if (!divergentesR1.length) return;
+    setResR1((p) => { const n = { ...p }; divergentesR1.forEach((id) => { n[id] = realR1[id]; }); return n; });
+    oR1.restaurarTodos(Object.fromEntries(divergentesR1.map((id) => [id, estadoOrigenReal(realR1[id])])));
+  };
+  const restaurarTodoR2 = () => {
+    if (!divergentesR2.length) return;
+    setResR2((p) => { const n = { ...p }; divergentesR2.forEach((id) => { n[id] = realR2[id]; }); return n; });
+    oR2.restaurarTodos(Object.fromEntries(divergentesR2.map((id) => [id, estadoOrigenReal(realR2[id])])));
+  };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1688,9 +1733,9 @@ function useEuropa(cl, datosReales) {
   return {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1, realR1,
-    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1,
+    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1, restaurarTodoR1, hayDivergenciaR1: divergentesR1.length > 0,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
-    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2,
+    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2, restaurarTodoR2, hayDivergenciaR2: divergentesR2.length > 0,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     clasificados, resolverGenerico,
@@ -1805,6 +1850,18 @@ function useConference(cl, el, datosReales) {
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
   const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id, estadoOrigenReal(realR1[id])); } };
   const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id, estadoOrigenReal(realR2[id])); } };
+  const divergentesR1 = useMemo(() => idsDivergentesDeReal(realR1, resR1, oR1.origen), [realR1, resR1, oR1.origen]);
+  const divergentesR2 = useMemo(() => idsDivergentesDeReal(realR2, resR2, oR2.origen), [realR2, resR2, oR2.origen]);
+  const restaurarTodoR1 = () => {
+    if (!divergentesR1.length) return;
+    setResR1((p) => { const n = { ...p }; divergentesR1.forEach((id) => { n[id] = realR1[id]; }); return n; });
+    oR1.restaurarTodos(Object.fromEntries(divergentesR1.map((id) => [id, estadoOrigenReal(realR1[id])])));
+  };
+  const restaurarTodoR2 = () => {
+    if (!divergentesR2.length) return;
+    setResR2((p) => { const n = { ...p }; divergentesR2.forEach((id) => { n[id] = realR2[id]; }); return n; });
+    oR2.restaurarTodos(Object.fromEntries(divergentesR2.map((id) => [id, estadoOrigenReal(realR2[id])])));
+  };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1978,9 +2035,9 @@ function useConference(cl, el, datosReales) {
   return {
     coefs, allTeams,
     resR1, changeR1, resetR1, resolverR1, realR1,
-    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1,
+    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1, restaurarTodoR1, hayDivergenciaR1: divergentesR1.length > 0,
     resR2, changeR2, resetR2, resolverExternoCL, resolverLado, resolverR2, r2Completa,
-    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2,
+    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2, restaurarTodoR2, hayDivergenciaR2: divergentesR2.length > 0,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     clasificados, resolverGenerico,
@@ -2014,12 +2071,20 @@ function TieCard({ nombreA, paisA, nombreB, paisB, ruta, nota, tie, resultado, o
   );
 }
 
-function CabeceraRonda({ titulo, fechas, colores, onRellenar, disabledRellenar }) {
+function CabeceraRonda({ titulo, fechas, colores, onRellenar, disabledRellenar, onRestaurarTodos, disabledRestaurarTodos }) {
   return (
     <div style={{ marginBottom: 4 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
         <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2 }}>{titulo}</div>
-        {onRellenar && <BotonAleatorio onClick={onRellenar} label="Simular" colores={colores} />}
+        <div style={{ display: "flex", gap: 8 }}>
+          {onRestaurarTodos && (
+            <button onClick={onRestaurarTodos} disabled={disabledRestaurarTodos}
+              style={{ background: "none", color: disabledRestaurarTodos ? "#555" : colores.textoSuave, border: `1px solid ${disabledRestaurarTodos ? "#3A3A3A" : colores.inputBorder}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: disabledRestaurarTodos ? "not-allowed" : "pointer" }}>
+              ↩ Restaurar todos los reales
+            </button>
+          )}
+          {onRellenar && <BotonAleatorio onClick={onRellenar} label="Simular" colores={colores} />}
+        </div>
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", marginBottom: 10 }}>{fechas}</div>
     </div>
@@ -2351,7 +2416,8 @@ function ChampionsView({ cl }) {
         ))}
       </div>
 
-      <CabeceraRonda titulo="RONDA 1" fechas={CL_FECHAS.R1} colores={t} onRellenar={cl.rellenarR1} />
+      <CabeceraRonda titulo="RONDA 1" fechas={CL_FECHAS.R1} colores={t} onRellenar={cl.rellenarR1}
+        onRestaurarTodos={cl.restaurarTodoR1} disabledRestaurarTodos={!cl.hayDivergenciaR1} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
         {CL_RONDA1.map((tie) => {
           const r = cl.resolverR1(tie.id);
@@ -2367,7 +2433,8 @@ function ChampionsView({ cl }) {
         })}
       </div>
 
-      <CabeceraRonda titulo="RONDA 2 (ya sorteada)" fechas={CL_FECHAS.R2} colores={t} onRellenar={cl.rellenarR2} />
+      <CabeceraRonda titulo="RONDA 2 (ya sorteada)" fechas={CL_FECHAS.R2} colores={t} onRellenar={cl.rellenarR2}
+        onRestaurarTodos={cl.restaurarTodoR2} disabledRestaurarTodos={!cl.hayDivergenciaR2} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
         {CL_RONDA2.map((tie) => {
           const ladoA = cl.resolverLadoR2(tie.aRef, tie.paisA), ladoB = cl.resolverLadoR2(tie.bRef, tie.paisB);
@@ -2468,7 +2535,8 @@ function EuropaView({ el, cl }) {
         ))}
       </div>
 
-      <CabeceraRonda titulo="RONDA 1" fechas={EL_FECHAS.R1} colores={t} onRellenar={el.rellenarR1} />
+      <CabeceraRonda titulo="RONDA 1" fechas={EL_FECHAS.R1} colores={t} onRellenar={el.rellenarR1}
+        onRestaurarTodos={el.restaurarTodoR1} disabledRestaurarTodos={!el.hayDivergenciaR1} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
         {EL_RONDA1.map((tie) => {
           const r = el.resolverR1(tie.id);
@@ -2483,7 +2551,8 @@ function EuropaView({ el, cl }) {
         })}
       </div>
 
-      <CabeceraRonda titulo="RONDA 2 (ya sorteada)" fechas={EL_FECHAS.R2} colores={t} onRellenar={el.rellenarR2} />
+      <CabeceraRonda titulo="RONDA 2 (ya sorteada)" fechas={EL_FECHAS.R2} colores={t} onRellenar={el.rellenarR2}
+        onRestaurarTodos={el.restaurarTodoR2} disabledRestaurarTodos={!el.hayDivergenciaR2} />
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
         {EL_RONDA2.map((tie) => {
           const ladoA = el.resolverLadoR2(tie.aRef, tie.paisA), ladoB = el.resolverLadoR2(tie.bRef, tie.paisB);
@@ -2593,7 +2662,8 @@ function ConferenceView({ co, cl, el }) {
         ))}
       </div>
 
-      <CabeceraRonda titulo="RONDA 1 — 26 CRUCES" fechas={CO_FECHAS.R1} colores={t} onRellenar={co.rellenarR1} />
+      <CabeceraRonda titulo="RONDA 1 — 26 CRUCES" fechas={CO_FECHAS.R1} colores={t} onRellenar={co.rellenarR1}
+        onRestaurarTodos={co.restaurarTodoR1} disabledRestaurarTodos={!co.hayDivergenciaR1} />
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 28, maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
         {CO_RONDA1.map((tie) => {
           const r = co.resolverR1(tie.id);
@@ -2607,7 +2677,8 @@ function ConferenceView({ co, cl, el }) {
         })}
       </div>
 
-      <CabeceraRonda titulo="RONDA 2 — RUTA DE CAMPEONES (6 cruces, desde Champions League en directo)" fechas={CO_FECHAS.R2} colores={t} onRellenar={co.rellenarR2} />
+      <CabeceraRonda titulo="RONDA 2 — RUTA DE CAMPEONES (6 cruces, desde Champions League en directo)" fechas={CO_FECHAS.R2} colores={t} onRellenar={co.rellenarR2}
+        onRestaurarTodos={co.restaurarTodoR2} disabledRestaurarTodos={!co.hayDivergenciaR2} />
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 24 }}>
         {CO_RONDA2_CAMPEONES.map((tie) => {
           const ladoA = co.resolverExternoCL(tie.ext1tie), ladoB = co.resolverExternoCL(tie.ext2tie);

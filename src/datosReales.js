@@ -124,6 +124,13 @@ export function resultadoRealParaCruce(eliminatorias, competicion, ronda, nombre
   const resultado = {};
   if (ida) { resultado.idaA = invertido ? ida[1] : ida[0]; resultado.idaB = invertido ? ida[0] : ida[1]; }
   if (vuelta) { resultado.vueltaA = invertido ? vuelta[1] : vuelta[0]; resultado.vueltaB = invertido ? vuelta[0] : vuelta[1]; }
+  // El dataset no trae el desglose de goles de la prórroga (no se puede rellenar
+  // sin inventarlo), pero si hubo tanda de penaltis sí trae su marcador final —
+  // se precarga igualmente: el simulador solo lo usa una vez el usuario complete
+  // la prórroga (necesaria para llegar a la fase de penaltis), así que no se
+  // muestra hasta entonces, pero ya está ahí cuando haga falta.
+  const penaltis = marcador(e.penaltis);
+  if (penaltis) { resultado.penA = invertido ? penaltis[1] : penaltis[0]; resultado.penB = invertido ? penaltis[0] : penaltis[1]; }
   // clasificado se devuelve en el "dominio" de nombres del simulador (nombreA/nombreB
   // tal y como los pasó quien llama), no en el del dataset — para que se pueda
   // encadenar (p. ej. usar el ganador de Q1 como nombreA de un cruce de Q2).
