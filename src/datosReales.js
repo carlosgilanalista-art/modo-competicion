@@ -69,6 +69,17 @@ const ALIAS = {
   "SK Rapid": "Rapid Wien",
   "Zimbru": "Zimbru Chișinău",
   "Zrinjski": "Zrinjski Mostar",
+  // Nuevos entrantes de Ronda 3 / Playoff (no aparecen hasta esas rondas)
+  "NEC Nijmegen": "NEC",
+  "Sparta Praga": "Sparta Prague",
+  "Olympiakos": "Olympiacos",
+  "AEK Atenas": "AEK Athens",
+  "LASK Linz": "LASK",
+  "Salzburgo": "Red Bull Salzburg",
+  "Sint-Truidense": "Sint-Truiden",
+  "OFI Creta": "OFI",
+  "Friburgo": "Freiburg",
+  "Mónaco": "Monaco",
 };
 function normaliza(nombre) { return ALIAS[nombre] || nombre; }
 
@@ -103,6 +114,19 @@ function marcador(str) {
   const partes = str.split("-").map((n) => parseInt(n, 10));
   if (partes.length !== 2 || partes.some((n) => Number.isNaN(n))) return null;
   return partes;
+}
+
+// ¿Existe en el dataset un cruce real de competicion/ronda entre estos dos
+// equipos, tenga o no marcador todavía? A diferencia de resultadoRealParaCruce,
+// SÍ cuenta los "pendiente" — el Playoff, por ejemplo, ya está sorteado en la
+// realidad aunque no se haya jugado ningún partido, así que el emparejamiento
+// se puede usar igual (solo el marcador, si lo hay, se consulta aparte).
+export function existeCrucePendiente(eliminatorias, competicion, ronda, nombreA, nombreB) {
+  const dsA = normaliza(nombreA), dsB = normaliza(nombreB);
+  return eliminatorias.some((x) =>
+    x.competicion === competicion && x.ronda === ronda &&
+    ((x.equipo_a === dsA && x.equipo_b === dsB) || (x.equipo_a === dsB && x.equipo_b === dsA))
+  );
 }
 
 // Busca en el dataset la eliminatoria real de `competicion`/`ronda` cuyo par de
@@ -168,4 +192,30 @@ export function perdedorRealR1(eliminatorias, competicion, tieR1) {
   const r = resultadoRealParaCruce(eliminatorias, competicion, "Q1", tieR1.a, tieR1.b);
   if (!r || !r.clasificado) return null;
   return r.clasificado === tieR1.a ? tieR1.b : tieR1.a;
+}
+
+// A diferencia de Q1/Q2 (bracket fijo), los cruces de Q3 y Playoff los decide un
+// sorteo — pero ese sorteo YA SE HIZO en la realidad, así que en vez de simularlo
+// de nuevo se puede reconstruir emparejando el pool de equipos que llegan a la
+// ronda (pool = ganadores reales de la ronda anterior + nuevos entrantes) contra
+// los cruces reales del dataset. Solo se usa el resultado si TODO el pool se
+// empareja (cada equipo encuentra a su rival real dentro del propio pool): si
+// falta alguno (p. ej. porque el usuario editó un resultado y ahora hay un
+// equipo que en la realidad no llegó a esta ronda), no se inventa nada — se
+// devuelve incompleto y quien llama debe recurrir al sorteo normal.
+export function sorteoRealParaPool(eliminatorias, competicion, ronda, pool) {
+  const usados = new Set();
+  const cruces = [];
+  pool.forEach((equipo) => {
+    if (usados.has(equipo.nombre)) return;
+    const rival = pool.find((otro) =>
+      otro.nombre !== equipo.nombre && !usados.has(otro.nombre) &&
+      existeCrucePendiente(eliminatorias, competicion, ronda, equipo.nombre, otro.nombre)
+    );
+    if (!rival) return;
+    usados.add(equipo.nombre); usados.add(rival.nombre);
+    const [cabeza, rival2] = (equipo.coef ?? -1) >= (rival.coef ?? -1) ? [equipo, rival] : [rival, equipo];
+    cruces.push({ cabeza, rival: rival2 });
+  });
+  return { cruces, completo: pool.length > 0 && usados.size === pool.length };
 }
