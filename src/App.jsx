@@ -17,7 +17,15 @@ function estadoEliminatoria(r) {
     return { fase: "sin_datos", aggTied: false, etTied: false };
   let aggA = Number(r.idaA) + Number(r.vueltaA), aggB = Number(r.idaB) + Number(r.vueltaB);
   if (aggA !== aggB) return { fase: "resuelto", ganador: aggA > aggB ? "A" : "B", aggTied: false, etTied: false };
-  if (r.etA === undefined || r.etB === undefined) return { fase: "necesita_prorroga", aggTied: true, etTied: false };
+  if (r.etA === undefined || r.etB === undefined) {
+    // Sin prórroga registrada: si ya hay un marcador de penaltis (dataset real sin
+    // desglose de prórroga), se resuelve directo por penaltis en vez de pedir la
+    // prórroga que no se puede rellenar.
+    if (r.penA !== undefined && r.penB !== undefined && Number(r.penA) !== Number(r.penB)) {
+      return { fase: "resuelto", ganador: Number(r.penA) > Number(r.penB) ? "A" : "B", aggTied: true, etTied: true };
+    }
+    return { fase: "necesita_prorroga", aggTied: true, etTied: false };
+  }
   const etA = aggA + Number(r.etA), etB = aggB + Number(r.etB);
   if (etA !== etB) return { fase: "resuelto", ganador: etA > etB ? "A" : "B", aggTied: true, etTied: false };
   if (r.penA === undefined || r.penB === undefined || Number(r.penA) === Number(r.penB)) return { fase: "necesita_penaltis", aggTied: true, etTied: true };
