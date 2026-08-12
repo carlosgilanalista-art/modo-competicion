@@ -37,6 +37,40 @@ function perdedorTie(tie, resultado) {
   const est = estadoEliminatoria(resultado);
   return est.fase === "resuelto" ? (est.ganador === "A" ? tie.b : tie.a) : null;
 }
+// "real": el resultado real ya tiene ganador (agregado no empatado). "real-incompleto":
+// el dataset trae ida/vuelta reales pero el agregado quedó empatado y no hay desglose
+// de prórroga/penaltis — no se bloquea (el usuario tiene que completarlo él mismo).
+function estadoOrigenReal(resultado) {
+  return estadoEliminatoria(resultado).fase === "resuelto" ? "real" : "real-incompleto";
+}
+// Recalcula, para los cruces de una ronda con lados "aRef/bRef" que pueden ser
+// referencias a un tie de la ronda anterior (prefijo refPrefix, p. ej. "R1-"),
+// qué cruces confirmados/reales-incompletos ya no corresponden al cruce real
+// (invalidar) y cuáles habían quedado invalidados pero la ronda anterior ha
+// vuelto a coincidir con la realidad, así que se pueden restaurar (revalidar) —
+// solo si el usuario no ha vuelto a introducir nada él mismo mientras tanto.
+//
+// El "ganador real" se saca del dataset (ganadorRealR1), no del resultado local
+// congelado: un cruce real "incompleto" (agregado empatado sin desglose de
+// prórroga/penaltis) sí tiene un ganador real conocido aunque la app no pueda
+// representar el marcador completo — si se comparara contra el resultado local
+// tratando "sin ganador local" como "coincide siempre", cualquier resolución que
+// el usuario le diera (acertada o no) revalidaría el cruce siguiente igual.
+function calcularCascadaR2(cruces, refPrefix, datosReales, competicion, resR1, tieLookupR1, origenR2, resR2, realR2) {
+  const invalidos = [], revalidos = [];
+  cruces.forEach((t) => {
+    const refs = [t.aRef, t.bRef].filter((r) => r.startsWith(refPrefix));
+    const coincide = refs.every((ref) => {
+      const r1tie = tieLookupR1(ref);
+      const realWinner = datosReales ? ganadorRealR1(datosReales, competicion, r1tie) : null;
+      return !realWinner || realWinner === ganadorTie(r1tie, resR1[ref]);
+    });
+    const origenActual = origenR2[t.id];
+    if ((origenActual === "real" || origenActual === "real-incompleto") && !coincide) invalidos.push(t.id);
+    else if (!origenActual && resR2[t.id] === undefined && realR2 && t.id in realR2 && coincide) revalidos.push(t.id);
+  });
+  return { invalidos, revalidos };
+}
 function resumenTexto(r) {
   if (!r) return "";
   let partes = [];
@@ -256,11 +290,14 @@ function TieResultInputs({ tie, resultado, onChange, onReset, definido = true, c
   const estado = estadoEliminatoria(resultado);
   const inputStyle = { width: 38, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
   const penIgual = resultado?.penA !== undefined && resultado?.penB !== undefined && Number(resultado.penA) === Number(resultado.penB);
-  const hayBaseReal = origen === "real" || origen === "editado";
+  const hayBaseReal = origen === "real" || origen === "editado" || origen === "real-incompleto";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {origen === "editado" && (
         <span style={{ alignSelf: "flex-start", fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.alerta, border: `1px solid ${colores.alerta}`, borderRadius: 999, padding: "2px 8px" }}>✎ Editado (resultado real modificado)</span>
+      )}
+      {origen === "real-incompleto" && (
+        <span style={{ alignSelf: "flex-start", fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: "#D4A94C", border: "1px solid #D4A94C", borderRadius: 999, padding: "2px 8px" }}>◐ Resultado real incompleto — falta prórroga/penaltis</span>
       )}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <span style={{ color: colores.textoSuave, fontSize: 11, width: 30 }}>Ida</span>
@@ -1174,14 +1211,15 @@ function fixturesFaseLiga(sorteo) {
 function useOrigenResultados() {
   const [origen, setOrigen] = useState({});
   const [desbloqueados, setDesbloqueados] = useState(() => new Set());
-  const marcarReal = (ids) => setOrigen((p) => { const n = { ...p }; ids.forEach((id) => { n[id] = "real"; }); return n; });
+  // mapa: { id: "real" | "real-incompleto" }
+  const marcarOrigen = (mapa) => setOrigen((p) => ({ ...p, ...mapa }));
   const desbloquear = (id) => setDesbloqueados((p) => new Set(p).add(id));
   const marcarEditado = (id) => {
     setOrigen((p) => (p[id] === "real" ? { ...p, [id]: "editado" } : p));
     setDesbloqueados((p) => { if (!p.has(id)) return p; const n = new Set(p); n.delete(id); return n; });
   };
-  const restaurar = (id) => {
-    setOrigen((p) => ({ ...p, [id]: "real" }));
+  const restaurar = (id, estado) => {
+    setOrigen((p) => ({ ...p, [id]: estado }));
     setDesbloqueados((p) => { if (!p.has(id)) return p; const n = new Set(p); n.delete(id); return n; });
   };
   // Cuando un cambio en una ronda anterior hace que un cruce ya no corresponda
@@ -1194,7 +1232,8 @@ function useOrigenResultados() {
     setDesbloqueados((p) => { if (!ids.some((id) => p.has(id))) return p; const n = new Set(p); ids.forEach((id) => n.delete(id)); return n; });
   };
   const esBloqueado = (id) => origen[id] === "real" && !desbloqueados.has(id);
-  return { origen, marcarReal, marcarEditado, desbloquear, restaurar, invalidar, esBloqueado };
+  const tieneBaseReal = (id) => origen[id] === "real" || origen[id] === "real-incompleto";
+  return { origen, marcarOrigen, marcarEditado, desbloquear, restaurar, invalidar, esBloqueado, tieneBaseReal };
 }
 
 function useChampions(datosReales) {
@@ -1215,7 +1254,8 @@ function useChampions(datosReales) {
     precargadoRef.current = true;
     if (Object.keys(resR1).length === 0) {
       const pre = precargarRonda(datosReales, "UCL", "Q1", CL_RONDA1);
-      setResR1(pre); setRealR1(pre); oR1.marcarReal(Object.keys(pre));
+      setResR1(pre); setRealR1(pre);
+      oR1.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
     }
     if (Object.keys(resR2).length === 0) {
       const cruces = CL_RONDA2.map((t) => {
@@ -1224,25 +1264,29 @@ function useChampions(datosReales) {
         return a && b ? { id: t.id, a, b } : null;
       }).filter(Boolean);
       const pre = precargarRonda(datosReales, "UCL", "Q2", cruces);
-      setResR2(pre); setRealR2(pre); oR2.marcarReal(Object.keys(pre));
+      setResR2(pre); setRealR2(pre);
+      oR2.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
     }
   }, [datosReales]);
 
   // Si una edición en Q1 cambia quién gana un cruce, cualquier resultado real de
-  // Q2 que dependiera de ese cruce deja de aplicar: se retira (no se inventa ni
-  // se mantiene como "confirmado" un resultado de un cruce que ya no es el real).
+  // Q2 que dependiera de ese cruce deja de aplicar (se retira). Si luego se
+  // restaura Q1 y vuelve a coincidir con lo real, el cruce de Q2 se recupera —
+  // siempre que el usuario no haya introducido ya algo suyo en su lugar.
   useEffect(() => {
-    if (!realR1) return;
-    const invalidos = CL_RONDA2.filter((t) => oR2.origen[t.id] === "real" && [t.aRef, t.bRef].some((ref) => {
-      if (!ref.startsWith("R1-")) return false;
-      const r1tie = CL_RONDA1.find((r) => r.id === ref);
-      const realWinner = ganadorTie(r1tie, realR1[ref]);
-      return realWinner && realWinner !== ganadorTie(r1tie, resR1[ref]);
-    })).map((t) => t.id);
-    if (!invalidos.length) return;
-    setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
-    oR2.invalidar(invalidos);
-  }, [resR1, oR2.origen, realR1]);
+    if (!datosReales) return;
+    const { invalidos, revalidos } = calcularCascadaR2(
+      CL_RONDA2, "R1-", datosReales, "UCL", resR1, (ref) => CL_RONDA1.find((r) => r.id === ref), oR2.origen, resR2, realR2
+    );
+    if (invalidos.length) {
+      setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
+      oR2.invalidar(invalidos);
+    }
+    if (revalidos.length) {
+      setResR2((p) => { const n = { ...p }; revalidos.forEach((id) => { n[id] = realR2[id]; }); return n; });
+      oR2.marcarOrigen(Object.fromEntries(revalidos.map((id) => [id, estadoOrigenReal(realR2[id])])));
+    }
+  }, [resR1, oR2.origen, datosReales, realR2, resR2]);
 
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
@@ -1255,8 +1299,8 @@ function useChampions(datosReales) {
   const changePO = (id, field, value) => setResPO((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const resetR1 = (id) => setResR1((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
-  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id); } };
-  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id); } };
+  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id, estadoOrigenReal(realR1[id])); } };
+  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id, estadoOrigenReal(realR2[id])); } };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1362,8 +1406,10 @@ function useChampions(datosReales) {
     return sorteoPO.cruces.map((t) => resolverGenerico(sorteoPO.cruces, resPO, t.id).ganador);
   }, [sorteoPO, resPO]);
 
-  const rellenarR1 = () => { const n = {}; CL_RONDA1.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR1(n); };
-  const rellenarR2 = () => { const n = {}; CL_RONDA2.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR2(n); };
+  // "Simular ronda" respeta los resultados con base real (confirmados o
+  // reales-incompletos) — solo rellena al azar lo que no tiene ese respaldo.
+  const rellenarR1 = () => { setResR1((p) => { const n = { ...p }; CL_RONDA1.forEach((t) => { if (!oR1.tieneBaseReal(t.id)) n[t.id] = generarResultadoAleatorio(); }); return n; }); };
+  const rellenarR2 = () => { setResR2((p) => { const n = { ...p }; CL_RONDA2.forEach((t) => { if (!oR2.tieneBaseReal(t.id)) n[t.id] = generarResultadoAleatorio(); }); return n; }); };
   const rellenarR3 = () => { if (!sorteoR3 || sorteoR3.error) return; const n = {}; sorteoR3.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR3(n); };
   const rellenarPO = () => { if (!sorteoPO || sorteoPO.error) return; const n = {}; sorteoPO.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResPO(n); };
 
@@ -1432,7 +1478,8 @@ function useEuropa(cl, datosReales) {
     precargadoRef.current = true;
     if (Object.keys(resR1).length === 0) {
       const pre = precargarRonda(datosReales, "UEL", "Q1", EL_RONDA1);
-      setResR1(pre); setRealR1(pre); oR1.marcarReal(Object.keys(pre));
+      setResR1(pre); setRealR1(pre);
+      oR1.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
     }
     if (Object.keys(resR2).length === 0) {
       const cruces = EL_RONDA2.map((t) => {
@@ -1441,22 +1488,25 @@ function useEuropa(cl, datosReales) {
         return a && b ? { id: t.id, a, b } : null;
       }).filter(Boolean);
       const pre = precargarRonda(datosReales, "UEL", "Q2", cruces);
-      setResR2(pre); setRealR2(pre); oR2.marcarReal(Object.keys(pre));
+      setResR2(pre); setRealR2(pre);
+      oR2.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
     }
   }, [datosReales]);
 
   useEffect(() => {
-    if (!realR1) return;
-    const invalidos = EL_RONDA2.filter((t) => oR2.origen[t.id] === "real" && [t.aRef, t.bRef].some((ref) => {
-      if (!ref.startsWith("EL1-")) return false;
-      const r1tie = EL_RONDA1.find((r) => r.id === ref);
-      const realWinner = ganadorTie(r1tie, realR1[ref]);
-      return realWinner && realWinner !== ganadorTie(r1tie, resR1[ref]);
-    })).map((t) => t.id);
-    if (!invalidos.length) return;
-    setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
-    oR2.invalidar(invalidos);
-  }, [resR1, oR2.origen, realR1]);
+    if (!datosReales) return;
+    const { invalidos, revalidos } = calcularCascadaR2(
+      EL_RONDA2, "EL1-", datosReales, "UEL", resR1, (ref) => EL_RONDA1.find((r) => r.id === ref), oR2.origen, resR2, realR2
+    );
+    if (invalidos.length) {
+      setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
+      oR2.invalidar(invalidos);
+    }
+    if (revalidos.length) {
+      setResR2((p) => { const n = { ...p }; revalidos.forEach((id) => { n[id] = realR2[id]; }); return n; });
+      oR2.marcarOrigen(Object.fromEntries(revalidos.map((id) => [id, estadoOrigenReal(realR2[id])])));
+    }
+  }, [resR1, oR2.origen, datosReales, realR2, resR2]);
 
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
@@ -1469,8 +1519,8 @@ function useEuropa(cl, datosReales) {
   const changePO = (id, field, value) => setResPO((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const resetR1 = (id) => setResR1((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
-  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id); } };
-  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id); } };
+  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id, estadoOrigenReal(realR1[id])); } };
+  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id, estadoOrigenReal(realR2[id])); } };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1592,8 +1642,8 @@ function useEuropa(cl, datosReales) {
     return sorteoPO.cruces.map((t) => resolverGenerico(sorteoPO.cruces, resPO, t.id).ganador);
   }, [sorteoPO, resPO]);
 
-  const rellenarR1 = () => { const n = {}; EL_RONDA1.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR1(n); };
-  const rellenarR2 = () => { const n = {}; EL_RONDA2.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR2(n); };
+  const rellenarR1 = () => { setResR1((p) => { const n = { ...p }; EL_RONDA1.forEach((t) => { if (!oR1.tieneBaseReal(t.id)) n[t.id] = generarResultadoAleatorio(); }); return n; }); };
+  const rellenarR2 = () => { setResR2((p) => { const n = { ...p }; EL_RONDA2.forEach((t) => { if (!oR2.tieneBaseReal(t.id)) n[t.id] = generarResultadoAleatorio(); }); return n; }); };
   const rellenarR3 = () => { if (!sorteoR3 || sorteoR3.error) return; const n = {}; sorteoR3.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR3(n); };
   const rellenarPO = () => { if (!sorteoPO || sorteoPO.error) return; const n = {}; sorteoPO.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResPO(n); };
 
@@ -1668,7 +1718,8 @@ function useConference(cl, el, datosReales) {
     precargadoRef.current = true;
     if (Object.keys(resR1).length === 0) {
       const pre = precargarRonda(datosReales, "UECL", "Q1", CO_RONDA1);
-      setResR1(pre); setRealR1(pre); oR1.marcarReal(Object.keys(pre));
+      setResR1(pre); setRealR1(pre);
+      oR1.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
     }
     if (Object.keys(resR2).length === 0) {
       const crucesCampeones = CO_RONDA2_CAMPEONES.map((t) => {
@@ -1687,45 +1738,59 @@ function useConference(cl, el, datosReales) {
         return a && b ? { id: t.id, a, b } : null;
       }).filter(Boolean);
       const pre = precargarRonda(datosReales, "UECL", "Q2", [...crucesCampeones, ...crucesPrincipal]);
-      setResR2(pre); setRealR2(pre); oR2.marcarReal(Object.keys(pre));
+      setResR2(pre); setRealR2(pre);
+      oR2.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
     }
   }, [datosReales]);
 
-  // Cascada de invalidación de Q2: cubre tanto el bracket propio (CO1 → CO2
-  // "interno") como las dependencias externas (perdedores de Q1 de Champions/Europa
-  // League que "reequilibran" hacia Conference). Si cualquiera de esas fuentes
-  // cambia de resultado en vivo respecto al real, el cruce de Q2 que dependía de
-  // ella deja de estar confirmado.
+  // Cascada de invalidación/revalidación de Q2: cubre tanto el bracket propio
+  // (CO1 → CO2 "interno") como las dependencias externas (perdedores de Q1 de
+  // Champions/Europa League que "reequilibran" hacia Conference). Si cualquiera
+  // de esas fuentes deja de coincidir con lo real, el cruce de Q2 que dependía de
+  // ella se invalida; si vuelve a coincidir (p. ej. tras restaurar), se recupera
+  // — salvo que el usuario ya haya introducido algo suyo en su lugar.
   useEffect(() => {
-    const invalidos = [];
+    const invalidos = [], revalidos = [];
     CO_RONDA2_CAMPEONES.forEach((t) => {
-      if (oR2.origen[t.id] !== "real" || !cl.realR1) return;
+      if (!datosReales) return;
       const t1 = CL_RONDA1.find((r) => r.id === t.ext1tie), t2 = CL_RONDA1.find((r) => r.id === t.ext2tie);
-      const realA = perdedorTie(t1, cl.realR1[t.ext1tie]), realB = perdedorTie(t2, cl.realR1[t.ext2tie]);
+      const realA = perdedorRealR1(datosReales, "UCL", t1), realB = perdedorRealR1(datosReales, "UCL", t2);
       const liveA = perdedorTie(t1, cl.resR1[t.ext1tie]), liveB = perdedorTie(t2, cl.resR1[t.ext2tie]);
-      if ((realA && realA !== liveA) || (realB && realB !== liveB)) invalidos.push(t.id);
+      const coincide = (!realA || realA === liveA) && (!realB || realB === liveB);
+      const origenActual = oR2.origen[t.id];
+      if ((origenActual === "real" || origenActual === "real-incompleto") && !coincide) invalidos.push(t.id);
+      else if (!origenActual && resR2[t.id] === undefined && realR2 && t.id in realR2 && coincide) revalidos.push(t.id);
     });
+    const ladoCoincide = (lado) => {
+      if (lado.tipo === "interno") {
+        if (!datosReales) return true;
+        const tie1 = CO_RONDA1.find((r) => r.id === lado.ref);
+        const realW = ganadorRealR1(datosReales, "UECL", tie1);
+        return !realW || realW === ganadorTie(tie1, resR1[lado.ref]);
+      }
+      if (lado.tipo === "externo-el") {
+        if (!datosReales) return true;
+        const tie1 = EL_RONDA1.find((r) => r.id === lado.tieId);
+        const realL = perdedorRealR1(datosReales, "UEL", tie1);
+        return !realL || realL === perdedorTie(tie1, el.resR1[lado.tieId]);
+      }
+      return true;
+    };
     CO_RONDA2_PRINCIPAL.forEach((t) => {
-      if (oR2.origen[t.id] !== "real") return;
-      const ladoInvalido = (lado) => {
-        if (lado.tipo === "interno" && realR1) {
-          const tie1 = CO_RONDA1.find((r) => r.id === lado.ref);
-          const realW = ganadorTie(tie1, realR1[lado.ref]);
-          return realW && realW !== ganadorTie(tie1, resR1[lado.ref]);
-        }
-        if (lado.tipo === "externo-el" && el.realR1) {
-          const tie1 = EL_RONDA1.find((r) => r.id === lado.tieId);
-          const realL = perdedorTie(tie1, el.realR1[lado.tieId]);
-          return realL && realL !== perdedorTie(tie1, el.resR1[lado.tieId]);
-        }
-        return false;
-      };
-      if (ladoInvalido(t.a) || ladoInvalido(t.b)) invalidos.push(t.id);
+      const coincide = ladoCoincide(t.a) && ladoCoincide(t.b);
+      const origenActual = oR2.origen[t.id];
+      if ((origenActual === "real" || origenActual === "real-incompleto") && !coincide) invalidos.push(t.id);
+      else if (!origenActual && resR2[t.id] === undefined && realR2 && t.id in realR2 && coincide) revalidos.push(t.id);
     });
-    if (!invalidos.length) return;
-    setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
-    oR2.invalidar(invalidos);
-  }, [resR1, oR2.origen, realR1, cl.resR1, cl.realR1, el.resR1, el.realR1]);
+    if (invalidos.length) {
+      setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
+      oR2.invalidar(invalidos);
+    }
+    if (revalidos.length) {
+      setResR2((p) => { const n = { ...p }; revalidos.forEach((id) => { n[id] = realR2[id]; }); return n; });
+      oR2.marcarOrigen(Object.fromEntries(revalidos.map((id) => [id, estadoOrigenReal(realR2[id])])));
+    }
+  }, [resR1, oR2.origen, datosReales, realR2, resR2, cl.resR1, el.resR1]);
 
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
@@ -1738,8 +1803,8 @@ function useConference(cl, el, datosReales) {
   const changePO = (id, field, value) => setResPO((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const resetR1 = (id) => setResR1((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
-  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id); } };
-  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id); } };
+  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id, estadoOrigenReal(realR1[id])); } };
+  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id, estadoOrigenReal(realR2[id])); } };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1882,12 +1947,14 @@ function useConference(cl, el, datosReales) {
     return sorteoPO.cruces.map((t) => resolverGenerico(sorteoPO.cruces, resPO, t.id).ganador);
   }, [sorteoPO, resPO]);
 
-  const rellenarR1 = () => { const n = {}; CO_RONDA1.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR1(n); };
+  const rellenarR1 = () => { setResR1((p) => { const n = { ...p }; CO_RONDA1.forEach((t) => { if (!oR1.tieneBaseReal(t.id)) n[t.id] = generarResultadoAleatorio(); }); return n; }); };
   const rellenarR2 = () => {
-    const n = { ...resR2 };
-    CO_RONDA2_CAMPEONES.forEach((t) => { const a = resolverExternoCL(t.ext1tie), b = resolverExternoCL(t.ext2tie); if (a.definido && b.definido) n[t.id] = generarResultadoAleatorio(); });
-    CO_RONDA2_PRINCIPAL.forEach((t) => { const a = resolverLado(t.a), b = resolverLado(t.b); if (a.definido && b.definido) n[t.id] = generarResultadoAleatorio(); });
-    setResR2(n);
+    setResR2((p) => {
+      const n = { ...p };
+      CO_RONDA2_CAMPEONES.forEach((t) => { const a = resolverExternoCL(t.ext1tie), b = resolverExternoCL(t.ext2tie); if (a.definido && b.definido && !oR2.tieneBaseReal(t.id)) n[t.id] = generarResultadoAleatorio(); });
+      CO_RONDA2_PRINCIPAL.forEach((t) => { const a = resolverLado(t.a), b = resolverLado(t.b); if (a.definido && b.definido && !oR2.tieneBaseReal(t.id)) n[t.id] = generarResultadoAleatorio(); });
+      return n;
+    });
   };
   const rellenarR3 = () => { if (!sorteoR3 || sorteoR3.error) return; const n = {}; sorteoR3.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResR3(n); };
   const rellenarPO = () => { if (!sorteoPO || sorteoPO.error) return; const n = {}; sorteoPO.cruces.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResPO(n); };
