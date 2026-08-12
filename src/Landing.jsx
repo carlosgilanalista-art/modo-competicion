@@ -214,6 +214,7 @@ export default function Landing() {
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 0 0", flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontFamily: MONO, color: C.texto, fontSize: 13, letterSpacing: 3 }}>MODO COMPETICIÓN</div>
           <nav style={{ display: "flex", gap: 22, flexWrap: "wrap", alignItems: "center" }}>
+            <a href="#/resultados" style={{ color: C.textoSuave, fontSize: 13, textDecoration: "none" }}>Resultados</a>
             <NavDropdown label="Clubes">
               <NavDropdownEtiqueta>UEFA</NavDropdownEtiqueta>
               <NavDropdownEtiqueta>Champions League</NavDropdownEtiqueta>
