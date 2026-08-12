@@ -7,6 +7,7 @@ import ArticuloEuro2028 from "./ArticuloEuro2028.jsx";
 import ArticuloAFCChampionsElite from "./ArticuloAFCChampionsElite.jsx";
 import ResultadosReales from "./ResultadosReales.jsx";
 import useDocumentMeta from "./useDocumentMeta.js";
+import { useResultadosReales, precargarRonda, ganadorRealR1, perdedorRealR1 } from "./datosReales.js";
 
 // ============================================================
 // FUNCIONES COMPARTIDAS
@@ -1131,10 +1132,30 @@ function fixturesFaseLiga(sorteo) {
 // ============================================================
 // LÓGICA — CHAMPIONS LEAGUE
 // ============================================================
-function useChampions() {
+function useChampions(datosReales) {
   const [coefs] = useState(CL_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
+
+  // Precarga Q1/Q2 con los resultados reales del dataset estático (bracket fijo,
+  // coincide siempre con el emparejamiento real — ver src/datosReales.js). No
+  // toca nada si el usuario ya ha introducido algo.
+  useEffect(() => {
+    if (!datosReales) return;
+    setResR1((p) => (Object.keys(p).length ? p : precargarRonda(datosReales, "UCL", "Q1", CL_RONDA1)));
+  }, [datosReales]);
+  useEffect(() => {
+    if (!datosReales) return;
+    setResR2((p) => {
+      if (Object.keys(p).length) return p;
+      const cruces = CL_RONDA2.map((t) => {
+        const a = t.aRef.startsWith("R1-") ? ganadorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.aRef)) : t.aRef;
+        const b = t.bRef.startsWith("R1-") ? ganadorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.bRef)) : t.bRef;
+        return a && b ? { id: t.id, a, b } : null;
+      }).filter(Boolean);
+      return precargarRonda(datosReales, "UCL", "Q2", cruces);
+    });
+  }, [datosReales]);
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
   const [sorteoPO, setSorteoPO] = useState(null);
@@ -1304,10 +1325,27 @@ function useChampions() {
 // ============================================================
 // LÓGICA — EUROPA LEAGUE (recibe datos de Champions League en directo)
 // ============================================================
-function useEuropa(cl) {
+function useEuropa(cl, datosReales) {
   const [coefs] = useState(EL_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
+
+  useEffect(() => {
+    if (!datosReales) return;
+    setResR1((p) => (Object.keys(p).length ? p : precargarRonda(datosReales, "UEL", "Q1", EL_RONDA1)));
+  }, [datosReales]);
+  useEffect(() => {
+    if (!datosReales) return;
+    setResR2((p) => {
+      if (Object.keys(p).length) return p;
+      const cruces = EL_RONDA2.map((t) => {
+        const a = t.aRef.startsWith("EL1-") ? ganadorRealR1(datosReales, "UEL", EL_RONDA1.find((r) => r.id === t.aRef)) : t.aRef;
+        const b = t.bRef.startsWith("EL1-") ? ganadorRealR1(datosReales, "UEL", EL_RONDA1.find((r) => r.id === t.bRef)) : t.bRef;
+        return a && b ? { id: t.id, a, b } : null;
+      }).filter(Boolean);
+      return precargarRonda(datosReales, "UEL", "Q2", cruces);
+    });
+  }, [datosReales]);
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
   const [sorteoPO, setSorteoPO] = useState(null);
@@ -1499,10 +1537,37 @@ function useEuropa(cl) {
 // ============================================================
 // LÓGICA — CONFERENCE LEAGUE (recibe datos de Champions y Europa en directo)
 // ============================================================
-function useConference(cl, el) {
+function useConference(cl, el, datosReales) {
   const [coefs] = useState(CO_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
+
+  useEffect(() => {
+    if (!datosReales) return;
+    setResR1((p) => (Object.keys(p).length ? p : precargarRonda(datosReales, "UECL", "Q1", CO_RONDA1)));
+  }, [datosReales]);
+  useEffect(() => {
+    if (!datosReales) return;
+    setResR2((p) => {
+      if (Object.keys(p).length) return p;
+      const crucesCampeones = CO_RONDA2_CAMPEONES.map((t) => {
+        const a = perdedorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.ext1tie));
+        const b = perdedorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.ext2tie));
+        return a && b ? { id: t.id, a, b } : null;
+      }).filter(Boolean);
+      const resolverLadoReal = (lado) => {
+        if (lado.tipo === "literal") return lado.nombre;
+        if (lado.tipo === "interno") return ganadorRealR1(datosReales, "UECL", CO_RONDA1.find((r) => r.id === lado.ref));
+        if (lado.tipo === "externo-el") return perdedorRealR1(datosReales, "UEL", EL_RONDA1.find((r) => r.id === lado.tieId));
+        return null;
+      };
+      const crucesPrincipal = CO_RONDA2_PRINCIPAL.map((t) => {
+        const a = resolverLadoReal(t.a), b = resolverLadoReal(t.b);
+        return a && b ? { id: t.id, a, b } : null;
+      }).filter(Boolean);
+      return precargarRonda(datosReales, "UECL", "Q2", [...crucesCampeones, ...crucesPrincipal]);
+    });
+  }, [datosReales]);
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
   const [sorteoPO, setSorteoPO] = useState(null);
@@ -2041,6 +2106,9 @@ function ChampionsView({ cl }) {
   const t = TEMA_CL;
   return (
     <div>
+      <a href="#/resultados" style={{ display: "inline-block", color: t.acento, fontSize: 12, textDecoration: "none", marginBottom: 16 }}>
+        📋 Ver tabla completa de resultados reales (incl. Ronda 3 y Play-off) →
+      </a>
       <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {cl.allTeams.map((team, idx) => (
@@ -2153,6 +2221,9 @@ function EuropaView({ el, cl }) {
   const t = TEMA_EL;
   return (
     <div>
+      <a href="#/resultados" style={{ display: "inline-block", color: t.acento, fontSize: 12, textDecoration: "none", marginBottom: 16 }}>
+        📋 Ver tabla completa de resultados reales (incl. Ronda 3 y Play-off) →
+      </a>
       <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {el.allTeams.map((team, idx) => (
@@ -2273,6 +2344,9 @@ function ConferenceView({ co, cl, el }) {
   const t = TEMA_CO;
   return (
     <div>
+      <a href="#/resultados" style={{ display: "inline-block", color: t.acento, fontSize: 12, textDecoration: "none", marginBottom: 16 }}>
+        📋 Ver tabla completa de resultados reales (incl. Ronda 3 y Play-off) →
+      </a>
       <div style={{ fontFamily: "'JetBrains Mono', monospace", color: t.textoSuave, fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>COEFICIENTES UEFA</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8, marginBottom: 28, maxHeight: 300, overflowY: "auto", paddingRight: 4 }}>
         {co.allTeams.map((team, idx) => (
@@ -4433,9 +4507,10 @@ function useHashRoute() {
 }
 
 export default function App() {
-  const cl = useChampions();
-  const el = useEuropa(cl);
-  const co = useConference(cl, el);
+  const { eliminatorias: datosReales } = useResultadosReales();
+  const cl = useChampions(datosReales);
+  const el = useEuropa(cl, datosReales);
+  const co = useConference(cl, el, datosReales);
   const nl = useNationsLeague();
   const eq = useEuro2028(nl);
   const [tab, setTab] = useState("CL");
