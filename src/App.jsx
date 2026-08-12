@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Landing from "./Landing.jsx";
 import Articulo from "./Articulo.jsx";
 import ArticuloFaseLiga from "./ArticuloFaseLiga.jsx";
@@ -22,6 +22,20 @@ function estadoEliminatoria(r) {
   if (etA !== etB) return { fase: "resuelto", ganador: etA > etB ? "A" : "B", aggTied: true, etTied: false };
   if (r.penA === undefined || r.penB === undefined || Number(r.penA) === Number(r.penB)) return { fase: "necesita_penaltis", aggTied: true, etTied: true };
   return { fase: "resuelto", ganador: Number(r.penA) > Number(r.penB) ? "A" : "B", aggTied: true, etTied: true };
+}
+// Ganador/perdedor de un cruce con lados fijos {a,b} (Ronda 1) dado un resultado
+// concreto — se usa tanto sobre el resultado en vivo como sobre el resultado
+// real "congelado", para poder comparar ambos y detectar cuándo una edición
+// cambia quién pasa de ronda (ver cascadaInvalidez en los hooks de competición).
+function ganadorTie(tie, resultado) {
+  if (!tie) return null;
+  const est = estadoEliminatoria(resultado);
+  return est.fase === "resuelto" ? (est.ganador === "A" ? tie.a : tie.b) : null;
+}
+function perdedorTie(tie, resultado) {
+  if (!tie) return null;
+  const est = estadoEliminatoria(resultado);
+  return est.fase === "resuelto" ? (est.ganador === "A" ? tie.b : tie.a) : null;
 }
 function resumenTexto(r) {
   if (!r) return "";
@@ -221,20 +235,41 @@ function ControlesSorteo({ sorteo, pools, poolsListas, onAuto, onConfirmarManual
 // ============================================================
 // COMPONENTES UI COMPARTIDOS
 // ============================================================
-function TieResultInputs({ tie, resultado, onChange, onReset, definido = true, colores }) {
+// origen: undefined (resultado normal, introducido/simulado a mano) | "real" (resultado
+// real del dataset, sin tocar) | "editado" (era real y el usuario lo ha modificado).
+// bloqueado: true cuando origen === "real" y todavía no se ha pulsado "Modificar" —
+// en ese estado el resultado se muestra de solo lectura, no hay inputs.
+function TieResultInputs({ tie, resultado, onChange, onReset, definido = true, colores, origen, bloqueado, onDesbloquear, onRestaurar }) {
   if (!definido) return <div style={{ color: colores.alerta, fontSize: 12, fontStyle: "italic" }}>Rivales aún no definidos — no se puede introducir resultado</div>;
+
+  if (bloqueado) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: "#5BBB7B", border: "1px solid #5BBB7B", borderRadius: 999, padding: "2px 8px" }}>✓ Confirmado</span>
+        <span style={{ color: colores.textoSuave, fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>{resumenTexto(resultado)}</span>
+        <button onClick={() => onDesbloquear(tie.id)} style={{ marginLeft: "auto", background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>✏️ Modificar</button>
+      </div>
+    );
+  }
+
   const set = (field, raw) => { const v = validar(raw); if (v === "INVALIDO") return; onChange(tie.id, field, v); };
   const estado = estadoEliminatoria(resultado);
   const inputStyle = { width: 38, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
   const penIgual = resultado?.penA !== undefined && resultado?.penB !== undefined && Number(resultado.penA) === Number(resultado.penB);
+  const hayBaseReal = origen === "real" || origen === "editado";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {origen === "editado" && (
+        <span style={{ alignSelf: "flex-start", fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.alerta, border: `1px solid ${colores.alerta}`, borderRadius: 999, padding: "2px 8px" }}>✎ Editado (resultado real modificado)</span>
+      )}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <span style={{ color: colores.textoSuave, fontSize: 11, width: 30 }}>Ida</span>
         <input type="number" min="0" placeholder="A" value={resultado?.idaA ?? ""} onChange={(e) => set("idaA", e.target.value)} style={inputStyle} />
         <span style={{ color: colores.textoSuave }}>-</span>
         <input type="number" min="0" placeholder="B" value={resultado?.idaB ?? ""} onChange={(e) => set("idaB", e.target.value)} style={inputStyle} />
-        {resultado && <button onClick={() => onReset(tie.id)} style={{ marginLeft: "auto", background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
+        {hayBaseReal
+          ? <button onClick={() => onRestaurar(tie.id)} style={{ marginLeft: "auto", background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↩ Restaurar resultado real</button>
+          : resultado && <button onClick={() => onReset(tie.id)} style={{ marginLeft: "auto", background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
       </div>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <span style={{ color: colores.textoSuave, fontSize: 11, width: 30 }}>Vta</span>
@@ -1132,41 +1167,96 @@ function fixturesFaseLiga(sorteo) {
 // ============================================================
 // LÓGICA — CHAMPIONS LEAGUE
 // ============================================================
+// Lleva el origen de cada resultado de una ronda: undefined (introducido/simulado
+// a mano, comportamiento de siempre), "real" (viene del dataset, bloqueado hasta
+// que se pulse "Modificar") o "editado" (era real y el usuario lo ha cambiado).
+// Se instancia una vez por ronda con datos reales (R1 y R2 de cada competición).
+function useOrigenResultados() {
+  const [origen, setOrigen] = useState({});
+  const [desbloqueados, setDesbloqueados] = useState(() => new Set());
+  const marcarReal = (ids) => setOrigen((p) => { const n = { ...p }; ids.forEach((id) => { n[id] = "real"; }); return n; });
+  const desbloquear = (id) => setDesbloqueados((p) => new Set(p).add(id));
+  const marcarEditado = (id) => {
+    setOrigen((p) => (p[id] === "real" ? { ...p, [id]: "editado" } : p));
+    setDesbloqueados((p) => { if (!p.has(id)) return p; const n = new Set(p); n.delete(id); return n; });
+  };
+  const restaurar = (id) => {
+    setOrigen((p) => ({ ...p, [id]: "real" }));
+    setDesbloqueados((p) => { if (!p.has(id)) return p; const n = new Set(p); n.delete(id); return n; });
+  };
+  // Cuando un cambio en una ronda anterior hace que un cruce ya no corresponda
+  // al cruce real (cambia quién avanza de ruta), el resultado precargado deja
+  // de ser válido: se retira del seguimiento (vuelve a comportarse como un
+  // resultado normal, sin badge ni bloqueo — solo se puede simular/introducir).
+  const invalidar = (ids) => {
+    if (!ids.length) return;
+    setOrigen((p) => { const n = { ...p }; let cambio = false; ids.forEach((id) => { if (id in n) { delete n[id]; cambio = true; } }); return cambio ? n : p; });
+    setDesbloqueados((p) => { if (!ids.some((id) => p.has(id))) return p; const n = new Set(p); ids.forEach((id) => n.delete(id)); return n; });
+  };
+  const esBloqueado = (id) => origen[id] === "real" && !desbloqueados.has(id);
+  return { origen, marcarReal, marcarEditado, desbloquear, restaurar, invalidar, esBloqueado };
+}
+
 function useChampions(datosReales) {
   const [coefs] = useState(CL_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
+  const [realR1, setRealR1] = useState(null); // resultado real "congelado" de Q1, para poder restaurarlo y para detectar cascadas
+  const [realR2, setRealR2] = useState(null);
+  const oR1 = useOrigenResultados();
+  const oR2 = useOrigenResultados();
 
   // Precarga Q1/Q2 con los resultados reales del dataset estático (bracket fijo,
   // coincide siempre con el emparejamiento real — ver src/datosReales.js). No
   // toca nada si el usuario ya ha introducido algo.
+  const precargadoRef = useRef(false);
   useEffect(() => {
-    if (!datosReales) return;
-    setResR1((p) => (Object.keys(p).length ? p : precargarRonda(datosReales, "UCL", "Q1", CL_RONDA1)));
-  }, [datosReales]);
-  useEffect(() => {
-    if (!datosReales) return;
-    setResR2((p) => {
-      if (Object.keys(p).length) return p;
+    if (!datosReales || precargadoRef.current) return;
+    precargadoRef.current = true;
+    if (Object.keys(resR1).length === 0) {
+      const pre = precargarRonda(datosReales, "UCL", "Q1", CL_RONDA1);
+      setResR1(pre); setRealR1(pre); oR1.marcarReal(Object.keys(pre));
+    }
+    if (Object.keys(resR2).length === 0) {
       const cruces = CL_RONDA2.map((t) => {
         const a = t.aRef.startsWith("R1-") ? ganadorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.aRef)) : t.aRef;
         const b = t.bRef.startsWith("R1-") ? ganadorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.bRef)) : t.bRef;
         return a && b ? { id: t.id, a, b } : null;
       }).filter(Boolean);
-      return precargarRonda(datosReales, "UCL", "Q2", cruces);
-    });
+      const pre = precargarRonda(datosReales, "UCL", "Q2", cruces);
+      setResR2(pre); setRealR2(pre); oR2.marcarReal(Object.keys(pre));
+    }
   }, [datosReales]);
+
+  // Si una edición en Q1 cambia quién gana un cruce, cualquier resultado real de
+  // Q2 que dependiera de ese cruce deja de aplicar: se retira (no se inventa ni
+  // se mantiene como "confirmado" un resultado de un cruce que ya no es el real).
+  useEffect(() => {
+    if (!realR1) return;
+    const invalidos = CL_RONDA2.filter((t) => oR2.origen[t.id] === "real" && [t.aRef, t.bRef].some((ref) => {
+      if (!ref.startsWith("R1-")) return false;
+      const r1tie = CL_RONDA1.find((r) => r.id === ref);
+      const realWinner = ganadorTie(r1tie, realR1[ref]);
+      return realWinner && realWinner !== ganadorTie(r1tie, resR1[ref]);
+    })).map((t) => t.id);
+    if (!invalidos.length) return;
+    setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
+    oR2.invalidar(invalidos);
+  }, [resR1, oR2.origen, realR1]);
+
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
-  const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
+  const changeR1 = (id, field, value) => { setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } })); oR1.marcarEditado(id); };
+  const changeR2 = (id, field, value) => { setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } })); oR2.marcarEditado(id); };
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changePO = (id, field, value) => setResPO((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const resetR1 = (id) => setResR1((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
+  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id); } };
+  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id); } };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1311,8 +1401,10 @@ function useChampions(datosReales) {
 
   return {
     coefs, allTeams,
-    resR1, changeR1, resetR1, resolverR1,
+    resR1, changeR1, resetR1, resolverR1, realR1,
+    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
+    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, confirmarR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, confirmarPO,
     clasificados, resolverGenerico,
@@ -1329,34 +1421,56 @@ function useEuropa(cl, datosReales) {
   const [coefs] = useState(EL_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
+  const [realR1, setRealR1] = useState(null);
+  const [realR2, setRealR2] = useState(null);
+  const oR1 = useOrigenResultados();
+  const oR2 = useOrigenResultados();
 
+  const precargadoRef = useRef(false);
   useEffect(() => {
-    if (!datosReales) return;
-    setResR1((p) => (Object.keys(p).length ? p : precargarRonda(datosReales, "UEL", "Q1", EL_RONDA1)));
-  }, [datosReales]);
-  useEffect(() => {
-    if (!datosReales) return;
-    setResR2((p) => {
-      if (Object.keys(p).length) return p;
+    if (!datosReales || precargadoRef.current) return;
+    precargadoRef.current = true;
+    if (Object.keys(resR1).length === 0) {
+      const pre = precargarRonda(datosReales, "UEL", "Q1", EL_RONDA1);
+      setResR1(pre); setRealR1(pre); oR1.marcarReal(Object.keys(pre));
+    }
+    if (Object.keys(resR2).length === 0) {
       const cruces = EL_RONDA2.map((t) => {
         const a = t.aRef.startsWith("EL1-") ? ganadorRealR1(datosReales, "UEL", EL_RONDA1.find((r) => r.id === t.aRef)) : t.aRef;
         const b = t.bRef.startsWith("EL1-") ? ganadorRealR1(datosReales, "UEL", EL_RONDA1.find((r) => r.id === t.bRef)) : t.bRef;
         return a && b ? { id: t.id, a, b } : null;
       }).filter(Boolean);
-      return precargarRonda(datosReales, "UEL", "Q2", cruces);
-    });
+      const pre = precargarRonda(datosReales, "UEL", "Q2", cruces);
+      setResR2(pre); setRealR2(pre); oR2.marcarReal(Object.keys(pre));
+    }
   }, [datosReales]);
+
+  useEffect(() => {
+    if (!realR1) return;
+    const invalidos = EL_RONDA2.filter((t) => oR2.origen[t.id] === "real" && [t.aRef, t.bRef].some((ref) => {
+      if (!ref.startsWith("EL1-")) return false;
+      const r1tie = EL_RONDA1.find((r) => r.id === ref);
+      const realWinner = ganadorTie(r1tie, realR1[ref]);
+      return realWinner && realWinner !== ganadorTie(r1tie, resR1[ref]);
+    })).map((t) => t.id);
+    if (!invalidos.length) return;
+    setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
+    oR2.invalidar(invalidos);
+  }, [resR1, oR2.origen, realR1]);
+
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
-  const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
+  const changeR1 = (id, field, value) => { setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } })); oR1.marcarEditado(id); };
+  const changeR2 = (id, field, value) => { setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } })); oR2.marcarEditado(id); };
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changePO = (id, field, value) => setResPO((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const resetR1 = (id) => setResR1((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
+  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id); } };
+  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id); } };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1523,8 +1637,10 @@ function useEuropa(cl, datosReales) {
 
   return {
     coefs, allTeams,
-    resR1, changeR1, resetR1, resolverR1,
+    resR1, changeR1, resetR1, resolverR1, realR1,
+    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1,
     resR2, changeR2, resetR2, resolverLadoR2, resolverR2, r2Completa,
+    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     clasificados, resolverGenerico,
@@ -1541,15 +1657,20 @@ function useConference(cl, el, datosReales) {
   const [coefs] = useState(CO_COEFS_INICIALES);
   const [resR1, setResR1] = useState({});
   const [resR2, setResR2] = useState({});
+  const [realR1, setRealR1] = useState(null);
+  const [realR2, setRealR2] = useState(null);
+  const oR1 = useOrigenResultados();
+  const oR2 = useOrigenResultados();
 
+  const precargadoRef = useRef(false);
   useEffect(() => {
-    if (!datosReales) return;
-    setResR1((p) => (Object.keys(p).length ? p : precargarRonda(datosReales, "UECL", "Q1", CO_RONDA1)));
-  }, [datosReales]);
-  useEffect(() => {
-    if (!datosReales) return;
-    setResR2((p) => {
-      if (Object.keys(p).length) return p;
+    if (!datosReales || precargadoRef.current) return;
+    precargadoRef.current = true;
+    if (Object.keys(resR1).length === 0) {
+      const pre = precargarRonda(datosReales, "UECL", "Q1", CO_RONDA1);
+      setResR1(pre); setRealR1(pre); oR1.marcarReal(Object.keys(pre));
+    }
+    if (Object.keys(resR2).length === 0) {
       const crucesCampeones = CO_RONDA2_CAMPEONES.map((t) => {
         const a = perdedorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.ext1tie));
         const b = perdedorRealR1(datosReales, "UCL", CL_RONDA1.find((r) => r.id === t.ext2tie));
@@ -1565,20 +1686,60 @@ function useConference(cl, el, datosReales) {
         const a = resolverLadoReal(t.a), b = resolverLadoReal(t.b);
         return a && b ? { id: t.id, a, b } : null;
       }).filter(Boolean);
-      return precargarRonda(datosReales, "UECL", "Q2", [...crucesCampeones, ...crucesPrincipal]);
-    });
+      const pre = precargarRonda(datosReales, "UECL", "Q2", [...crucesCampeones, ...crucesPrincipal]);
+      setResR2(pre); setRealR2(pre); oR2.marcarReal(Object.keys(pre));
+    }
   }, [datosReales]);
+
+  // Cascada de invalidación de Q2: cubre tanto el bracket propio (CO1 → CO2
+  // "interno") como las dependencias externas (perdedores de Q1 de Champions/Europa
+  // League que "reequilibran" hacia Conference). Si cualquiera de esas fuentes
+  // cambia de resultado en vivo respecto al real, el cruce de Q2 que dependía de
+  // ella deja de estar confirmado.
+  useEffect(() => {
+    const invalidos = [];
+    CO_RONDA2_CAMPEONES.forEach((t) => {
+      if (oR2.origen[t.id] !== "real" || !cl.realR1) return;
+      const t1 = CL_RONDA1.find((r) => r.id === t.ext1tie), t2 = CL_RONDA1.find((r) => r.id === t.ext2tie);
+      const realA = perdedorTie(t1, cl.realR1[t.ext1tie]), realB = perdedorTie(t2, cl.realR1[t.ext2tie]);
+      const liveA = perdedorTie(t1, cl.resR1[t.ext1tie]), liveB = perdedorTie(t2, cl.resR1[t.ext2tie]);
+      if ((realA && realA !== liveA) || (realB && realB !== liveB)) invalidos.push(t.id);
+    });
+    CO_RONDA2_PRINCIPAL.forEach((t) => {
+      if (oR2.origen[t.id] !== "real") return;
+      const ladoInvalido = (lado) => {
+        if (lado.tipo === "interno" && realR1) {
+          const tie1 = CO_RONDA1.find((r) => r.id === lado.ref);
+          const realW = ganadorTie(tie1, realR1[lado.ref]);
+          return realW && realW !== ganadorTie(tie1, resR1[lado.ref]);
+        }
+        if (lado.tipo === "externo-el" && el.realR1) {
+          const tie1 = EL_RONDA1.find((r) => r.id === lado.tieId);
+          const realL = perdedorTie(tie1, el.realR1[lado.tieId]);
+          return realL && realL !== perdedorTie(tie1, el.resR1[lado.tieId]);
+        }
+        return false;
+      };
+      if (ladoInvalido(t.a) || ladoInvalido(t.b)) invalidos.push(t.id);
+    });
+    if (!invalidos.length) return;
+    setResR2((p) => { const n = { ...p }; invalidos.forEach((id) => delete n[id]); return n; });
+    oR2.invalidar(invalidos);
+  }, [resR1, oR2.origen, realR1, cl.resR1, cl.realR1, el.resR1, el.realR1]);
+
   const [sorteoR3, setSorteoR3] = useState(null);
   const [resR3, setResR3] = useState({});
   const [sorteoPO, setSorteoPO] = useState(null);
   const [resPO, setResPO] = useState({});
 
-  const changeR1 = (id, field, value) => setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
-  const changeR2 = (id, field, value) => setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
+  const changeR1 = (id, field, value) => { setResR1((p) => ({ ...p, [id]: { ...p[id], [field]: value } })); oR1.marcarEditado(id); };
+  const changeR2 = (id, field, value) => { setResR2((p) => ({ ...p, [id]: { ...p[id], [field]: value } })); oR2.marcarEditado(id); };
   const changeR3 = (id, field, value) => setResR3((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const changePO = (id, field, value) => setResPO((p) => ({ ...p, [id]: { ...p[id], [field]: value } }));
   const resetR1 = (id) => setResR1((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetR2 = (id) => setResR2((p) => { const n = { ...p }; delete n[id]; return n; });
+  const restaurarR1 = (id) => { if (realR1 && id in realR1) { setResR1((p) => ({ ...p, [id]: realR1[id] })); oR1.restaurar(id); } };
+  const restaurarR2 = (id) => { if (realR2 && id in realR2) { setResR2((p) => ({ ...p, [id]: realR2[id] })); oR2.restaurar(id); } };
   const resetR3 = (id) => setResR3((p) => { const n = { ...p }; delete n[id]; return n; });
   const resetPO = (id) => setResPO((p) => { const n = { ...p }; delete n[id]; return n; });
 
@@ -1749,8 +1910,10 @@ function useConference(cl, el, datosReales) {
 
   return {
     coefs, allTeams,
-    resR1, changeR1, resetR1, resolverR1,
+    resR1, changeR1, resetR1, resolverR1, realR1,
+    origenR1: oR1.origen, bloqueadoR1: oR1.esBloqueado, desbloquearR1: oR1.desbloquear, restaurarR1,
     resR2, changeR2, resetR2, resolverExternoCL, resolverLado, resolverR2, r2Completa,
+    origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     clasificados, resolverGenerico,
@@ -1766,7 +1929,7 @@ const TEMA_CL = { fondo: "#0B1F16", tarjeta: "#0F2E22", borde: "#1C4534", acento
 const TEMA_EL = { fondo: "#1F0B14", tarjeta: "#2A0F1A", borde: "#4A1F2E", acento: "#E8734A", texto: "#F4F1E8", textoSuave: "#B08A94", alerta: "#E8734A", inputBg: "#1F0B14", inputBorder: "#5C2A3E", rutaCampeones: "#D4A94C", rutaLiga: "#4A90D4", rutaPrincipal: "#E8734A" };
 const TEMA_CO = { fondo: "#0B1420", tarjeta: "#0F2436", borde: "#1C3A54", acento: "#4A90D4", texto: "#F4F1E8", textoSuave: "#7A94B0", alerta: "#E8734A", inputBg: "#0B1420", inputBorder: "#2A4A64", rutaCampeones: "#D4A94C", rutaLiga: "#4A90D4", rutaPrincipal: "#4A90D4" };
 
-function TieCard({ nombreA, paisA, nombreB, paisB, ruta, nota, tie, resultado, onChange, onReset, definido, colores, ganador, perdedor, destinoGanador, destinoPerdedor }) {
+function TieCard({ nombreA, paisA, nombreB, paisB, ruta, nota, tie, resultado, onChange, onReset, definido, colores, ganador, perdedor, destinoGanador, destinoPerdedor, origen, bloqueado, onDesbloquear, onRestaurar }) {
   return (
     <div style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "12px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
@@ -1777,7 +1940,8 @@ function TieCard({ nombreA, paisA, nombreB, paisB, ruta, nota, tie, resultado, o
         {ruta && <RutaBadge ruta={ruta} colores={colores} />}
       </div>
       {nota && <div style={{ color: colores.alerta, fontSize: 11, marginBottom: 6 }}>{nota}</div>}
-      <TieResultInputs tie={tie} resultado={resultado} onChange={onChange} onReset={onReset} definido={definido} colores={colores} />
+      <TieResultInputs tie={tie} resultado={resultado} onChange={onChange} onReset={onReset} definido={definido} colores={colores}
+        origen={origen} bloqueado={bloqueado} onDesbloquear={onDesbloquear} onRestaurar={onRestaurar} />
       <DestinoEquipos ganador={ganador} perdedor={perdedor} destinoGanador={destinoGanador} destinoPerdedor={destinoPerdedor} colores={colores} />
     </div>
   );
@@ -2130,6 +2294,7 @@ function ChampionsView({ cl }) {
           return (
             <TieCard key={tie.id} nombreA={tie.a} paisA={tie.paisA} nombreB={tie.b} paisB={tie.paisB} ruta={tie.ruta} nota={tie.nota}
               tie={tie} resultado={cl.resR1[tie.id]} onChange={cl.changeR1} onReset={cl.resetR1} colores={t}
+              origen={cl.origenR1[tie.id]} bloqueado={cl.bloqueadoR1(tie.id)} onDesbloquear={cl.desbloquearR1} onRestaurar={cl.restaurarR1}
               ganador={ganador} perdedor={perdedor} destinoGanador="Continúa a Ronda 2 de Champions League" destinoPerdedor={destinoPerdedor} />
           );
         })}
@@ -2146,6 +2311,7 @@ function ChampionsView({ cl }) {
           return (
             <TieCard key={tie.id} nombreA={ladoA.texto} nombreB={ladoB.texto} ruta={tie.ruta}
               tie={tie} resultado={cl.resR2[tie.id]} onChange={cl.changeR2} onReset={cl.resetR2} definido={definido} colores={t}
+              origen={cl.origenR2[tie.id]} bloqueado={cl.bloqueadoR2(tie.id)} onDesbloquear={cl.desbloquearR2} onRestaurar={cl.restaurarR2}
               ganador={ganador} perdedor={perdedor} destinoGanador="Continúa a Ronda 3 de Champions League" destinoPerdedor="Pasa a Ronda 3 de Europa League (misma ruta)" />
           );
         })}
@@ -2244,6 +2410,7 @@ function EuropaView({ el, cl }) {
           return (
             <TieCard key={tie.id} nombreA={tie.a} paisA={tie.paisA} nombreB={tie.b} paisB={tie.paisB}
               tie={tie} resultado={el.resR1[tie.id]} onChange={el.changeR1} onReset={el.resetR1} colores={t}
+              origen={el.origenR1[tie.id]} bloqueado={el.bloqueadoR1(tie.id)} onDesbloquear={el.desbloquearR1} onRestaurar={el.restaurarR1}
               ganador={ganador} perdedor={perdedor} destinoGanador="Continúa a Ronda 2 de Europa League" destinoPerdedor="Pasa a Ronda 2 de Conference League" />
           );
         })}
@@ -2260,6 +2427,7 @@ function EuropaView({ el, cl }) {
           return (
             <TieCard key={tie.id} nombreA={ladoA.texto} nombreB={ladoB.texto}
               tie={tie} resultado={el.resR2[tie.id]} onChange={el.changeR2} onReset={el.resetR2} definido={definido} colores={t}
+              origen={el.origenR2[tie.id]} bloqueado={el.bloqueadoR2(tie.id)} onDesbloquear={el.desbloquearR2} onRestaurar={el.restaurarR2}
               ganador={ganador} perdedor={perdedor} destinoGanador="Continúa a Ronda 3 de Europa League" destinoPerdedor="Pasa a Ronda 3 de Conference League" />
           );
         })}
@@ -2366,6 +2534,7 @@ function ConferenceView({ co, cl, el }) {
           return (
             <TieCard key={tie.id} nombreA={tie.a} paisA={tie.paisA} nombreB={tie.b} paisB={tie.paisB} ruta="Principal"
               tie={tie} resultado={co.resR1[tie.id]} onChange={co.changeR1} onReset={co.resetR1} colores={t}
+              origen={co.origenR1[tie.id]} bloqueado={co.bloqueadoR1(tie.id)} onDesbloquear={co.desbloquearR1} onRestaurar={co.restaurarR1}
               ganador={ganador} perdedor={null} destinoGanador="Continúa a Ronda 2 de Conference League" />
           );
         })}
@@ -2381,6 +2550,7 @@ function ConferenceView({ co, cl, el }) {
           return (
             <TieCard key={tie.id} nombreA={ladoA.texto} nombreB={ladoB.texto} ruta="Campeones"
               tie={tie} resultado={co.resR2[tie.id]} onChange={co.changeR2} onReset={co.resetR2} definido={definido} colores={t}
+              origen={co.origenR2[tie.id]} bloqueado={co.bloqueadoR2(tie.id)} onDesbloquear={co.desbloquearR2} onRestaurar={co.restaurarR2}
               ganador={ganador} perdedor={null} destinoGanador="Continúa a Ronda 3 de Conference League" />
           );
         })}
@@ -2396,6 +2566,7 @@ function ConferenceView({ co, cl, el }) {
           return (
             <TieCard key={tie.id} nombreA={ladoA.texto} nombreB={ladoB.texto} ruta="Principal"
               tie={tie} resultado={co.resR2[tie.id]} onChange={co.changeR2} onReset={co.resetR2} definido={definido} colores={t}
+              origen={co.origenR2[tie.id]} bloqueado={co.bloqueadoR2(tie.id)} onDesbloquear={co.desbloquearR2} onRestaurar={co.restaurarR2}
               ganador={ganador} perdedor={null} destinoGanador="Continúa a Ronda 3 de Conference League" />
           );
         })}
