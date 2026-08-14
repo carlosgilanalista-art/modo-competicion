@@ -62,7 +62,14 @@ function estadoOrigenReal(resultado) {
 // usa si TODAS las rutas emparejan completo — si falta alguna (dataset
 // incompleto para esa ronda, o un resultado editado que ya no corresponde a la
 // realidad), no se toca nada y la ronda se sortea/simula como siempre.
-function intentarSorteoRealRonda(datosReales, competicion, dsRonda, poolsPorRuta, setSorteo, setRes, setReal, origenHook) {
+// Precarga resR3/resPO a partir de un sorteo ya dado (real o restaurado), con
+// el mismo sistema de origen "real"/"real-incompleto" que usan las demás rondas.
+function precargarDesdeSorteo(datosReales, competicion, dsRonda, sorteo, setRes, setReal, origenHook) {
+  const pre = precargarRonda(datosReales, competicion, dsRonda, sorteo.cruces.map((c) => ({ id: c.id, a: c.cabeza.nombre, b: c.rival.nombre })));
+  setRes(pre); setReal(pre);
+  origenHook.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
+}
+function intentarSorteoRealRonda(datosReales, competicion, dsRonda, poolsPorRuta, setSorteo, setRes, setReal, origenHook, setSorteoReal) {
   const porRuta = Object.entries(poolsPorRuta).map(([ruta, plazas]) => [ruta, sorteoRealParaPool(datosReales, competicion, dsRonda, plazas)]);
   if (porRuta.length === 0 || porRuta.some(([, r]) => !r.completo)) return;
   const prefijo = dsRonda === "Q3" ? "R3" : "PO";
@@ -71,10 +78,10 @@ function intentarSorteoRealRonda(datosReales, competicion, dsRonda, poolsPorRuta
     const sufijo = ruta === "Campeones" ? "CP" : "LP";
     r.cruces.forEach((c, i) => cruces.push({ id: `${prefijo}-${sufijo}-${i + 1}`, ruta, cabeza: c.cabeza, rival: c.rival }));
   });
-  setSorteo({ cruces, bloqueo: false, real: true });
-  const pre = precargarRonda(datosReales, competicion, dsRonda, cruces.map((c) => ({ id: c.id, a: c.cabeza.nombre, b: c.rival.nombre })));
-  setRes(pre); setReal(pre);
-  origenHook.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
+  const sorteo = { cruces, bloqueo: false, real: true };
+  setSorteo(sorteo);
+  if (setSorteoReal) setSorteoReal(sorteo);
+  precargarDesdeSorteo(datosReales, competicion, dsRonda, sorteo, setRes, setReal, origenHook);
 }
 const CAMPOS_RESULTADO = ["idaA", "idaB", "vueltaA", "vueltaB", "etA", "etB", "penA", "penB"];
 function idsDivergentesDeReal(real, resActual, origen) {
@@ -275,7 +282,7 @@ function extraerPlazas(pools) {
 }
 
 // Botonera para elegir cómo generar/editar un sorteo: automático, a mano, o editar uno ya hecho.
-function ControlesSorteo({ sorteo, pools, poolsListas, onAuto, onConfirmarManual, colores, labelAuto, labelManualNuevo = "✍️ Sorteo a mano", labelEditar = "✏️ Editar sorteo" }) {
+function ControlesSorteo({ sorteo, pools, poolsListas, onAuto, onConfirmarManual, colores, labelAuto, labelManualNuevo = "✍️ Sorteo a mano", labelEditar = "✏️ Editar sorteo", onRestaurarSorteoReal, hayCambioSobreSorteoReal }) {
   const [modo, setModo] = useState(null); // null | "manual" | "editar"
   useEffect(() => { setModo(null); }, [sorteo?.cruces]);
   if (modo === "manual" || modo === "editar") {
@@ -304,6 +311,12 @@ function ControlesSorteo({ sorteo, pools, poolsListas, onAuto, onConfirmarManual
         <button onClick={() => setModo("editar")}
           style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 8, padding: "10px 16px", fontSize: 13, cursor: "pointer" }}>
           {labelEditar}
+        </button>
+      )}
+      {onRestaurarSorteoReal && (
+        <button onClick={onRestaurarSorteoReal} disabled={!hayCambioSobreSorteoReal}
+          style={{ background: "none", border: `1px solid ${hayCambioSobreSorteoReal ? colores.acento : "#3A3A3A"}`, color: hayCambioSobreSorteoReal ? colores.acento : "#555", borderRadius: 8, padding: "10px 16px", fontSize: 13, cursor: hayCambioSobreSorteoReal ? "pointer" : "not-allowed" }}>
+          ↩ Restaurar sorteo real
         </button>
       )}
     </div>
@@ -1281,6 +1294,11 @@ function useOrigenResultados() {
     const ids = Object.keys(mapa);
     setDesbloqueados((p) => { if (!ids.some((id) => p.has(id))) return p; const n = new Set(p); ids.forEach((id) => n.delete(id)); return n; });
   };
+  // Un sorteo nuevo (manual o simulado) reutiliza los mismos ids (R3-CP-1...)
+  // para cruces que ya no son los mismos equipos — hay que olvidar por completo
+  // el seguimiento anterior, o un cruce nuevo heredaría el badge "Confirmado"
+  // de un cruce real que ya no tiene nada que ver.
+  const reiniciar = () => { setOrigen({}); setDesbloqueados(new Set()); };
   // Cuando un cambio en una ronda anterior hace que un cruce ya no corresponda
   // al cruce real (cambia quién avanza de ruta), el resultado precargado deja
   // de ser válido: se retira del seguimiento (vuelve a comportarse como un
@@ -1292,7 +1310,7 @@ function useOrigenResultados() {
   };
   const esBloqueado = (id) => origen[id] === "real" && !desbloqueados.has(id);
   const tieneBaseReal = (id) => origen[id] === "real" || origen[id] === "real-incompleto";
-  return { origen, marcarOrigen, marcarEditado, revisarCompletado, desbloquear, restaurar, restaurarTodos, invalidar, esBloqueado, tieneBaseReal };
+  return { origen, marcarOrigen, marcarEditado, revisarCompletado, desbloquear, restaurar, restaurarTodos, reiniciar, invalidar, esBloqueado, tieneBaseReal };
 }
 
 function useChampions(datosReales) {
@@ -1303,6 +1321,8 @@ function useChampions(datosReales) {
   const [realR2, setRealR2] = useState(null);
   const [realR3, setRealR3] = useState(null);
   const [realPO, setRealPO] = useState(null);
+  const [sorteoRealR3, setSorteoRealR3] = useState(null); // sorteo real "congelado" de Ronda 3, para poder restaurarlo tras un sorteo alternativo
+  const [sorteoRealPO, setSorteoRealPO] = useState(null);
   const oR1 = useOrigenResultados();
   const oR2 = useOrigenResultados();
   const oR3 = useOrigenResultados();
@@ -1444,6 +1464,7 @@ function useChampions(datosReales) {
     ];
     setSorteoR3({ cruces, bloqueo });
     setResR3({}); setSorteoPO(null); setResPO({});
+    oR3.reiniciar(); oPO.reiniciar();
   };
   const simularR3 = () => {
     const { Campeones, Liga } = poolsR3();
@@ -1468,6 +1489,7 @@ function useChampions(datosReales) {
     ];
     setSorteoPO({ cruces, bloqueo });
     setResPO({});
+    oPO.reiniciar();
   };
   const simularPlayoff = () => {
     const { Campeones, Liga } = poolsPO();
@@ -1485,14 +1507,16 @@ function useChampions(datosReales) {
   // (ver intentarSorteoRealRonda) en vez de esperar a que el usuario sortee/simule.
   useEffect(() => {
     if (!datosReales || sorteoR3 || !r2Completa) return;
-    intentarSorteoRealRonda(datosReales, "UCL", "Q3", poolsR3(), setSorteoR3, setResR3, setRealR3, oR3);
+    intentarSorteoRealRonda(datosReales, "UCL", "Q3", poolsR3(), setSorteoR3, setResR3, setRealR3, oR3, setSorteoRealR3);
   }, [datosReales, r2Completa, resR1, resR2, sorteoR3]);
   useEffect(() => {
     if (!datosReales || sorteoPO || !r3Completa) return;
-    intentarSorteoRealRonda(datosReales, "UCL", "PO", poolsPO(), setSorteoPO, setResPO, setRealPO, oPO);
+    intentarSorteoRealRonda(datosReales, "UCL", "PO", poolsPO(), setSorteoPO, setResPO, setRealPO, oPO, setSorteoRealPO);
   }, [datosReales, r3Completa, sorteoR3, resR3, sorteoPO]);
   const restaurarR3 = (id) => { if (realR3 && id in realR3) { setResR3((p) => ({ ...p, [id]: realR3[id] })); oR3.restaurar(id, estadoOrigenReal(realR3[id])); } };
   const restaurarPO = (id) => { if (realPO && id in realPO) { setResPO((p) => ({ ...p, [id]: realPO[id] })); oPO.restaurar(id, estadoOrigenReal(realPO[id])); } };
+  const restaurarSorteoR3 = () => { if (!sorteoRealR3) return; setSorteoR3(sorteoRealR3); oR3.reiniciar(); precargarDesdeSorteo(datosReales, "UCL", "Q3", sorteoRealR3, setResR3, setRealR3, oR3); };
+  const restaurarSorteoPO = () => { if (!sorteoRealPO) return; setSorteoPO(sorteoRealPO); oPO.reiniciar(); precargarDesdeSorteo(datosReales, "UCL", "PO", sorteoRealPO, setResPO, setRealPO, oPO); };
   const divergentesR3 = useMemo(() => idsDivergentesDeReal(realR3, resR3, oR3.origen), [realR3, resR3, oR3.origen]);
   const divergentesPO = useMemo(() => idsDivergentesDeReal(realPO, resPO, oPO.origen), [realPO, resPO, oPO.origen]);
   const restaurarTodoR3 = () => {
@@ -1553,8 +1577,10 @@ function useChampions(datosReales) {
     origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2, restaurarTodoR2, hayDivergenciaR2: divergentesR2.length > 0,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, confirmarR3,
     origenR3: oR3.origen, bloqueadoR3: oR3.esBloqueado, desbloquearR3: oR3.desbloquear, restaurarR3, restaurarTodoR3, hayDivergenciaR3: divergentesR3.length > 0,
+    sorteoRealR3, restaurarSorteoR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, confirmarPO,
     origenPO: oPO.origen, bloqueadoPO: oPO.esBloqueado, desbloquearPO: oPO.desbloquear, restaurarPO, restaurarTodoPO, hayDivergenciaPO: divergentesPO.length > 0,
+    sorteoRealPO, restaurarSorteoPO,
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
     perdedoresR1, perdedoresR2, perdedoresR3, perdedoresPO,
@@ -1573,6 +1599,8 @@ function useEuropa(cl, datosReales) {
   const [realR2, setRealR2] = useState(null);
   const [realR3, setRealR3] = useState(null);
   const [realPO, setRealPO] = useState(null);
+  const [sorteoRealR3, setSorteoRealR3] = useState(null); // sorteo real "congelado" de Ronda 3, para poder restaurarlo tras un sorteo alternativo
+  const [sorteoRealPO, setSorteoRealPO] = useState(null);
   const oR1 = useOrigenResultados();
   const oR2 = useOrigenResultados();
   const oR3 = useOrigenResultados();
@@ -1715,6 +1743,7 @@ function useEuropa(cl, datosReales) {
     ];
     setSorteoR3({ cruces, bloqueo });
     setResR3({}); setSorteoPO(null); setResPO({});
+    oR3.reiniciar(); oPO.reiniciar();
   };
   const simularR3 = () => {
     const pools = poolsR3();
@@ -1746,6 +1775,7 @@ function useEuropa(cl, datosReales) {
     ];
     setSorteoPO({ cruces, bloqueo });
     setResPO({});
+    oPO.reiniciar();
   };
   const simularPlayoff = () => {
     const pools = poolsPO();
@@ -1762,14 +1792,16 @@ function useEuropa(cl, datosReales) {
 
   useEffect(() => {
     if (!datosReales || sorteoR3 || !poolsR3Listas) return;
-    intentarSorteoRealRonda(datosReales, "UEL", "Q3", extraerPlazas(poolsR3()), setSorteoR3, setResR3, setRealR3, oR3);
+    intentarSorteoRealRonda(datosReales, "UEL", "Q3", extraerPlazas(poolsR3()), setSorteoR3, setResR3, setRealR3, oR3, setSorteoRealR3);
   }, [datosReales, poolsR3Listas, resR1, resR2, sorteoR3]);
   useEffect(() => {
     if (!datosReales || sorteoPO || !poolsPOListas) return;
-    intentarSorteoRealRonda(datosReales, "UEL", "PO", extraerPlazas(poolsPO()), setSorteoPO, setResPO, setRealPO, oPO);
+    intentarSorteoRealRonda(datosReales, "UEL", "PO", extraerPlazas(poolsPO()), setSorteoPO, setResPO, setRealPO, oPO, setSorteoRealPO);
   }, [datosReales, poolsPOListas, sorteoR3, resR3, sorteoPO]);
   const restaurarR3 = (id) => { if (realR3 && id in realR3) { setResR3((p) => ({ ...p, [id]: realR3[id] })); oR3.restaurar(id, estadoOrigenReal(realR3[id])); } };
   const restaurarPO = (id) => { if (realPO && id in realPO) { setResPO((p) => ({ ...p, [id]: realPO[id] })); oPO.restaurar(id, estadoOrigenReal(realPO[id])); } };
+  const restaurarSorteoR3 = () => { if (!sorteoRealR3) return; setSorteoR3(sorteoRealR3); oR3.reiniciar(); precargarDesdeSorteo(datosReales, "UEL", "Q3", sorteoRealR3, setResR3, setRealR3, oR3); };
+  const restaurarSorteoPO = () => { if (!sorteoRealPO) return; setSorteoPO(sorteoRealPO); oPO.reiniciar(); precargarDesdeSorteo(datosReales, "UEL", "PO", sorteoRealPO, setResPO, setRealPO, oPO); };
   const divergentesR3 = useMemo(() => idsDivergentesDeReal(realR3, resR3, oR3.origen), [realR3, resR3, oR3.origen]);
   const divergentesPO = useMemo(() => idsDivergentesDeReal(realPO, resPO, oPO.origen), [realPO, resPO, oPO.origen]);
   const restaurarTodoR3 = () => {
@@ -1834,8 +1866,10 @@ function useEuropa(cl, datosReales) {
     origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2, restaurarTodoR2, hayDivergenciaR2: divergentesR2.length > 0,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
     origenR3: oR3.origen, bloqueadoR3: oR3.esBloqueado, desbloquearR3: oR3.desbloquear, restaurarR3, restaurarTodoR3, hayDivergenciaR3: divergentesR3.length > 0,
+    sorteoRealR3, restaurarSorteoR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     origenPO: oPO.origen, bloqueadoPO: oPO.esBloqueado, desbloquearPO: oPO.desbloquear, restaurarPO, restaurarTodoPO, hayDivergenciaPO: divergentesPO.length > 0,
+    sorteoRealPO, restaurarSorteoPO,
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
     perdedoresR1, perdedoresR2, perdedoresR3, perdedoresPO,
@@ -1854,6 +1888,8 @@ function useConference(cl, el, datosReales) {
   const [realR2, setRealR2] = useState(null);
   const [realR3, setRealR3] = useState(null);
   const [realPO, setRealPO] = useState(null);
+  const [sorteoRealR3, setSorteoRealR3] = useState(null); // sorteo real "congelado" de Ronda 3, para poder restaurarlo tras un sorteo alternativo
+  const [sorteoRealPO, setSorteoRealPO] = useState(null);
   const oR1 = useOrigenResultados();
   const oR2 = useOrigenResultados();
   const oR3 = useOrigenResultados();
@@ -2060,6 +2096,7 @@ function useConference(cl, el, datosReales) {
     ];
     setSorteoR3({ cruces, bloqueo });
     setResR3({}); setSorteoPO(null); setResPO({});
+    oR3.reiniciar(); oPO.reiniciar();
   };
   const simularR3 = () => {
     const pools = poolsR3();
@@ -2092,6 +2129,7 @@ function useConference(cl, el, datosReales) {
     ];
     setSorteoPO({ cruces, bloqueo });
     setResPO({});
+    oPO.reiniciar();
   };
   const simularPlayoff = () => {
     const pools = poolsPO();
@@ -2108,14 +2146,16 @@ function useConference(cl, el, datosReales) {
 
   useEffect(() => {
     if (!datosReales || sorteoR3 || !poolsR3Listas) return;
-    intentarSorteoRealRonda(datosReales, "UECL", "Q3", extraerPlazas(poolsR3()), setSorteoR3, setResR3, setRealR3, oR3);
+    intentarSorteoRealRonda(datosReales, "UECL", "Q3", extraerPlazas(poolsR3()), setSorteoR3, setResR3, setRealR3, oR3, setSorteoRealR3);
   }, [datosReales, poolsR3Listas, resR1, resR2, sorteoR3]);
   useEffect(() => {
     if (!datosReales || sorteoPO || !poolsPOListas) return;
-    intentarSorteoRealRonda(datosReales, "UECL", "PO", extraerPlazas(poolsPO()), setSorteoPO, setResPO, setRealPO, oPO);
+    intentarSorteoRealRonda(datosReales, "UECL", "PO", extraerPlazas(poolsPO()), setSorteoPO, setResPO, setRealPO, oPO, setSorteoRealPO);
   }, [datosReales, poolsPOListas, sorteoR3, resR3, sorteoPO]);
   const restaurarR3 = (id) => { if (realR3 && id in realR3) { setResR3((p) => ({ ...p, [id]: realR3[id] })); oR3.restaurar(id, estadoOrigenReal(realR3[id])); } };
   const restaurarPO = (id) => { if (realPO && id in realPO) { setResPO((p) => ({ ...p, [id]: realPO[id] })); oPO.restaurar(id, estadoOrigenReal(realPO[id])); } };
+  const restaurarSorteoR3 = () => { if (!sorteoRealR3) return; setSorteoR3(sorteoRealR3); oR3.reiniciar(); precargarDesdeSorteo(datosReales, "UECL", "Q3", sorteoRealR3, setResR3, setRealR3, oR3); };
+  const restaurarSorteoPO = () => { if (!sorteoRealPO) return; setSorteoPO(sorteoRealPO); oPO.reiniciar(); precargarDesdeSorteo(datosReales, "UECL", "PO", sorteoRealPO, setResPO, setRealPO, oPO); };
   const divergentesR3 = useMemo(() => idsDivergentesDeReal(realR3, resR3, oR3.origen), [realR3, resR3, oR3.origen]);
   const divergentesPO = useMemo(() => idsDivergentesDeReal(realPO, resPO, oPO.origen), [realPO, resPO, oPO.origen]);
   const restaurarTodoR3 = () => {
@@ -2165,8 +2205,10 @@ function useConference(cl, el, datosReales) {
     origenR2: oR2.origen, bloqueadoR2: oR2.esBloqueado, desbloquearR2: oR2.desbloquear, restaurarR2, restaurarTodoR2, hayDivergenciaR2: divergentesR2.length > 0,
     sorteoR3, resR3, changeR3, resetR3, r3Completa, simularR3, poolsR3, poolsR3Listas, confirmarR3,
     origenR3: oR3.origen, bloqueadoR3: oR3.esBloqueado, desbloquearR3: oR3.desbloquear, restaurarR3, restaurarTodoR3, hayDivergenciaR3: divergentesR3.length > 0,
+    sorteoRealR3, restaurarSorteoR3,
     sorteoPO, resPO, changePO, resetPO, simularPlayoff, poolsPO, poolsPOListas, confirmarPO,
     origenPO: oPO.origen, bloqueadoPO: oPO.esBloqueado, desbloquearPO: oPO.desbloquear, restaurarPO, restaurarTodoPO, hayDivergenciaPO: divergentesPO.length > 0,
+    sorteoRealPO, restaurarSorteoPO,
     clasificados, resolverGenerico,
     rellenarR1, rellenarR2, rellenarR3, rellenarPO,
     liga, poolLiga,
@@ -2580,7 +2622,8 @@ function ChampionsView({ cl }) {
       {!cl.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa todos los resultados de Ronda 2 para poder sortear la Ronda 3.</div>}
 
       <EntrantesConfirmados titulo="Nuevos entrantes de Ronda 3 (Ruta Liga): Lyon, NEC Nijmegen, Union Saint-Gilloise, Sparta Praga, Bodø/Glimt, Olympiakos" lista={[]} colores={t} />
-      <ControlesSorteo sorteo={cl.sorteoR3} pools={extraerPlazas(cl.poolsR3())} poolsListas={cl.r2Completa} onAuto={cl.simularR3} onConfirmarManual={cl.confirmarR3} colores={t} labelAuto={cl.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} />
+      <ControlesSorteo sorteo={cl.sorteoR3} pools={extraerPlazas(cl.poolsR3())} poolsListas={cl.r2Completa} onAuto={cl.simularR3} onConfirmarManual={cl.confirmarR3} colores={t} labelAuto={cl.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"}
+        onRestaurarSorteoReal={cl.sorteoRealR3 ? cl.restaurarSorteoR3 : undefined} hayCambioSobreSorteoReal={!!cl.sorteoRealR3 && cl.sorteoR3 !== cl.sorteoRealR3} />
 
       {cl.sorteoR3 && cl.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{cl.sorteoR3.error}</div>}
       {cl.sorteoR3 && !cl.sorteoR3.error && (
@@ -2601,7 +2644,8 @@ function ChampionsView({ cl }) {
           </div>
           {!cl.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Campeones): Viking, AEK Atenas, LASK Linz, Celtic" lista={[]} colores={t} />
-          <ControlesSorteo sorteo={cl.sorteoPO} pools={extraerPlazas(cl.poolsPO())} poolsListas={cl.r3Completa} onAuto={cl.simularPlayoff} onConfirmarManual={cl.confirmarPO} colores={t} labelAuto={cl.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} />
+          <ControlesSorteo sorteo={cl.sorteoPO} pools={extraerPlazas(cl.poolsPO())} poolsListas={cl.r3Completa} onAuto={cl.simularPlayoff} onConfirmarManual={cl.confirmarPO} colores={t} labelAuto={cl.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"}
+            onRestaurarSorteoReal={cl.sorteoRealPO ? cl.restaurarSorteoPO : undefined} hayCambioSobreSorteoReal={!!cl.sorteoRealPO && cl.sorteoPO !== cl.sorteoRealPO} />
         </>
       )}
 
@@ -2702,7 +2746,8 @@ function EuropaView({ el, cl }) {
       {!el.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa todos los resultados de Ronda 2 para poder sortear la Ronda 3.</div>}
 
       <EntrantesConfirmados titulo="Nuevos entrantes de Ronda 3 (Ruta Liga): Salzburgo, Rangers, Jagiellonia Białystok. Ruta Campeones: se alimenta de perdedores de Champions Ronda 2 (en directo)." lista={[]} colores={t} />
-      <ControlesSorteo sorteo={el.sorteoR3} pools={extraerPlazas(el.poolsR3())} poolsListas={el.poolsR3Listas} onAuto={el.simularR3} onConfirmarManual={el.confirmarR3} colores={t} labelAuto={el.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} />
+      <ControlesSorteo sorteo={el.sorteoR3} pools={extraerPlazas(el.poolsR3())} poolsListas={el.poolsR3Listas} onAuto={el.simularR3} onConfirmarManual={el.confirmarR3} colores={t} labelAuto={el.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"}
+        onRestaurarSorteoReal={el.sorteoRealR3 ? el.restaurarSorteoR3 : undefined} hayCambioSobreSorteoReal={!!el.sorteoRealR3 && el.sorteoR3 !== el.sorteoRealR3} />
 
       {el.sorteoR3 && el.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{el.sorteoR3.error}</div>}
       {el.sorteoR3 && !el.sorteoR3.error && (
@@ -2723,7 +2768,8 @@ function EuropaView({ el, cl }) {
           </div>
           {!el.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Sint-Truidense, Lillestrøm, Viktoria Plzeň, OFI Creta, Trabzonspor" lista={[]} colores={t} />
-          <ControlesSorteo sorteo={el.sorteoPO} pools={extraerPlazas(el.poolsPO())} poolsListas={el.poolsPOListas} onAuto={el.simularPlayoff} onConfirmarManual={el.confirmarPO} colores={t} labelAuto={el.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} />
+          <ControlesSorteo sorteo={el.sorteoPO} pools={extraerPlazas(el.poolsPO())} poolsListas={el.poolsPOListas} onAuto={el.simularPlayoff} onConfirmarManual={el.confirmarPO} colores={t} labelAuto={el.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"}
+            onRestaurarSorteoReal={el.sorteoRealPO ? el.restaurarSorteoPO : undefined} hayCambioSobreSorteoReal={!!el.sorteoRealPO && el.sorteoPO !== el.sorteoRealPO} />
         </>
       )}
 
@@ -2847,7 +2893,8 @@ function ConferenceView({ co, cl, el }) {
       {!co.r2Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 20 }}>Completa Ronda 2 (y que Champions/Europa League tengan sus resultados de Ronda 1 reales) para poder sortear la Ronda 3.</div>}
 
       <div style={{ color: t.textoSuave, fontSize: 12, marginBottom: 12 }}>Ronda 3 es automática: Ruta Campeones (6 propios + 2 reequilibrio de Champions R1) y Ruta Liga (43 propios + 9 de Europa League R2) — sin nada que añadir a mano.</div>
-      <ControlesSorteo sorteo={co.sorteoR3} pools={extraerPlazas(co.poolsR3())} poolsListas={co.poolsR3Listas} onAuto={co.simularR3} onConfirmarManual={co.confirmarR3} colores={t} labelAuto={co.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"} />
+      <ControlesSorteo sorteo={co.sorteoR3} pools={extraerPlazas(co.poolsR3())} poolsListas={co.poolsR3Listas} onAuto={co.simularR3} onConfirmarManual={co.confirmarR3} colores={t} labelAuto={co.sorteoR3 ? "Volver a sortear la Ronda 3" : "Sortear Ronda 3"}
+        onRestaurarSorteoReal={co.sorteoRealR3 ? co.restaurarSorteoR3 : undefined} hayCambioSobreSorteoReal={!!co.sorteoRealR3 && co.sorteoR3 !== co.sorteoRealR3} />
 
       {co.sorteoR3 && co.sorteoR3.error && <div style={{ color: t.alerta, fontSize: 13, marginBottom: 20 }}>{co.sorteoR3.error}</div>}
       {co.sorteoR3 && !co.sorteoR3.error && (
@@ -2867,7 +2914,8 @@ function ConferenceView({ co, cl, el }) {
           </div>
           {!co.r3Completa && <div style={{ color: t.alerta, fontSize: 12, marginBottom: 12 }}>Completa todos los resultados de Ronda 3 para poder sortear el Playoff.</div>}
           <EntrantesConfirmados titulo="Nuevos entrantes del Playoff (Ruta Liga): Brighton & Hove Albion (ENG), Atalanta (ITA), Getafe (ESP), Friburgo (GER), Mónaco (FRA) — confirmado por el listado de acceso oficial de la UEFA" lista={[]} colores={t} />
-          <ControlesSorteo sorteo={co.sorteoPO} pools={extraerPlazas(co.poolsPO())} poolsListas={co.poolsPOListas} onAuto={co.simularPlayoff} onConfirmarManual={co.confirmarPO} colores={t} labelAuto={co.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"} />
+          <ControlesSorteo sorteo={co.sorteoPO} pools={extraerPlazas(co.poolsPO())} poolsListas={co.poolsPOListas} onAuto={co.simularPlayoff} onConfirmarManual={co.confirmarPO} colores={t} labelAuto={co.sorteoPO ? "Volver a sortear el Playoff" : "Sortear Playoff"}
+            onRestaurarSorteoReal={co.sorteoRealPO ? co.restaurarSorteoPO : undefined} hayCambioSobreSorteoReal={!!co.sorteoRealPO && co.sorteoPO !== co.sorteoRealPO} />
         </>
       )}
 
