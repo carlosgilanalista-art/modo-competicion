@@ -1865,7 +1865,7 @@
       "path": "main",
       "ronda": "PO",
       "equipo_a": "Universitatea Craiova",
-      "equipo_b": "Celje",
+      "equipo_b": "Ararat-Armenia",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -1881,7 +1881,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -1914,7 +1914,7 @@
       "competicion": "UEL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Hapoel Be'er Sheva",
+      "equipo_a": "Red Star Belgrade",
       "equipo_b": "Viktoria Plzeň",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -1931,7 +1931,7 @@
       "plaza_reasignada": "Viktoria Plzeň ocupa la plaza de play-off de la UEL originalmente de MFK Karviná (excluido; decisión UEFA de 2 jul 2026). Plzeň disputa la vuelta en casa (Doosan Arena, 27/08).",
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -1989,7 +1989,7 @@
       "competicion": "UEL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Slovan Bratislava",
+      "equipo_a": "Mjällby AIF",
       "equipo_b": "Red Bull Salzburg",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -2006,7 +2006,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -2014,7 +2014,7 @@
       "competicion": "UEL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Levski Sofia",
+      "equipo_a": "Kairat",
       "equipo_b": "Anderlecht",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -2031,7 +2031,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -2065,7 +2065,7 @@
       "path": "main",
       "ronda": "PO",
       "equipo_a": "Beşiktaş",
-      "equipo_b": "Dinamo Zagreb",
+      "equipo_b": "Kauno Žalgiris",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -2081,7 +2081,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -2090,7 +2090,7 @@
       "path": "main",
       "ronda": "PO",
       "equipo_a": "Benfica",
-      "equipo_b": "Sabah",
+      "equipo_b": "AGF",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -2106,7 +2106,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -4764,7 +4764,7 @@
       "competicion": "UECL",
       "path": "champions",
       "ronda": "PO",
-      "equipo_a": "Thun",
+      "equipo_a": "Víkingur Reykjavík",
       "equipo_b": "Borac Banja Luka",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -4781,7 +4781,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -4789,8 +4789,8 @@
       "competicion": "UECL",
       "path": "champions",
       "ronda": "PO",
-      "equipo_a": "Egnatia",
-      "equipo_b": "Universitatea Craiova",
+      "equipo_a": "Shamrock Rovers",
+      "equipo_b": "KuPS",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -4806,7 +4806,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -4864,8 +4864,8 @@
       "competicion": "UECL",
       "path": "champions",
       "ronda": "PO",
-      "equipo_a": "Omonia",
-      "equipo_b": "Iberia 1999",
+      "equipo_a": "Larne",
+      "equipo_b": "Lincoln Red Imps",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -4881,7 +4881,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
