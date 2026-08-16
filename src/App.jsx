@@ -70,8 +70,25 @@ function precargarDesdeSorteo(datosReales, competicion, dsRonda, sorteo, setRes,
   origenHook.marcarOrigen(Object.fromEntries(Object.keys(pre).map((id) => [id, estadoOrigenReal(pre[id])])));
 }
 function intentarSorteoRealRonda(datosReales, competicion, dsRonda, poolsPorRuta, setSorteo, setRes, setReal, origenHook, setSorteoReal) {
-  const porRuta = Object.entries(poolsPorRuta).map(([ruta, plazas]) => [ruta, sorteoRealParaPool(datosReales, competicion, dsRonda, plazas)]);
-  if (porRuta.length === 0 || porRuta.some(([, r]) => !r.completo)) return;
+  const rutas = Object.keys(poolsPorRuta);
+  if (rutas.length === 0) return;
+  let porRuta = rutas.map((ruta) => [ruta, sorteoRealParaPool(datosReales, competicion, dsRonda, poolsPorRuta[ruta])]);
+  if (porRuta.some(([, r]) => !r.completo)) {
+    // Algunos cruces reales no respetan la separación por ruta del sorteo
+    // simulado (p. ej. en el Playoff de Europa League varios cruces mezclan
+    // equipos de la Ruta Campeones con equipos de la Ruta Liga en un único
+    // sorteo real). Si emparejar cada ruta por separado deja algo suelto, se
+    // reintenta contra la unión de todas las plazas; cada cruce resultante
+    // hereda la ruta de "cabeza" para mantener el agrupado visual.
+    const union = rutas.flatMap((r) => poolsPorRuta[r]);
+    const combinado = sorteoRealParaPool(datosReales, competicion, dsRonda, union);
+    if (!combinado.completo) return;
+    porRuta = rutas.map((ruta) => [ruta, { cruces: [], completo: true }]);
+    combinado.cruces.forEach((c) => {
+      const ruta = rutas.find((r) => poolsPorRuta[r].some((p) => p.nombre === c.cabeza.nombre)) || rutas[0];
+      porRuta.find(([r]) => r === ruta)[1].cruces.push(c);
+    });
+  }
   const prefijo = dsRonda === "Q3" ? "R3" : "PO";
   const cruces = [];
   porRuta.forEach(([ruta, r]) => {
