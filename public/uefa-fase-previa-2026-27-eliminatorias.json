@@ -4864,8 +4864,8 @@
       "competicion": "UECL",
       "path": "champions",
       "ronda": "PO",
-      "equipo_a": "Larne",
-      "equipo_b": "Lincoln Red Imps",
+      "equipo_a": "Lincoln Red Imps",
+      "equipo_b": "Larne",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -4914,7 +4914,7 @@
       "competicion": "UECL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Ferencváros",
+      "equipo_a": "Górnik Zabrze",
       "equipo_b": "Monaco",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -4931,7 +4931,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -4964,7 +4964,7 @@
       "competicion": "UECL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Benfica",
+      "equipo_a": "Heart of Midlothian",
       "equipo_b": "Rapid Wien",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -4981,7 +4981,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -5040,7 +5040,7 @@
       "path": "main",
       "ronda": "PO",
       "equipo_a": "Panathinaikos",
-      "equipo_b": "Beşiktaş",
+      "equipo_b": "Hradec Králové",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -5056,7 +5056,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -5089,7 +5089,7 @@
       "competicion": "UECL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Anderlecht",
+      "equipo_a": "PAOK",
       "equipo_b": "Brann",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -5106,7 +5106,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -5164,7 +5164,7 @@
       "competicion": "UECL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Jagiellonia Białystok",
+      "equipo_a": "Rangers",
       "equipo_b": "Jablonec",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -5181,7 +5181,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -5215,7 +5215,7 @@
       "path": "main",
       "ronda": "PO",
       "equipo_a": "Dinamo City",
-      "equipo_b": "Red Bull Salzburg",
+      "equipo_b": "Pafos",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -5231,7 +5231,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -5340,7 +5340,7 @@
       "path": "main",
       "ronda": "PO",
       "equipo_a": "Lugano",
-      "equipo_b": "CSKA Sofia",
+      "equipo_b": "Maccabi Tel Aviv",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
       "marcador_ida": null,
@@ -5356,7 +5356,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     }
   ],
