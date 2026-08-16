@@ -214,7 +214,15 @@ export function sorteoRealParaPool(eliminatorias, competicion, ronda, pool) {
     );
     if (!rival) return;
     usados.add(equipo.nombre); usados.add(rival.nombre);
-    const [cabeza, rival2] = (equipo.coef ?? -1) >= (rival.coef ?? -1) ? [equipo, rival] : [rival, equipo];
+    // "cabeza" pasa a ser quien juega la ida en casa según el dataset real
+    // (equipo_a), no el de mayor coeficiente — así el simulador respeta el
+    // calendario real de ida/vuelta en vez de reordenar por ranking UEFA.
+    const dsA = normaliza(equipo.nombre), dsB = normaliza(rival.nombre);
+    const entrada = eliminatorias.find((x) =>
+      x.competicion === competicion && x.ronda === ronda &&
+      ((x.equipo_a === dsA && x.equipo_b === dsB) || (x.equipo_a === dsB && x.equipo_b === dsA))
+    );
+    const [cabeza, rival2] = entrada && entrada.equipo_a === dsB ? [rival, equipo] : [equipo, rival];
     cruces.push({ cabeza, rival: rival2 });
   });
   return { cruces, completo: pool.length > 0 && usados.size === pool.length };
