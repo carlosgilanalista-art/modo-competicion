@@ -6,7 +6,7 @@
     "nota_fechas": "Fechas de ida/vuelta a nivel de ventana oficial de jornada de cada ronda (calendario UEFA). Dentro de la ventana un partido puede caer en un día adyacente (p. ej. UCL Q1 idas 7-8 jul; vueltas 14-15 jul; UEL/UECL Q3 idas 4-6 ago, vueltas 11-13 ago).",
     "nota_byes": "En la Q2 de la UECL (champions path) Tre Fiori e Inter Club d'Escaldes tuvieron BYE directo a la Q3; no se modelan como eliminatoria. Por eso Q2 UECL = 49 (6 champions + 43 main).",
     "abolicion_gol_visitante": "Regla del gol de visitante abolida en todas las competiciones UEFA.",
-    "fecha_actualizacion_dato_mas_reciente": "2026-08-12"
+    "fecha_actualizacion_dato_mas_reciente": "2026-08-16"
   },
   "eliminatorias": [
     {
@@ -1619,19 +1619,19 @@
       "fecha_ida": "2026-08-06",
       "fecha_vuelta": "2026-08-13",
       "marcador_ida": "1-0",
-      "marcador_vuelta": null,
-      "agregado": null,
+      "marcador_vuelta": "5-0",
+      "agregado": "6-0",
       "prorroga": null,
       "penaltis": null,
-      "clasificado": null,
-      "estado": "parcial",
+      "clasificado": "Lech Poznań",
+      "estado": "jugada",
       "origen_ida": "real",
-      "origen_vuelta": null,
-      "origen_agregado": null,
+      "origen_vuelta": "real",
+      "origen_agregado": "derivado",
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -2039,7 +2039,7 @@
       "competicion": "UEL",
       "path": "main",
       "ronda": "PO",
-      "equipo_a": "Lech Poznań / KÍ",
+      "equipo_a": "Lech Poznań",
       "equipo_b": "Thun",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -2056,7 +2056,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaeuropaleague/news/02a6-20e5db0029dd-8241a8d00925-1000--europa-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
@@ -4839,7 +4839,7 @@
       "competicion": "UECL",
       "path": "champions",
       "ronda": "PO",
-      "equipo_a": "Lech Poznań / KÍ",
+      "equipo_a": "KÍ",
       "equipo_b": "Riga",
       "fecha_ida": "2026-08-20",
       "fecha_vuelta": "2026-08-27",
@@ -4856,7 +4856,7 @@
       "plaza_reasignada": false,
       "fuente_ida": "https://www.uefa.com/uefaconferenceleague/news/02a6-20e5e911587f-cc10425958b3-1000--conference-league-qualifying-fixtures-dates-how-it-works/",
       "fuente_vuelta": null,
-      "fecha_actualizacion_dato": "2026-08-11",
+      "fecha_actualizacion_dato": "2026-08-16",
       "notas": null
     },
     {
