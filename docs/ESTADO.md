@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 17/08/2026 — cierre de sesión de lunes
+**Última actualización:** 17/08/2026 — cierre de segunda sesión de lunes
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -11,6 +11,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - modocompeticion.com — React/Vite, desplegado en Vercel desde `main` (repo `carlosgilanalista-art/modo-competicion`). Dominio en IONOS.
 - Google Analytics 4 (`G-J93TNQ8R8M`) y Search Console activos y vinculados.
 - Menú de Clubes agrupado por confederación (UEFA / AFC), en `main` desde el 09/08 (PR #14).
+- Sistema de documentación en `docs/`: `ESTADO.md` en `main` desde el 17/08 (PR #34).
 
 **Simuladores**
 
@@ -45,7 +46,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 ## 4. En curso
 
 - Datos reales UEFA fase previa 2026/27 — Ronda 3 completa y sorteo de Playoff cargados. Pendiente incorporar los resultados del Playoff conforme se jueguen. Sin rama abierta: el trabajo se ha ido integrando en `main`.
-- `docs/ESTADO.md` (este documento) — creado y verificado contra el repo real. PR [#34](https://github.com/carlosgilanalista-art/modo-competicion/pull/34) abierto en rama `claude/create-estado-docs-3ukmag`, CI en verde, sin comentarios pendientes, sin conflictos. Pendiente de fusión a `main`.
+- `docs/ARQUITECTURA.md`, `docs/MARCA.md` y `docs/CONVENCIONES.md` — creados. PR [#35](https://github.com/carlosgilanalista-art/modo-competicion/pull/35) abierto en rama `claude/create-estado-docs-3ukmag`, CI en verde, sin comentarios pendientes, sin conflictos. Pendiente de fusión a `main`.
 
 ## 5. Backlog congelado
 
@@ -85,3 +86,4 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 
 - El registro irreverente de Modo Competición sigue sin calibrar con ejemplos propios reales. La voz de objetivoanalista.com es técnica y didáctica, no es esa. Bloquea afinar el tono de los artículos nuevos.
 - Search Console: 0 keywords confirmadas a fecha de la última revisión (09/08). Sin señal orgánica todavía; pendiente de volver a mirar en el cierre del Sprint (24/08).
+- `ARQUITECTURA.md` §2 describe flags `origen_ida`/`origen_vuelta` a nivel de campo. El código real (`useOrigenResultados`, `src/App.jsx`) usa en su lugar un único campo `origen` por eliminatoria con tres estados (`real`, `editado`, `real-incompleto`). Señalado el 17/08 y dejado sin corregir a petición explícita — pendiente decidir si se actualiza el documento o el código.
