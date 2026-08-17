@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 17/08/2026 — sesión de lunes
+**Última actualización:** 17/08/2026 — cierre de sesión de lunes
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -45,6 +45,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 ## 4. En curso
 
 - Datos reales UEFA fase previa 2026/27 — Ronda 3 completa y sorteo de Playoff cargados. Pendiente incorporar los resultados del Playoff conforme se jueguen. Sin rama abierta: el trabajo se ha ido integrando en `main`.
+- `docs/ESTADO.md` (este documento) — creado y verificado contra el repo real. PR [#34](https://github.com/carlosgilanalista-art/modo-competicion/pull/34) abierto en rama `claude/create-estado-docs-3ukmag`, CI en verde, sin comentarios pendientes, sin conflictos. Pendiente de fusión a `main`.
 
 ## 5. Backlog congelado
 
@@ -53,7 +54,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | Validación UEFA: publicar los 3 artefactos (Champions, Europa, Conference) y simulación completa de todas las rondas previas verificando la cadena de guardado/recarga | 09/08/2026 | Octubre 2026 |
 | Simulador CAF Champions League | 09/08/2026 | Después del 14/09 |
 | Revisión del logo para redes sociales | 09/08/2026 | Post-relanzamiento |
-| Limpieza de las 35 ramas `claude/*` abiertas | 17/08/2026 | No antes del 14/09 |
+| Limpieza de las 36 ramas `claude/*` abiertas | 17/08/2026 | No antes del 14/09 |
 | Reparto de archivos antiguos en las carpetas locales | 17/08/2026 | 24/08, o nunca |
 
 ## 6. Decisiones cerradas
@@ -71,6 +72,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 17/08 | El gate del menú del 09/08 era válido: la fusión está en `main` vía PR #14. Ambigüedad de rama cerrada |
 | 17/08 | Opus con esfuerzo alto solo para arquitectura e investigación crítica. Sonnet sin thinking, esfuerzo medio, para ejecución recurrente |
 | 17/08 | Adoptado el sistema de organización v1.1: ESTADO.md como fuente única, regla del renglón, decidir en Projects y ejecutar en Code |
+| 17/08 | `docs/ESTADO.md` creado. Al redactarlo se corrigió la sección "En producción" del borrador: faltaban en la lista de artículos publicados "Fase de liga y eliminatorias UEFA" y "Clasificación para la EURO 2028", ya enrutados en `App.jsx` |
 
 ## 7. Aparcadero
 
