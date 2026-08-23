@@ -76,6 +76,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 22/08 | Cerrado el mapeo completo de las ocho carpetas antiguas (Codigo, docs, Documentos, Articulos, Difusion, Nations League, Previas Europeas, Fase Liga, prompts) al árbol canónico de seis carpetas (00-entrada, 01-referencia, 02-competiciones, 03-difusion, 04-planificacion, 99-archivo) en `C:\Users\carlo\OneDrive\Documentos\Carlos\Futbol\Claude\Modo Competicion\`. Sin pérdida de contenido, verificado con `Test-Path` antes de cada borrado de carpetas vacías. Las credenciales de Vercel (`Dominio.txt`, `recovery-codes.txt`) se movieron fuera del árbol del proyecto, a una carpeta separada de credenciales privadas — no se archivan ni se suben nunca al repo |
 | 22/08 | Confirmado el sistema de organización como completo y operativo desde el 17/08 (`ESTADO.md`, `ARQUITECTURA.md`, `MARCA.md`, `CONVENCIONES.md` ya viven en `docs/` del repo) |
 | 22/08 | PR #35 (`docs/ARQUITECTURA.md`, `docs/MARCA.md`, `docs/CONVENCIONES.md`) confirmado fusionado a `main` — se fusionó el 17/08/2026 a las 06:07 UTC, el mismo día que se abrió. La entrada de la sección "En curso" que lo describía como abierto y pendiente de fusión estaba desactualizada |
+| 22/08 | Gate semanal 22/08: no avanzó el deadline (simulador AFC, 14/09). Primer "no" — si el próximo lunes también es "no", la semana siguiente se dedica en exclusiva al deadline y todo lo demás se congela |
 
 ## 7. Aparcadero
 
