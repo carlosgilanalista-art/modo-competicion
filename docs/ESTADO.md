@@ -11,7 +11,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - modocompeticion.com — React/Vite, desplegado en Vercel desde `main` (repo `carlosgilanalista-art/modo-competicion`). Dominio en IONOS.
 - Google Analytics 4 (`G-J93TNQ8R8M`) y Search Console activos y vinculados.
 - Menú de Clubes agrupado por confederación (UEFA / AFC), en `main` desde el 09/08 (PR #14).
-- Sistema de documentación en `docs/`: `ESTADO.md` en `main` desde el 17/08 (PR #34).
+- Sistema de documentación en `docs/` (ESTADO.md, ARQUITECTURA.md, MARCA.md, CONVENCIONES.md, SISTEMA.md), en `main` desde el 22/08.
 
 **Simuladores**
 
