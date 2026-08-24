@@ -816,6 +816,47 @@ const FL_CFG_UEL = { bombos: 4, porBombo: 9, dobleRival: true };
 const FL_CFG_UECL = { bombos: 6, porBombo: 6, dobleRival: false, paresBombos: true };
 const FL_CFG_AFC = { bombos: 4, porBombo: 4, rejilla: true };
 
+// AFC Champions League Elite 2026/27 — Fase de liga, Región Oeste: 16 equipos
+// (14 directos + 2 clasificados de la previa del 11/08/2026: Al-Ittihad 4-1
+// Al-Jazira, Pakhtakor 3-0 Al-Hussein Irbid). No hay ranking de clubes AFC
+// público comparable al coeficiente UEFA, así que "coef" aquí no es un
+// coeficiente real: es el bombo real del sorteo del 18/08/2026 codificado como
+// rango (16-13 bombo 1 ... 4-1 bombo 4) para que repartirBombos lo reproduzca
+// tal cual. Fuente: es.wikipedia.org (confirmado 25/08/2026).
+const AFC_OESTE = [
+  // Bombo 1
+  { nombre: "Al-Ain", pais: "UAE", coef: 16 }, { nombre: "Esteghlal", pais: "IRN", coef: 15 },
+  { nombre: "Al-Sadd", pais: "QAT", coef: 14 }, { nombre: "Al-Ahli", pais: "KSA", coef: 13 },
+  // Bombo 2
+  { nombre: "Shabab Al-Ahli", pais: "UAE", coef: 12 }, { nombre: "Al-Nassr", pais: "KSA", coef: 11 },
+  { nombre: "Neftchi", pais: "UZB", coef: 10 }, { nombre: "Al-Quwa Al-Jawiya", pais: "IRQ", coef: 9 },
+  // Bombo 3
+  { nombre: "Al-Gharafa", pais: "QAT", coef: 8 }, { nombre: "Tractor", pais: "IRN", coef: 7 },
+  { nombre: "Al-Wasl", pais: "UAE", coef: 6 }, { nombre: "Al-Hilal", pais: "KSA", coef: 5 },
+  // Bombo 4
+  { nombre: "Pakhtakor", pais: "UZB", coef: 4 }, { nombre: "Al-Qadisiyah", pais: "KSA", coef: 3 },
+  { nombre: "Al-Shamal", pais: "QAT", coef: 2 }, { nombre: "Al-Ittihad", pais: "KSA", coef: 1 },
+];
+
+// AFC Champions League Elite 2026/27 — Fase de liga, Región Este: 16 equipos
+// (14 directos + 2 clasificados de la previa del 11/08/2026: Gamba Osaka 1-0
+// Gangwon, Cong An Ha Noi 2-0 Adelaide United). Mismo criterio de "coef" que
+// AFC_OESTE. Fuente: es.wikipedia.org (confirmado 25/08/2026).
+const AFC_ESTE = [
+  // Bombo 1
+  { nombre: "Buriram United", pais: "THA", coef: 16 }, { nombre: "Kashima Antlers", pais: "JPN", coef: 15 },
+  { nombre: "Jeonbuk Hyundai Motors", pais: "KOR", coef: 14 }, { nombre: "Shanghai Port", pais: "CHN", coef: 13 },
+  // Bombo 2
+  { nombre: "Daejeon Hana Citizen", pais: "KOR", coef: 12 }, { nombre: "Vissel Kobe", pais: "JPN", coef: 11 },
+  { nombre: "Newcastle United Jets", pais: "AUS", coef: 10 }, { nombre: "Johor Darul Takzim", pais: "MAS", coef: 9 },
+  // Bombo 3
+  { nombre: "Port", pais: "THA", coef: 8 }, { nombre: "Beijing Guoan", pais: "CHN", coef: 7 },
+  { nombre: "Pohang Steelers", pais: "KOR", coef: 6 }, { nombre: "Kashiwa Reysol", pais: "JPN", coef: 5 },
+  // Bombo 4
+  { nombre: "Cong An Ha Noi", pais: "VIE", coef: 4 }, { nombre: "Kyoto Sanga", pais: "JPN", coef: 3 },
+  { nombre: "Ratchaburi", pais: "THA", coef: 2 }, { nombre: "Gamba Osaka", pais: "JPN", coef: 1 },
+];
+
 function repartirBombos(plazas, cfg) {
   const orden = [...plazas].sort((a, b) => b.coef - a.coef);
   if (cfg.campeon) {
