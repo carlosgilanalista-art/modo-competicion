@@ -807,9 +807,14 @@ const coefFaseLiga = (nombre) =>
 // UCL/UEL: 4 bombos de 9, 2 rivales por bombo (1 casa + 1 fuera) → 8 partidos.
 // UECL: 6 bombos de 6, 1 rival por bombo; los bombos se emparejan (1-2, 3-4,
 // 5-6) y dentro de cada par se juega un partido en casa y otro fuera → 6 partidos.
+// AFC Elite (por región): 4 bombos de 4, rejilla de columnas (no biyección
+// bombo-contra-bombo) — cada equipo juega en casa contra toda la columna a su
+// derecha y fuera contra la de su izquierda, cíclico → 8 partidos. Verificado
+// contra el sorteo real del 18/08/2026 (es.wikipedia.org).
 const FL_CFG_UCL = { bombos: 4, porBombo: 9, dobleRival: true, campeon: CL_CAMPEON_VIGENTE };
 const FL_CFG_UEL = { bombos: 4, porBombo: 9, dobleRival: true };
 const FL_CFG_UECL = { bombos: 6, porBombo: 6, dobleRival: false, paresBombos: true };
+const FL_CFG_AFC = { bombos: 4, porBombo: 4, rejilla: true };
 
 function repartirBombos(plazas, cfg) {
   const orden = [...plazas].sort((a, b) => b.coef - a.coef);
@@ -973,15 +978,63 @@ function sortearFaseLiga(plazas, cfg) {
     return st.partidos;
   };
 
+  const intentoRejilla = () => {
+    // AFC Elite: no hay biyección bombo-contra-bombo. Cada bombo reparte un
+    // equipo por columna (tantas columnas como equipos por bombo); cada
+    // equipo juega en casa contra TODA la columna a su derecha y fuera contra
+    // TODA la columna a su izquierda, cíclico (última columna con la
+    // primera). Verificado contra el sorteo real del 18/08/2026: columnas
+    // adyacentes nunca comparten federación, pero columnas opuestas sí
+    // pueden (nunca se enfrentan, así que no hace falta evitarlo).
+    const numCol = cfg.porBombo;
+    const columnas = Array.from({ length: numCol }, () => []);
+    const paisesCol = Array.from({ length: numCol }, () => ({}));
+    const izq = (c) => (c - 1 + numCol) % numCol;
+    const der = (c) => (c + 1) % numCol;
+    const compatibleCol = (equipo, c) => !paisesCol[izq(c)][equipo.pais] && !paisesCol[der(c)][equipo.pais];
+    const colocar = (equipo, c) => { columnas[c].push(equipo); paisesCol[c][equipo.pais] = (paisesCol[c][equipo.pais] || 0) + 1; };
+    const quitar = (equipo, c) => { columnas[c].pop(); paisesCol[c][equipo.pais]--; };
+    let pasos = 0;
+    const asignarBombo = (equiposBombo) => {
+      const orden = shuffleCopy(equiposBombo);
+      const usadas = new Set();
+      const bt = (k) => {
+        if (k === orden.length) return true;
+        if (++pasos > 200000) return false;
+        for (const c of shuffleCopy(Array.from({ length: numCol }, (_, i) => i))) {
+          if (usadas.has(c) || !compatibleCol(orden[k], c)) continue;
+          colocar(orden[k], c);
+          usadas.add(c);
+          if (bt(k + 1)) return true;
+          quitar(orden[k], c);
+          usadas.delete(c);
+        }
+        return false;
+      };
+      return bt(0);
+    };
+    for (const equiposBombo of bombos) if (!asignarBombo(equiposBombo)) return null;
+    const bomboDeEquipo = new Map(equipos.map((e, i) => [e, bomboDe[i]]));
+    const partidos = [];
+    for (let c = 0; c < numCol; c++) {
+      columnas[c].forEach((local) => {
+        columnas[der(c)].forEach((visitante) => {
+          partidos.push({ local, visitante, bomboLocal: bomboDeEquipo.get(local), bomboVisitante: bomboDeEquipo.get(visitante) });
+        });
+      });
+    }
+    return partidos;
+  };
+
   for (let intento = 0; intento < 1000; intento++) {
-    const partidos = cfg.dobleRival ? intentoDoble() : intentoConPares();
+    const partidos = cfg.rejilla ? intentoRejilla() : cfg.dobleRival ? intentoDoble() : intentoConPares();
     if (!partidos) continue;
-    const numJornadas = cfg.dobleRival ? 8 : 6;
+    const numJornadas = cfg.rejilla ? cfg.bombos * 2 : cfg.dobleRival ? 8 : 6;
     if (!repartirJornadas(partidos, numJornadas)) continue;
     partidos.forEach((m) => { m.clave = `${m.local.nombre}|${m.visitante.nombre}`; });
     return { bombos, partidos, numJornadas };
   }
-  return { error: "No se encontró una combinación válida tras 1000 intentos — las restricciones de federación no dejan solución con estos 36 equipos." };
+  return { error: `No se encontró una combinación válida tras 1000 intentos — las restricciones de federación no dejan solución con estos ${total} equipos.` };
 }
 
 // Reparte los partidos en jornadas: cada equipo juega exactamente una vez por
