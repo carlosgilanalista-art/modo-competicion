@@ -1372,6 +1372,20 @@ function fixturesFaseLiga(sorteo) {
 }
 
 // ============================================================
+// LÓGICA — AFC CHAMPIONS LEAGUE ELITE (Capa 1: solo fase de liga)
+// Dos regiones independientes, cada una con su propio useFaseLiga. Sin cadena
+// useChampions→useEuropa→useConference: el AFC Elite es una única competición,
+// no hay descenso entre competiciones que enlazar.
+// ============================================================
+const AFC_POOL_OESTE = { plazas: AFC_OESTE, error: null };
+const AFC_POOL_ESTE = { plazas: AFC_ESTE, error: null };
+function useAFCChampionsElite() {
+  const oeste = useFaseLiga(AFC_POOL_OESTE, FL_CFG_AFC);
+  const este = useFaseLiga(AFC_POOL_ESTE, FL_CFG_AFC);
+  return { oeste, este };
+}
+
+// ============================================================
 // LÓGICA — CHAMPIONS LEAGUE
 // ============================================================
 // Lleva el origen de cada resultado de una ronda: undefined (introducido/simulado
@@ -5100,6 +5114,12 @@ function SimuladorEuro2028Page({ eq }) {
   );
 }
 
+// Placeholder mínimo — el layout real (paso 4) reutiliza el boilerplate del
+// simulador UEFA (cabecera, botón de feedback, footer).
+function SimuladorAFCPage({ afc }) {
+  return <div style={{ minHeight: "100vh", background: "#0A0E17", color: "#F4F1E8", padding: 40, fontFamily: "'Inter', sans-serif" }}>Simulador AFC Champions League Elite — en construcción.</div>;
+}
+
 // ============================================================
 // APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
@@ -5120,14 +5140,15 @@ export default function App() {
   const co = useConference(cl, el, datosReales);
   const nl = useNationsLeague();
   const eq = useEuro2028(nl);
+  const afc = useAFCChampionsElite();
   const [tab, setTab] = useState("CL");
   const hash = useHashRoute();
 
   // El simulador se comprueba antes que el artículo: "#/simulador-clasificacion-euro2028"
   // empieza por "#/simulador", así que el orden de las ramas es lo que las separa.
-  // Mismo cuidado cuando se publique el simulador de la ACL Elite: la rama de
-  // "#/simulador-afc-champions-elite" tiene que ir ANTES que la de "#/simulador".
-  const vista = hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
+  // Mismo cuidado con el simulador de la ACL Elite: la rama de
+  // "#/simulador-afc-champions-elite" va ANTES que la de "#/simulador".
+  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -5169,6 +5190,7 @@ export default function App() {
       {vista === "resultados" && <ResultadosReales />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
+      {vista === "simulador-afc" && <SimuladorAFCPage afc={afc} />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
           <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
