@@ -184,7 +184,8 @@ function SelectorCompeticion({ abierto, onClose }) {
 
         <GrupoCompeticiones etiqueta="CLUBES · AFC 2026/27">
           <TarjetaCompeticion color={C.verde} titulo="AFC Champions League Elite"
-            explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]} />
+            explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]}
+            simulador="#/simulador-afc-champions-elite" />
         </GrupoCompeticiones>
 
         <GrupoCompeticiones etiqueta="SELECCIONES">
@@ -226,6 +227,7 @@ export default function Landing() {
               <NavDropdownEnlace href="#/formato-liga">Explicación: liga y eliminatorias</NavDropdownEnlace>
               <NavDropdownEtiqueta>AFC</NavDropdownEtiqueta>
               <NavDropdownEtiqueta>Champions League Elite 2026/27</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador-afc-champions-elite">Simulador</NavDropdownEnlace>
               <NavDropdownEnlace href="#/afc-champions-elite">Explicación</NavDropdownEnlace>
               <NavDropdownEtiqueta>CAF</NavDropdownEtiqueta>
               <NavDropdownProximamente>Competiciones africanas</NavDropdownProximamente>
@@ -339,7 +341,8 @@ export default function Landing() {
           <GrupoCompeticiones etiqueta="CLUBES · AFC 2026/27">
             <TarjetaCompeticion color={C.verde} titulo="AFC Champions League Elite"
               sub="La Champions asiática pasa de 24 a 32 equipos: dos ligas paralelas por región, ocho jornadas, corte seco en el top 8 y un play-off aprobado que no se aplica todavía."
-              explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]} />
+              explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]}
+              simulador="#/simulador-afc-champions-elite" />
           </GrupoCompeticiones>
 
           <GrupoCompeticiones etiqueta="SELECCIONES">
