@@ -7,9 +7,13 @@ Cambia poco. Si cambia, se anota también en `ESTADO.md` § Decisiones cerradas.
 
 ## 1. Simulador UEFA unificado
 
-**Decisión:** un solo artefacto para Champions, Europa y Conference. No tres separados.
+**Decisión:** un solo componente para Champions, Europa y Conference. No tres separados.
 
-**Motivo:** `window.storage` está **aislado por artefacto**. Tres artefactos separados no pueden compartir datos entre sí bajo ninguna forma, y las tres competiciones se necesitan mutuamente: los perdedores de una alimentan a la siguiente.
+**Dónde vive:** `src/App.jsx` (~5142 líneas). Es una SPA React normal dentro de este mismo repo Vite, servida en producción como el resto del sitio — no un Claude Artifact externo.
+
+**Motivo:** las tres competiciones se necesitan mutuamente: los perdedores de una alimentan a la siguiente. Separarlas en componentes independientes rompería ese flujo en vivo.
+
+**Persistencia:** ninguna por ahora. Todo el estado es `useState`/`useMemo` en memoria de React; se pierde al recargar la página. Es una decisión pendiente, no un hecho consumado — queda por resolver si se añade persistencia real y con qué mecanismo.
 
 **Cómo se resuelve:** estado React compartido mediante hooks encadenados.
 
