@@ -1123,6 +1123,34 @@ function repartirJornadas(partidos, numJornadas) {
   return false;
 }
 
+// Sorteo real (no simulado) de la fase de liga del AFC Elite, del 18/08/2026.
+// AFC_OESTE/AFC_ESTE codifican el bombo real de cada equipo con el mismo orden
+// en que cayó cada uno en su columna ese día (ver el comentario de esas
+// constantes) — así que la columna real de cada equipo es sencillamente su
+// posición dentro de su bombo, sin sortear nada. No reproduce el reparto real
+// de jornadas (no está publicado con ese nivel de detalle): las jornadas se
+// asignan igual que en un sorteo simulado.
+function sorteoRealFaseLigaAFC(plazas, cfg) {
+  const bombos = repartirBombos(plazas, cfg);
+  const numCol = cfg.porBombo;
+  const columnas = Array.from({ length: numCol }, (_, c) => bombos.map((bombo) => bombo[c]));
+  const equipos = bombos.flat();
+  const bomboDeEquipo = new Map(equipos.map((e, i) => [e, Math.floor(i / cfg.porBombo)]));
+  const der = (c) => (c + 1) % numCol;
+  const partidos = [];
+  for (let c = 0; c < numCol; c++) {
+    columnas[c].forEach((local) => {
+      columnas[der(c)].forEach((visitante) => {
+        partidos.push({ local, visitante, bomboLocal: bomboDeEquipo.get(local), bomboVisitante: bomboDeEquipo.get(visitante) });
+      });
+    });
+  }
+  const numJornadas = cfg.bombos * 2;
+  if (!repartirJornadas(partidos, numJornadas)) return { error: "No se pudo repartir el sorteo real en jornadas — no debería ocurrir con una rejilla completa." };
+  partidos.forEach((m) => { m.clave = `${m.local.nombre}|${m.visitante.nombre}`; });
+  return { bombos, partidos, numJornadas, real: true };
+}
+
 // ---- Edición tras el sorteo: intercambio de visitantes entre dos partidos ----
 // Intercambiar los visitantes de dos partidos del mismo "bloque" (mismo bombo
 // del local y mismo bombo del visitante) conserva todas las cuotas del Art. 16
@@ -1294,12 +1322,18 @@ function resolverCuadro(ko, resKO, posiciones) {
 }
 
 // ---- Estado de la fase liga de una competición (compartido por las 3) ----
-function useFaseLiga(poolLiga, cfg) {
-  const [sorteoLiga, setSorteoLiga] = useState(null);
+// sorteoReal (opcional): sorteo ya conocido (no simulado) que se precarga en
+// vez de arrancar vacío, con opción de volver a él tras simular. Solo lo usa
+// el AFC Elite (su sorteo del 18/08/2026 ya se produjo) — UCL/UEL/UECL no lo
+// pasan y siguen arrancando vacíos, como siempre.
+function useFaseLiga(poolLiga, cfg, sorteoReal) {
+  const [sorteoLiga, setSorteoLiga] = useState(sorteoReal ?? null);
   const [resLiga, setResLiga] = useState({});
   const [sorteoKO, setSorteoKO] = useState(null);
-  useEffect(() => { setSorteoLiga(null); setResLiga({}); setSorteoKO(null); }, [poolLiga]);
+  useEffect(() => { setSorteoLiga(sorteoReal ?? null); setResLiga({}); setSorteoKO(null); }, [poolLiga, sorteoReal]);
   const sortear = () => { setSorteoLiga(sortearFaseLiga(poolLiga.plazas, cfg)); setResLiga({}); setSorteoKO(null); };
+  const restaurarSorteoReal = () => { if (!sorteoReal) return; setSorteoLiga(sorteoReal); setResLiga({}); setSorteoKO(null); };
+  const esSorteoReal = sorteoReal ? sorteoLiga === sorteoReal : false;
   const cambiarResultado = (clave, campo, raw) => {
     const v = validar(raw);
     if (v === "INVALIDO") return;
@@ -1356,7 +1390,7 @@ function useFaseLiga(poolLiga, cfg) {
       return n;
     });
   };
-  return { sorteoLiga, resLiga, sorteoKO, sortear, cambiarResultado, reiniciarPartido, simularJornada, intercambiar, clasificacion, clasificacionHasta, completa, jugados, sortearKO, resKO, cambiarKO, reiniciarKO, posiciones, cuadro, simularRondaKO };
+  return { sorteoLiga, resLiga, sorteoKO, sortear, cambiarResultado, reiniciarPartido, simularJornada, intercambiar, clasificacion, clasificacionHasta, completa, jugados, sortearKO, resKO, cambiarKO, reiniciarKO, posiciones, cuadro, simularRondaKO, restaurarSorteoReal: sorteoReal ? restaurarSorteoReal : undefined, esSorteoReal };
 }
 
 // Calendario individual: para cada equipo, sus rivales ordenados por bombo.
@@ -1379,9 +1413,15 @@ function fixturesFaseLiga(sorteo) {
 // ============================================================
 const AFC_POOL_OESTE = { plazas: AFC_OESTE, error: null };
 const AFC_POOL_ESTE = { plazas: AFC_ESTE, error: null };
+// El sorteo del 18/08/2026 ya se produjo — se precarga en vez de arrancar
+// vacío. Se calcula una sola vez (constante de módulo) para que la referencia
+// sea estable entre renders: useFaseLiga la usa para saber si el usuario sigue
+// en el sorteo real o se ha desviado a uno simulado.
+const AFC_SORTEO_REAL_OESTE = sorteoRealFaseLigaAFC(AFC_OESTE, FL_CFG_AFC);
+const AFC_SORTEO_REAL_ESTE = sorteoRealFaseLigaAFC(AFC_ESTE, FL_CFG_AFC);
 function useAFCChampionsElite() {
-  const oeste = useFaseLiga(AFC_POOL_OESTE, FL_CFG_AFC);
-  const este = useFaseLiga(AFC_POOL_ESTE, FL_CFG_AFC);
+  const oeste = useFaseLiga(AFC_POOL_OESTE, FL_CFG_AFC, AFC_SORTEO_REAL_OESTE);
+  const este = useFaseLiga(AFC_POOL_ESTE, FL_CFG_AFC, AFC_SORTEO_REAL_ESTE);
   return { oeste, este };
 }
 
@@ -2560,7 +2600,18 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercamb
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 12, lineHeight: 1.6, marginBottom: 12, maxWidth: 760 }}>{descripcion}</div>
       {!listo && <div style={{ color: colores.alerta, fontSize: 12, marginBottom: 10 }}>{pool.error}</div>}
-      <BotonSorteo onClick={liga.sortear} disabled={!listo} label={sorteo && !sorteo.error ? "Volver a sortear la fase de liga" : "Sortear fase de liga"} colores={colores} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: sorteo?.error ? 0 : undefined }}>
+        <BotonSorteo onClick={liga.sortear} disabled={!listo} label={sorteo && !sorteo.error ? "Volver a sortear la fase de liga" : "Sortear fase de liga"} colores={colores} />
+        {liga.restaurarSorteoReal && !liga.esSorteoReal && (
+          <button onClick={liga.restaurarSorteoReal}
+            style={{ background: "none", border: `1px solid ${colores.acento}`, color: colores.acento, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            ↺ Volver al sorteo real
+          </button>
+        )}
+        {liga.esSorteoReal && (
+          <span style={{ color: colores.acento, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>✓ SORTEO REAL</span>
+        )}
+      </div>
       {sorteo?.error && <div style={{ color: colores.alerta, fontSize: 13, marginBottom: 12 }}>{sorteo.error}</div>}
 
       {sorteo && !sorteo.error && (
