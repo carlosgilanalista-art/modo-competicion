@@ -39,8 +39,13 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 ## 3. Tarea única de la próxima sesión
 
 **Sesión:** 23/08/2026 (domingo)
-**Tarea:** (por definir — se fija el viernes 21)
-**Criterio de hecho:**
+**Tarea:** Definir el alcance del simulador AFC Champions League Elite en tres capas:
+- Capa 1 (obligatoria, deadline 14/09): fase de liga
+- Capa 2 (si hay margen de tiempo): rondas previas ya jugadas
+- Capa 3 (extensión, puede ir después del 14/09 sin incumplir el deadline): proyección de próximas eliminatorias
+
+Arquitectura: adaptar la del simulador UEFA unificado (mismo patrón de hooks encadenados y `window.storage`), no construir desde cero.
+**Criterio de hecho:** Alcance en tres capas y decisión de arquitectura registrados en ESTADO.md
 **Herramienta:** Claude Code
 
 ## 4. En curso
