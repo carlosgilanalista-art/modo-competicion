@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 17/08/2026 — cierre de segunda sesión de lunes
+**Última actualización:** 25/08/2026 — cierre de sesión de martes
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -20,6 +20,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - Datos reales de la fase previa 2026/27 cargados y editables, hasta Ronda 3 completa y sorteo de Playoff.
 - "Restaurar sorteo real" y "Restaurar todos los reales"; resolución directa por penaltis cuando no hay prórroga registrada.
 - Simulador de selecciones: Nations League 2026/27 y clasificación para la EURO 2028.
+- Simulador AFC Champions League Elite — Capa 1 (solo fase de liga): dos regiones independientes (Oeste/Este, 16 equipos cada una), motor de sorteo por rejilla propio (no es el bombo-contra-bombo de la UEFA), sorteo real del 18/08/2026 precargado con opción de simular y volver a él. Enlazado desde el menú "Clubes". `#/simulador-afc-champions-elite`.
 
 **Artículos publicados**
 
@@ -38,9 +39,14 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 
 ## 3. Tarea única de la próxima sesión
 
-**Sesión:** 25/08/2026 (martes)
-**Tarea:** Ejecución de la Capa 1 del simulador AFC Champions League Elite (fase de liga). Alcance en tres capas ya decidido el 23/08 — toca implementar código real: cfg de las dos regiones AFC, pool de equipos, adaptación de `useFaseLiga` del simulador UEFA unificado (mismo patrón de hooks encadenados).
-**Criterio de hecho:** Capa 1 funcional sobre la arquitectura adaptada del simulador UEFA
+**Sesión:** 25/08/2026 (martes) — COMPLETADA
+**Tarea:** Ejecución de la Capa 1 del simulador AFC Champions League Elite (fase de liga).
+**Criterio de hecho:** Capa 1 funcional sobre la arquitectura adaptada del simulador UEFA — CUMPLIDO. Motor de sorteo por rejilla (`sortearFaseLiga`, modo `cfg.rejilla`), pool real de 32 equipos (bombos del sorteo del 18/08/2026), `useAFCChampionsElite` con dos `useFaseLiga` independientes, ruta `#/simulador-afc-champions-elite`, layout reutilizando `FaseLigaPanel`/`TablaClasificacion`, sorteo real precargado con opción de simular y restaurar. En producción vía PR #39 y PR #40 (enlace de menú, que faltaba en el primer despliegue).
+**Herramienta:** Claude Code
+
+**Sesión siguiente:** (por definir — se fija el viernes)
+**Tarea:** (por definir)
+**Criterio de hecho:**
 **Herramienta:** Claude Code
 
 ## 4. En curso
@@ -78,6 +84,8 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 22/08 | PR #35 (`docs/ARQUITECTURA.md`, `docs/MARCA.md`, `docs/CONVENCIONES.md`) confirmado fusionado a `main` — se fusionó el 17/08/2026 a las 06:07 UTC, el mismo día que se abrió. La entrada de la sección "En curso" que lo describía como abierto y pendiente de fusión estaba desactualizada |
 | 22/08 | Gate semanal 22/08: no avanzó el deadline (simulador AFC, 14/09). Primer "no" — si el próximo lunes también es "no", la semana siguiente se dedica en exclusiva al deadline y todo lo demás se congela |
 | 25/08 | Gate semanal 25/08: segundo "no" seguido (deadline simulador AFC, 14/09). Se aplica la regla: semana 25-31 congelada, dedicada en exclusiva al simulador AFC. Excepción explícita y consciente: seguimiento y difusión de los 3 días finales de las previas UEFA (fecha fija, no se puede aparcar). Esta excepción no reabre el resto del backlog congelado — solo cubre las previas UEFA |
+| 25/08 | Capa 1 del simulador AFC Champions League Elite completada y en producción. PR #39 (motor de sorteo por rejilla — mecanismo real distinto del bombo-contra-bombo UEFA, verificado contra el sorteo real del 18/08/2026 y con miles de simulaciones —, pool real de 32 equipos, `useAFCChampionsElite`, ruta y layout) y PR #40 (enlace al simulador en el menú "Clubes" y en las tarjetas de la landing, ausente en el primer despliegue) fusionados a `main` |
+| 25/08 | Rama `claude/afc-champions-simulator-scope-33hge2` resuelta: todo su contenido ya está en `main` vía los dos merges (squash), sin diferencia de contenido restante. Pendiente solo borrarla |
 
 ## 7. Aparcadero
 
