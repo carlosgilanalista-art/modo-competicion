@@ -2397,10 +2397,19 @@ function BotonSorteo({ onClick, disabled, label, colores }) {
 // ============================================================
 // PANEL DE FASE LIGA (compartido por las 3 competiciones)
 // ============================================================
-function TablaClasificacion({ filas, colores, marca }) {
+// zonas: cortes de clasificación configurables — por defecto, los del formato
+// UEFA (8 directos a octavos, 9º-24º a playoff de eliminatorias, resto fuera).
+// Competiciones con otro formato de corte (p. ej. AFC Elite: solo top 8, sin
+// playoff) pasan su propio array de zonas en vez de asumir el de la UEFA.
+function TablaClasificacion({ filas, colores, marca, zonas }) {
   const th = { color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 10, padding: "3px 6px", textAlign: "right" };
   const td = { color: colores.texto, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, padding: "3px 6px", textAlign: "right" };
-  const zona = (idx) => (idx < 8 ? colores.acento : idx < 24 ? colores.rutaLiga : "#555");
+  const zonasDef = zonas ?? [
+    { hasta: 8, color: colores.acento, label: "1º-8º directos a octavos" },
+    { hasta: 24, color: colores.rutaLiga, label: "9º-24º playoff de eliminatorias" },
+    { hasta: filas.length, color: "#555", label: `25º-${filas.length}º eliminados`, atenuada: true },
+  ];
+  const zonaDe = (idx) => zonasDef.find((z) => idx < z.hasta) ?? zonasDef[zonasDef.length - 1];
   return (
     <div style={{ overflowX: "auto" }}>
       <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 640 }}>
@@ -2413,22 +2422,23 @@ function TablaClasificacion({ filas, colores, marca }) {
           </tr>
         </thead>
         <tbody>
-          {filas.map((f, idx) => (
-            <tr key={f.equipo.nombre} style={{ borderLeft: `3px solid ${zona(idx)}`, opacity: marca && idx >= 24 ? 0.55 : 1 }}>
-              <td style={{ ...td, textAlign: "left", color: zona(idx) }}>{idx + 1}</td>
-              <td style={{ ...td, textAlign: "left", fontFamily: "'Inter', sans-serif" }}>{f.equipo.nombre} <span style={{ color: colores.textoSuave, fontSize: 9 }}>({f.equipo.pais})</span></td>
-              <td style={td}>{f.pj}</td><td style={td}>{f.g}</td><td style={td}>{f.e}</td><td style={td}>{f.p}</td>
-              <td style={td}>{f.gf}</td><td style={td}>{f.gc}</td><td style={td}>{f.gf - f.gc > 0 ? "+" : ""}{f.gf - f.gc}</td>
-              <td style={{ ...td, color: colores.acento, fontWeight: 600 }}>{f.pts}</td>
-            </tr>
-          ))}
+          {filas.map((f, idx) => {
+            const z = zonaDe(idx);
+            return (
+              <tr key={f.equipo.nombre} style={{ borderLeft: `3px solid ${z.color}`, opacity: marca && z.atenuada ? 0.55 : 1 }}>
+                <td style={{ ...td, textAlign: "left", color: z.color }}>{idx + 1}</td>
+                <td style={{ ...td, textAlign: "left", fontFamily: "'Inter', sans-serif" }}>{f.equipo.nombre} <span style={{ color: colores.textoSuave, fontSize: 9 }}>({f.equipo.pais})</span></td>
+                <td style={td}>{f.pj}</td><td style={td}>{f.g}</td><td style={td}>{f.e}</td><td style={td}>{f.p}</td>
+                <td style={td}>{f.gf}</td><td style={td}>{f.gc}</td><td style={td}>{f.gf - f.gc > 0 ? "+" : ""}{f.gf - f.gc}</td>
+                <td style={{ ...td, color: colores.acento, fontWeight: 600 }}>{f.pts}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       {marca && (
         <div style={{ display: "flex", gap: 14, marginTop: 6, flexWrap: "wrap" }}>
-          <span style={{ color: colores.acento, fontSize: 10 }}>■ 1º-8º directos a octavos</span>
-          <span style={{ color: colores.rutaLiga, fontSize: 10 }}>■ 9º-24º playoff de eliminatorias</span>
-          <span style={{ color: "#777", fontSize: 10 }}>■ 25º-36º eliminados</span>
+          {zonasDef.map((z) => <span key={z.label} style={{ color: z.color, fontSize: 10 }}>■ {z.label}</span>)}
         </div>
       )}
     </div>
@@ -2532,7 +2542,7 @@ function CuadroFinal({ liga, colores }) {
   );
 }
 
-function FaseLigaPanel({ pool, liga, cfg, colores, descripcion }) {
+function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercambio = true, permiteKO = true, mostrarCoef = true, zonas }) {
   const { sorteoLiga: sorteo, resLiga, sorteoKO } = liga;
   const [verCalendarioEquipo, setVerCalendarioEquipo] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -2567,7 +2577,7 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion }) {
                       {e.nombre} <span style={{ color: colores.textoSuave, fontSize: 10 }}>({e.pais})</span>
                       {cfg.campeon === e.nombre && <span style={{ color: colores.acento, fontSize: 10 }}> 👑</span>}
                     </span>
-                    <span style={{ color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{e.coef.toFixed(3)}</span>
+                    {mostrarCoef && <span style={{ color: colores.textoSuave, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>{e.coef.toFixed(3)}</span>}
                   </div>
                 ))}
               </div>
@@ -2575,10 +2585,12 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion }) {
           </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-            <button onClick={() => setEditando(!editando)}
-              style={{ background: editando ? colores.acento : "none", color: editando ? colores.fondo : colores.acento, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-              {editando ? "✓ Terminar edición" : "✏️ Editar emparejamientos"}
-            </button>
+            {permiteIntercambio && (
+              <button onClick={() => setEditando(!editando)}
+                style={{ background: editando ? colores.acento : "none", color: editando ? colores.fondo : colores.acento, border: `1px solid ${colores.acento}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                {editando ? "✓ Terminar edición" : "✏️ Editar emparejamientos"}
+              </button>
+            )}
             <button onClick={() => setVerCalendarioEquipo(!verCalendarioEquipo)}
               style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 8, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
               {verCalendarioEquipo ? "Ocultar calendario por equipo" : "Ver calendario por equipo"}
@@ -2662,7 +2674,7 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion }) {
               {clasifAbierta === j && (
                 <div style={{ marginTop: 8, background: colores.tarjeta, border: `1px dashed ${colores.inputBorder}`, borderRadius: 8, padding: 10 }}>
                   <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 6 }}>Clasificación acumulada tras la Jornada {j + 1} (con los resultados introducidos hasta ahí)</div>
-                  <TablaClasificacion filas={liga.clasificacionHasta(j)} colores={colores} />
+                  <TablaClasificacion filas={liga.clasificacionHasta(j)} colores={colores} zonas={zonas} />
                 </div>
               )}
             </div>
@@ -2675,14 +2687,16 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion }) {
             Desempates del Art. 17: puntos, diferencia de goles, goles a favor, goles a favor fuera, victorias,
             victorias fuera y, en última instancia, coeficiente de club.
           </div>
-          <TablaClasificacion filas={liga.clasificacion} colores={colores} marca />
+          <TablaClasificacion filas={liga.clasificacion} colores={colores} marca zonas={zonas} />
 
-          <div style={{ marginTop: 18 }}>
-            <BotonSorteo onClick={liga.sortearKO} disabled={!liga.completa}
-              label={sorteoKO ? "Volver a sortear las eliminatorias" : "Sortear eliminatorias"} colores={colores} />
-            {!liga.completa && <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: -12 }}>Introduce (o simula) los {sorteo.partidos.length} resultados para poder sortear las eliminatorias.</div>}
-            {sorteoKO && <CuadroFinal liga={liga} colores={colores} />}
-          </div>
+          {permiteKO && (
+            <div style={{ marginTop: 18 }}>
+              <BotonSorteo onClick={liga.sortearKO} disabled={!liga.completa}
+                label={sorteoKO ? "Volver a sortear las eliminatorias" : "Sortear eliminatorias"} colores={colores} />
+              {!liga.completa && <div style={{ color: colores.textoSuave, fontSize: 11, marginTop: -12 }}>Introduce (o simula) los {sorteo.partidos.length} resultados para poder sortear las eliminatorias.</div>}
+              {sorteoKO && <CuadroFinal liga={liga} colores={colores} />}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -5114,10 +5128,77 @@ function SimuladorEuro2028Page({ eq }) {
   );
 }
 
-// Placeholder mínimo — el layout real (paso 4) reutiliza el boilerplate del
-// simulador UEFA (cabecera, botón de feedback, footer).
+// Mismo esquema de fondo que el artículo del AFC Elite (ArticuloAFCChampionsElite.jsx),
+// con acento naranja para Oeste y azul para Este — para diferenciar región sin
+// inventar una paleta nueva.
+const TEMA_AFC_OESTE = { fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C", acento: "#E8734A", texto: "#F4F1E8", textoSuave: "#8A97A8", alerta: "#E8734A", inputBg: "#0A0E17", inputBorder: "#2A3A4E" };
+const TEMA_AFC_ESTE = { fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C", acento: "#4A90D4", texto: "#F4F1E8", textoSuave: "#8A97A8", alerta: "#E8734A", inputBg: "#0A0E17", inputBorder: "#2A3A4E" };
+
+// Capa 1: solo fase de liga. Reutiliza FaseLigaPanel (mismo componente que
+// Champions/Europa/Conference) con permiteIntercambio y permiteKO desactivados:
+// el editor de emparejamientos está pensado para el sorteo bombo-contra-bombo
+// de la UEFA (no aplica al sorteo por rejilla del AFC) y las eliminatorias son
+// Capa 3, fuera de alcance hasta después del 14/09.
 function SimuladorAFCPage({ afc }) {
-  return <div style={{ minHeight: "100vh", background: "#0A0E17", color: "#F4F1E8", padding: 40, fontFamily: "'Inter', sans-serif" }}>Simulador AFC Champions League Elite — en construcción.</div>;
+  const [region, setRegion] = useState("oeste");
+  const liga = region === "oeste" ? afc.oeste : afc.este;
+  const pool = region === "oeste" ? AFC_POOL_OESTE : AFC_POOL_ESTE;
+  const c = region === "oeste" ? TEMA_AFC_OESTE : TEMA_AFC_ESTE;
+  useDocumentMeta({
+    title: "Simulador AFC Champions League Elite 2026/27 · Modo Competición",
+    description: "Simula la fase de liga de la AFC Champions League Elite 2026/27: dos regiones de 16 equipos, ocho jornadas cada una, con el sorteo real del 18/08/2026 ya cargado.",
+  });
+  return (
+    <div style={{ minHeight: "100vh", background: c.fondo, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 20px 60px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: c.textoSuave, fontSize: 11, letterSpacing: 3 }}>SIMULADOR AFC CHAMPIONS LEAGUE ELITE 2026/27</div>
+          <div style={{ display: "flex", gap: 14 }}>
+            <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
+            <a href="#/afc-champions-elite" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Cómo funciona</a>
+          </div>
+        </div>
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", color: c.texto, fontSize: 28, margin: "8px 0 6px" }}>AFC Champions League Elite — Fase de liga</h1>
+        <p style={{ color: c.textoSuave, fontSize: 13, lineHeight: 1.6, maxWidth: 700, marginBottom: 16 }}>
+          32 equipos, dos regiones de 16 sin cruzarse hasta octavos. Ocho jornadas por región (cuatro en casa, cuatro
+          fuera), sorteo por rejilla de columnas — no hay bombo contra bombo como en la UEFA. Clasifican los 8
+          primeros de cada región. Pool y bombos: sorteo real del 18/08/2026.
+        </p>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          {[["oeste", "Región Oeste", TEMA_AFC_OESTE.acento], ["este", "Región Este", TEMA_AFC_ESTE.acento]].map(([id, label, acento]) => (
+            <button key={id} onClick={() => setRegion(id)}
+              style={{
+                background: region === id ? acento : "none",
+                color: region === id ? "#0B1420" : c.textoSuave,
+                border: `1px solid ${acento}`,
+                borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700,
+                fontFamily: "'Oswald', sans-serif", cursor: "pointer",
+              }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <FaseLigaPanel
+          pool={pool} liga={liga} cfg={FL_CFG_AFC} colores={c}
+          descripcion="Cada equipo juega ocho partidos (cuatro en casa, cuatro fuera) contra ocho rivales distintos, nunca contra uno de su propia federación. Clasifican los ocho primeros a octavos — noveno es estar fuera, sin repesca."
+          permiteIntercambio={false} permiteKO={false} mostrarCoef={false}
+          zonas={[
+            { hasta: 8, color: c.acento, label: "1º-8º clasifican a octavos" },
+            { hasta: 16, color: "#555", label: "9º-16º eliminados", atenuada: true },
+          ]}
+        />
+
+        <footer style={{ borderTop: `1px solid ${c.borde}`, paddingTop: 16, marginTop: 16, color: c.textoSuave, fontSize: 11, lineHeight: 1.6 }}>
+          Modo Competición · Formato de la AFC Champions League Elite 2026/27 según la documentación oficial de la AFC,
+          contrastado con el sorteo real del 18/08/2026. El motor de partido es el mismo aleatorio uniforme que el
+          resto de simuladores del sitio. Fase de liga únicamente — octavos de final y fase final llegarán más
+          adelante, si hay margen antes del inicio de la competición.
+        </footer>
+      </div>
+    </div>
+  );
 }
 
 // ============================================================
