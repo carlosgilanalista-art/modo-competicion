@@ -5139,8 +5139,7 @@ const TEMA_AFC_ESTE = { fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C", 
 // el editor de emparejamientos está pensado para el sorteo bombo-contra-bombo
 // de la UEFA (no aplica al sorteo por rejilla del AFC) y las eliminatorias son
 // Capa 3, fuera de alcance hasta después del 14/09.
-function SimuladorAFCPage({ afc }) {
-  const [region, setRegion] = useState("oeste");
+function SimuladorAFCPage({ afc, region, setRegion }) {
   const liga = region === "oeste" ? afc.oeste : afc.este;
   const pool = region === "oeste" ? AFC_POOL_OESTE : AFC_POOL_ESTE;
   const c = region === "oeste" ? TEMA_AFC_OESTE : TEMA_AFC_ESTE;
@@ -5223,6 +5222,7 @@ export default function App() {
   const eq = useEuro2028(nl);
   const afc = useAFCChampionsElite();
   const [tab, setTab] = useState("CL");
+  const [regionAFC, setRegionAFC] = useState("oeste");
   const hash = useHashRoute();
 
   // El simulador se comprueba antes que el artículo: "#/simulador-clasificacion-euro2028"
@@ -5253,7 +5253,9 @@ export default function App() {
       <a href="https://forms.gle/Vyqkoy7G6daEJdX27" target="_blank" rel="noopener noreferrer" style={{
         position: "fixed", bottom: 20, right: 20, zIndex: 1000,
         display: "inline-flex", alignItems: "center", gap: 8,
-        background: vista === "simulador" ? tabs.find((tb) => tb.id === tab).color : TEMA_CL.acento,
+        background: vista === "simulador" ? tabs.find((tb) => tb.id === tab).color
+          : vista === "simulador-afc" ? (regionAFC === "oeste" ? TEMA_AFC_OESTE.acento : TEMA_AFC_ESTE.acento)
+          : TEMA_CL.acento,
         color: "#0B1420",
         borderRadius: 8, padding: "12px 22px", fontSize: 15, fontWeight: 700,
         fontFamily: "'Oswald', sans-serif", textDecoration: "none",
@@ -5271,7 +5273,7 @@ export default function App() {
       {vista === "resultados" && <ResultadosReales />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
-      {vista === "simulador-afc" && <SimuladorAFCPage afc={afc} />}
+      {vista === "simulador-afc" && <SimuladorAFCPage afc={afc} region={regionAFC} setRegion={setRegionAFC} />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
           <div style={{ position: "sticky", top: 0, zIndex: 10, background: fondoActivo, borderBottom: "1px solid #333", padding: "16px 20px 0" }}>
