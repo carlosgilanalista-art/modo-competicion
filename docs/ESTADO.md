@@ -38,14 +38,9 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 
 ## 3. Tarea única de la próxima sesión
 
-**Sesión:** 23/08/2026 (domingo)
-**Tarea:** Definir el alcance del simulador AFC Champions League Elite en tres capas:
-- Capa 1 (obligatoria, deadline 14/09): fase de liga
-- Capa 2 (si hay margen de tiempo): rondas previas ya jugadas
-- Capa 3 (extensión, puede ir después del 14/09 sin incumplir el deadline): proyección de próximas eliminatorias
-
-Arquitectura: adaptar la del simulador UEFA unificado (mismo patrón de hooks encadenados y `window.storage`), no construir desde cero.
-**Criterio de hecho:** Alcance en tres capas y decisión de arquitectura registrados en ESTADO.md
+**Sesión:** 25/08/2026 (martes)
+**Tarea:** Ejecución de la Capa 1 del simulador AFC Champions League Elite (fase de liga). Alcance en tres capas ya decidido el 23/08 — toca implementar código real: cfg de las dos regiones AFC, pool de equipos, adaptación de `useFaseLiga` del simulador UEFA unificado (mismo patrón de hooks encadenados).
+**Criterio de hecho:** Capa 1 funcional sobre la arquitectura adaptada del simulador UEFA
 **Herramienta:** Claude Code
 
 ## 4. En curso
@@ -82,6 +77,7 @@ Arquitectura: adaptar la del simulador UEFA unificado (mismo patrón de hooks en
 | 22/08 | Confirmado el sistema de organización como completo y operativo desde el 17/08 (`ESTADO.md`, `ARQUITECTURA.md`, `MARCA.md`, `CONVENCIONES.md` ya viven en `docs/` del repo) |
 | 22/08 | PR #35 (`docs/ARQUITECTURA.md`, `docs/MARCA.md`, `docs/CONVENCIONES.md`) confirmado fusionado a `main` — se fusionó el 17/08/2026 a las 06:07 UTC, el mismo día que se abrió. La entrada de la sección "En curso" que lo describía como abierto y pendiente de fusión estaba desactualizada |
 | 22/08 | Gate semanal 22/08: no avanzó el deadline (simulador AFC, 14/09). Primer "no" — si el próximo lunes también es "no", la semana siguiente se dedica en exclusiva al deadline y todo lo demás se congela |
+| 25/08 | Gate semanal 25/08: segundo "no" seguido (deadline simulador AFC, 14/09). Se aplica la regla: semana 25-31 congelada, dedicada en exclusiva al simulador AFC. Excepción explícita y consciente: seguimiento y difusión de los 3 días finales de las previas UEFA (fecha fija, no se puede aparcar). Esta excepción no reabre el resto del backlog congelado — solo cubre las previas UEFA |
 
 ## 7. Aparcadero
 
