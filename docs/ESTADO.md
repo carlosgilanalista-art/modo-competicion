@@ -51,8 +51,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 
 ## 4. En curso
 
-- Datos reales UEFA fase previa 2026/27 — Playoff de Champions League cargado y resuelto (7/7), fase de liga UCL completa (36/36). Pendiente Europa League (Playoff 0/12) y Conference League (Playoff 0/24): ninguna se ha jugado aún. Detalle en `docs/clasificados-2026-27.md`. Fusionado a `main` vía PR #43 (rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta).
-- ⚠️ Tras el PR #43, Vercel no generó un deployment de Production para el commit de fusión (visto en el dashboard: la Production seguía en el commit de 3 días antes, y el nuevo commit no aparecía ni como Building ni como Error). Causa sin confirmar — no es caché de navegador ni proyecto/dominio equivocado (ambos descartados). Si se repite, revisar Settings → Git del proyecto en Vercel (rama de producción, integración con GitHub) y probar un redeploy manual desde el dashboard.
+- Datos reales UEFA fase previa 2026/27 — Playoff de Champions League cargado y resuelto (7/7), fase de liga UCL completa (36/36), confirmado en producción. Pendiente Europa League (Playoff 0/12) y Conference League (Playoff 0/24): ninguna se ha jugado aún. Detalle en `docs/clasificados-2026-27.md`. Fusionado a `main` vía PR #43 y PR #44 (rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta).
 
 ## 5. Backlog congelado
 
@@ -87,6 +86,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 25/08 | Gate semanal 25/08: segundo "no" seguido (deadline simulador AFC, 14/09). Se aplica la regla: semana 25-31 congelada, dedicada en exclusiva al simulador AFC. Excepción explícita y consciente: seguimiento y difusión de los 3 días finales de las previas UEFA (fecha fija, no se puede aparcar). Esta excepción no reabre el resto del backlog congelado — solo cubre las previas UEFA |
 | 25/08 | Capa 1 del simulador AFC Champions League Elite completada y en producción. PR #39 (motor de sorteo por rejilla — mecanismo real distinto del bombo-contra-bombo UEFA, verificado contra el sorteo real del 18/08/2026 y con miles de simulaciones —, pool real de 32 equipos, `useAFCChampionsElite`, ruta y layout) y PR #40 (enlace al simulador en el menú "Clubes" y en las tarjetas de la landing, ausente en el primer despliegue) fusionados a `main` |
 | 25/08 | Rama `claude/afc-champions-simulator-scope-33hge2` resuelta: todo su contenido ya está en `main` vía los dos merges (squash), sin diferencia de contenido restante. Pendiente solo borrarla |
+| 27/08 | Playoff de Champions League 2026/27 cargado y resuelto (7/7 eliminatorias, fase de liga UCL 36/36) vía PR #43. Europa League y Conference League quedan pendientes — sus Playoff (12 y 24 eliminatorias) no se han jugado. Incidencia detectada tras el PR #43: Vercel no generó deployment de Production para el commit de fusión (Production se quedó clavada en el commit de 3 días antes, sin Building ni Error para el nuevo). Se descartaron caché de navegador y proyecto/dominio equivocado. Se resolvió con un push adicional a `main` (PR #44, doc): el deployment siguiente sí se disparó y Carlos confirmó el cambio en producción. Causa raíz del fallo puntual del webhook sin confirmar |
 
 ## 7. Aparcadero
 
