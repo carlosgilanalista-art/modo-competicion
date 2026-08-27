@@ -5,6 +5,7 @@ import ArticuloFaseLiga from "./ArticuloFaseLiga.jsx";
 import ArticuloNationsLeague from "./ArticuloNationsLeague.jsx";
 import ArticuloEuro2028 from "./ArticuloEuro2028.jsx";
 import ArticuloAFCChampionsElite from "./ArticuloAFCChampionsElite.jsx";
+import ArticuloProcedimientoSorteoUCL from "./ArticuloProcedimientoSorteoUCL.jsx";
 import ResultadosReales from "./ResultadosReales.jsx";
 import useDocumentMeta from "./useDocumentMeta.js";
 import { useResultadosReales, precargarRonda, ganadorRealR1, perdedorRealR1, sorteoRealParaPool } from "./datosReales.js";
@@ -2582,7 +2583,7 @@ function CuadroFinal({ liga, colores }) {
   );
 }
 
-function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercambio = true, permiteKO = true, mostrarCoef = true, zonas }) {
+function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercambio = true, permiteKO = true, mostrarCoef = true, zonas, enlaceArticulo }) {
   const { sorteoLiga: sorteo, resLiga, sorteoKO } = liga;
   const [verCalendarioEquipo, setVerCalendarioEquipo] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -2610,6 +2611,11 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercamb
         )}
         {liga.esSorteoReal && (
           <span style={{ color: colores.acento, fontSize: 11, fontFamily: "'JetBrains Mono', monospace", letterSpacing: 1 }}>✓ SORTEO REAL</span>
+        )}
+        {enlaceArticulo && (
+          <a href={enlaceArticulo} style={{ color: colores.textoSuave, fontSize: 12, textDecoration: "underline", marginLeft: 4 }}>
+            📄 Cómo funciona el sorteo
+          </a>
         )}
       </div>
       {sorteo?.error && <div style={{ color: colores.alerta, fontSize: 13, marginBottom: 12 }}>{sorteo.error}</div>}
@@ -2874,7 +2880,8 @@ function ChampionsView({ cl }) {
         descripcion={<>36 equipos en 4 bombos de 9 por coeficiente UEFA; el campeón vigente ({CL_CAMPEON_VIGENTE} 👑) ocupa la posición 1
           del Bombo 1. Cada equipo juega 8 partidos contra 8 rivales distintos: 2 de cada bombo, uno en casa y otro fuera.
           Prohibido enfrentarse a clubes de la propia federación y máximo 2 rivales de una misma federación ajena
-          (Art. 16 del reglamento UEFA). El calendario por jornadas lo fija la UEFA después, fuera del sorteo.</>} />
+          (Art. 16 del reglamento UEFA). El calendario por jornadas lo fija la UEFA después, fuera del sorteo.</>}
+        enlaceArticulo="#/procedimiento-sorteo-ucl" />
     </div>
   );
 }
@@ -5280,7 +5287,7 @@ export default function App() {
   // empieza por "#/simulador", así que el orden de las ramas es lo que las separa.
   // Mismo cuidado con el simulador de la ACL Elite: la rama de
   // "#/simulador-afc-champions-elite" va ANTES que la de "#/simulador".
-  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
+  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/procedimiento-sorteo-ucl") ? "procedimiento-sorteo-ucl" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -5321,6 +5328,7 @@ export default function App() {
       {vista === "nations-league" && <ArticuloNationsLeague />}
       {vista === "euro2028" && <ArticuloEuro2028 />}
       {vista === "afc-champions-elite" && <ArticuloAFCChampionsElite />}
+      {vista === "procedimiento-sorteo-ucl" && <ArticuloProcedimientoSorteoUCL />}
       {vista === "resultados" && <ResultadosReales />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
