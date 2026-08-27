@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 27/08/2026 — cierre de sesión de jueves
+**Última actualización:** 27/08/2026 — cierre de sesión de jueves (2ª actualización del día)
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -88,7 +88,8 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 25/08 | Capa 1 del simulador AFC Champions League Elite completada y en producción. PR #39 (motor de sorteo por rejilla — mecanismo real distinto del bombo-contra-bombo UEFA, verificado contra el sorteo real del 18/08/2026 y con miles de simulaciones —, pool real de 32 equipos, `useAFCChampionsElite`, ruta y layout) y PR #40 (enlace al simulador en el menú "Clubes" y en las tarjetas de la landing, ausente en el primer despliegue) fusionados a `main` |
 | 25/08 | Rama `claude/afc-champions-simulator-scope-33hge2` resuelta: todo su contenido ya está en `main` vía los dos merges (squash), sin diferencia de contenido restante. Pendiente solo borrarla |
 | 27/08 | Playoff de Champions League 2026/27 cargado y resuelto (7/7 eliminatorias, fase de liga UCL 36/36) vía PR #43. Europa League y Conference League quedan pendientes — sus Playoff (12 y 24 eliminatorias) no se han jugado. Incidencia detectada tras el PR #43: Vercel no generó deployment de Production para el commit de fusión (Production se quedó clavada en el commit de 3 días antes, sin Building ni Error para el nuevo). Se descartaron caché de navegador y proyecto/dominio equivocado. Se resolvió con un push adicional a `main` (PR #44, doc): el deployment siguiente sí se disparó y Carlos confirmó el cambio en producción. Causa raíz del fallo puntual del webhook sin confirmar |
-| 27/08 | Artículo "Procedimiento del sorteo de la fase de liga UCL 2026/27" fusionado a `main` (fast-forward, commit `0d39dab`, rama `claude/articulo-procedimiento-sorteo-ucl-15e1g6`). Rama local borrada. El borrado de la rama remota falló con HTTP 403 (permiso de la sesión, no bloqueo de protección de rama detectado) tras dos intentos; queda pendiente borrarla a mano desde GitHub — no bloquea nada, ya está fusionada e íntegra en `main` |
+| 27/08 | Artículo "Procedimiento del sorteo de la fase de liga UCL 2026/27" fusionado a `main` (fast-forward, commit `0d39dab`, rama `claude/articulo-procedimiento-sorteo-ucl-15e1g6`). Rama local borrada. El borrado de la rama remota falló con HTTP 403 en tres intentos (dos vía `git push --delete`, uno con refspec explícito `:refs/heads/...`), mismo error en los tres; no hay tool de borrado de rama en el set de GitHub MCP disponible. Es una restricción del proxy git de la sesión, no bloqueo de protección de rama de GitHub. Pendiente borrarla a mano desde GitHub — no bloquea nada, ya está fusionada e íntegra en `main` |
+| 27/08 | Hilo de X para el artículo del procedimiento del sorteo redactado y entregado a Carlos (gancho + 4 tweets de desarrollo + cierre con enlaces a artículo y simulador, hashtags solo en el primer y último tweet). Pensado para publicarse a las 15:00, tres horas antes del sorteo real de Champions (18:00) para capturar la expectación sin arriesgar desfase, ya que el artículo es solo procedimiento y no caduca con el resultado del sorteo. Publicación manual pendiente por parte de Carlos, no se gestiona desde el repo |
 
 ## 7. Aparcadero
 
