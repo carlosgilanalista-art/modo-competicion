@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 25/08/2026 — cierre de sesión de martes
+**Última actualización:** 27/08/2026 — cierre de sesión de jueves
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -29,6 +29,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - Nations League 2026/27
 - Clasificación para la EURO 2028
 - AFC Champions League Elite 2026/27 — explicación
+- Procedimiento del sorteo de la fase de liga UCL 2026/27 (`#/procedimiento-sorteo-ucl`), enlazado junto al botón de sorteo en el simulador de Champions
 
 ## 2. Deadlines duros
 
@@ -39,9 +40,9 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 
 ## 3. Tarea única de la próxima sesión
 
-**Sesión:** 25/08/2026 (martes) — COMPLETADA
-**Tarea:** Ejecución de la Capa 1 del simulador AFC Champions League Elite (fase de liga).
-**Criterio de hecho:** Capa 1 funcional sobre la arquitectura adaptada del simulador UEFA — CUMPLIDO. Motor de sorteo por rejilla (`sortearFaseLiga`, modo `cfg.rejilla`), pool real de 32 equipos (bombos del sorteo del 18/08/2026), `useAFCChampionsElite` con dos `useFaseLiga` independientes, ruta `#/simulador-afc-champions-elite`, layout reutilizando `FaseLigaPanel`/`TablaClasificacion`, sorteo real precargado con opción de simular y restaurar. En producción vía PR #39 y PR #40 (enlace de menú, que faltaba en el primer despliegue).
+**Sesión:** 27/08/2026 (jueves) — COMPLETADA
+**Tarea:** Artículo del procedimiento del sorteo de la fase de liga de la Champions 2026/27, accesible desde el simulador de Champions junto al botón de sorteo.
+**Criterio de hecho:** CUMPLIDO — ruta `#/procedimiento-sorteo-ucl` resuelve, enlace visible junto al botón "Sortear fase de liga" en `#/simulador/cl` (sin competir visualmente con él), navegación de vuelta verificada sin pérdida del estado de la simulación (comprobado con Playwright: mismo sorteo de bombos antes y después de visitar el artículo). Texto íntegro del usuario, sin reescribir ni inventar emparejamientos. Fusionado a `main` (fast-forward, commit `0d39dab`).
 **Herramienta:** Claude Code
 
 **Sesión siguiente:** (por definir — se fija el viernes)
@@ -87,6 +88,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 25/08 | Capa 1 del simulador AFC Champions League Elite completada y en producción. PR #39 (motor de sorteo por rejilla — mecanismo real distinto del bombo-contra-bombo UEFA, verificado contra el sorteo real del 18/08/2026 y con miles de simulaciones —, pool real de 32 equipos, `useAFCChampionsElite`, ruta y layout) y PR #40 (enlace al simulador en el menú "Clubes" y en las tarjetas de la landing, ausente en el primer despliegue) fusionados a `main` |
 | 25/08 | Rama `claude/afc-champions-simulator-scope-33hge2` resuelta: todo su contenido ya está en `main` vía los dos merges (squash), sin diferencia de contenido restante. Pendiente solo borrarla |
 | 27/08 | Playoff de Champions League 2026/27 cargado y resuelto (7/7 eliminatorias, fase de liga UCL 36/36) vía PR #43. Europa League y Conference League quedan pendientes — sus Playoff (12 y 24 eliminatorias) no se han jugado. Incidencia detectada tras el PR #43: Vercel no generó deployment de Production para el commit de fusión (Production se quedó clavada en el commit de 3 días antes, sin Building ni Error para el nuevo). Se descartaron caché de navegador y proyecto/dominio equivocado. Se resolvió con un push adicional a `main` (PR #44, doc): el deployment siguiente sí se disparó y Carlos confirmó el cambio en producción. Causa raíz del fallo puntual del webhook sin confirmar |
+| 27/08 | Artículo "Procedimiento del sorteo de la fase de liga UCL 2026/27" fusionado a `main` (fast-forward, commit `0d39dab`, rama `claude/articulo-procedimiento-sorteo-ucl-15e1g6`). Rama local borrada. El borrado de la rama remota falló con HTTP 403 (permiso de la sesión, no bloqueo de protección de rama detectado) tras dos intentos; queda pendiente borrarla a mano desde GitHub — no bloquea nada, ya está fusionada e íntegra en `main` |
 
 ## 7. Aparcadero
 
