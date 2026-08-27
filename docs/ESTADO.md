@@ -51,7 +51,8 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 
 ## 4. En curso
 
-- Datos reales UEFA fase previa 2026/27 — Ronda 3 completa y sorteo de Playoff cargados. Pendiente incorporar los resultados del Playoff conforme se jueguen. Sin rama abierta: el trabajo se ha ido integrando en `main`.
+- Datos reales UEFA fase previa 2026/27 — Playoff de Champions League cargado y resuelto (7/7), fase de liga UCL completa (36/36). Pendiente Europa League (Playoff 0/12) y Conference League (Playoff 0/24): ninguna se ha jugado aún. Detalle en `docs/clasificados-2026-27.md`. Fusionado a `main` vía PR #43 (rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta).
+- ⚠️ Tras el PR #43, Vercel no generó un deployment de Production para el commit de fusión (visto en el dashboard: la Production seguía en el commit de 3 días antes, y el nuevo commit no aparecía ni como Building ni como Error). Causa sin confirmar — no es caché de navegador ni proyecto/dominio equivocado (ambos descartados). Si se repite, revisar Settings → Git del proyecto en Vercel (rama de producción, integración con GitHub) y probar un redeploy manual desde el dashboard.
 
 ## 5. Backlog congelado
 
