@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 28/08/2026 — cierre de sesión de viernes (Playoff UEL/UECL)
+**Última actualización:** 28/08/2026 — cierre de sesión (sorteo real de la fase de liga UCL)
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -19,6 +19,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - Modo confirmado vs simulado con cascada de invalidación.
 - Datos reales de la fase previa 2026/27 cargados y editables, hasta Ronda 3 completa y sorteo de Playoff.
 - "Restaurar sorteo real" y "Restaurar todos los reales"; resolución directa por penaltis cuando no hay prórroga registrada.
+- Sorteo real de la fase de liga de la Champions League 2026/27 (36 equipos, 144 partidos), celebrado el 27/08/2026, cargado y editable con el mismo patrón "sorteo real" / restauración / edición campo a campo, y las restricciones de federación (Art. 16) validadas también al editar a mano.
 - Simulador de selecciones: Nations League 2026/27 y clasificación para la EURO 2028.
 - Simulador AFC Champions League Elite — Capa 1 (solo fase de liga): dos regiones independientes (Oeste/Este, 16 equipos cada una), motor de sorteo por rejilla propio (no es el bombo-contra-bombo de la UEFA), sorteo real del 18/08/2026 precargado con opción de simular y volver a él. Enlazado desde el menú "Clubes". `#/simulador-afc-champions-elite`.
 
@@ -45,7 +46,12 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 **Criterio de hecho:** CUMPLIDO — 36/36 eliminatorias cargadas (12 UEL + 24 UECL), verificadas aritméticamente una a una (agregado = ida+vuelta, ganador recalculado independientemente, penaltis solo con agregado empatado). Resolución directa por penaltis sin asumir prórroga en las 3 eliminatorias sin prórroga registrada (Heart of Midlothian–Rapid Wien, Rangers–Jablonec, Drita–Inter Club d'Escaldes). Corregida además una ida ya cargada que era incorrecta (Lincoln Red Imps–Larne, "2-1" → "0-2", confirmado por Carlos contra la página oficial de "Play-offs - Ida"). Detalle completo en `docs/clasificados-2026-27.md`. Fusionado a `main` (squash, commit `53d7cc7`, PR #46, rama `claude/playoff-uefa-resultados-851dma`).
 **Herramienta:** Claude Code
 
-**Sesión siguiente:** (por definir — Carlos está lanzando otra tarea en un chat distinto en paralelo; documentar aquí al cierre de esa sesión)
+**Sesión:** 28/08/2026 — COMPLETADA
+**Tarea:** Cargar el sorteo real de la fase de liga de la Champions League 2026/27, celebrado el jueves 27/08/2026, como dato confirmado, con la misma lógica híbrida real/simulado que ya existe para otros datos. Cambio de alcance consciente sobre la tarea de resultados de Playoff de la sesión anterior, decidido por Carlos.
+**Criterio de hecho:** CUMPLIDO — 36 equipos en 4 bombos de 9, 144 emparejamientos (36×8÷2) cargados como sorteo real, reutilizando el patrón `sorteoReal`/`esSorteoReal`/`restaurarSorteoReal` ya existente (AFC Elite y Ronda 3/Playoff de Champions, `ARQUITECTURA.md §2`) — no el contrato `origen_ida`/`origen_vuelta` ni el campo `origen` de resultados, que no aplican a sorteos. Edición campo a campo (intercambio de visitante) y restauración al sorteo real ya funcionaban de forma genérica en `FaseLigaPanel`/`useFaseLiga`; solo hizo falta conectar los datos reales, sin tocar la UI. Restricciones de federación (Art. 16) validadas en el propio dataset (0 infracciones) y en la edición en vivo. Verificado por conteos exactos: 36 bloques de equipo parseados (288 líneas), pot derivado sin discrepancias, 144 parejas local/visitante simétricas, 8 partidos por equipo, 8 jornadas de 18 partidos sin choques. Probado en navegador (build limpio + Playwright). Fusionado a `main` (squash, commit `9afa0f1`, PR #47, rama `claude/load-champions-league-draw-pstwwu`), deployment de Production confirmado por Carlos.
+**Herramienta:** Claude Code
+
+**Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
 **Herramienta:** Claude Code
@@ -93,6 +99,8 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 28/08 | Playoff de Europa League (12/12) y Conference League (24/24) 2026/27 cargado y resuelto vía PR #46 (rama `claude/playoff-uefa-resultados-851dma`, squash-merge a `main`, commit `53d7cc7`). Corregida una ida ya cargada e incorrecta (Lincoln Red Imps–Larne, "2-1" → "0-2") tras confirmación explícita de Carlos contra la página oficial de "Play-offs - Ida" de la UEFA — no se asumió, se paró y se preguntó antes de tocar un dato marcado como real. Aclarado (sin resolver la pregunta abierta de §8) que el contrato de campo `origen_ida`/`origen_vuelta` de ARQUITECTURA.md §2 y el campo único `origen` del código conviven en capas distintas: el JSON de datos usa el primero, el estado en vivo de React deriva el segundo a partir de los marcadores — no son versiones contradictorias del mismo dato, sino dos representaciones a distinto nivel |
 | 28/08 | Precedente del 27/08 (Vercel sin generar deployment de Production tras un merge) no verificado todavía para este merge (PR #46, commit `53d7cc7`) — pendiente que Carlos confirme en el dashboard de Vercel o en producción; si no dispara, el fix conocido es un push adicional a `main` |
 | 28/08 | Carlos lanza en paralelo otra tarea en un chat de Code distinto mientras se cerraba esta sesión. Recomendado que esa sesión arranque su rama desde `main` en su punta actual (ya incluye el merge de PR #46) para evitar una base obsoleta, sobre todo si toca `docs/ESTADO.md` o el mismo dataset JSON de resultados reales |
+| 28/08 | Esa sesión en paralelo era la tarea de cargar el sorteo real de la fase de liga de la Champions League 2026/27 (sorteo del 27/08/2026) — cambio de alcance consciente por Carlos respecto a la tarea de resultados de Playoff, no continuación de ella. Confirmado que para *sorteos* (a diferencia de *resultados*) el código ya usaba un tercer patrón, distinto de los dos que documenta la pregunta abierta de §8 (`origen_ida`/`origen_vuelta` vs. campo `origen`): un objeto `sorteoReal` fijo a nivel de módulo, comparado por referencia (`esSorteoReal`), con `restaurarSorteoReal()` — ya usado por el sorteo real del AFC Champions Elite y por Ronda 3/Playoff de Champions. Se ha extendido ese mismo patrón a la fase de liga UCL sin mecanismo nuevo; la UI de edición campo a campo y restauración (`FaseLigaPanel`) ya era genérica y no ha hecho falta tocarla. 144 emparejamientos verificados por conteos exactos (ver §3). Fusionado a `main` (squash, commit `9afa0f1`, PR #47, rama `claude/load-champions-league-draw-pstwwu`), deployment de Production confirmado por Carlos sin el problema de webhook del 27/08 |
+| 28/08 | Intento de borrar la rama remota `claude/load-champions-league-draw-pstwwu` tras su fusión: mismo error HTTP 403 ya documentado el 27/08 (restricción del proxy git de la sesión, no protección de rama de GitHub; tampoco hay tool de borrado de rama en el set de GitHub MCP disponible). Rama fusionada e íntegra en `main`, pendiente borrarla a mano desde GitHub — no bloquea nada |
 
 ## 7. Aparcadero
 
