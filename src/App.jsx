@@ -1152,6 +1152,100 @@ function sorteoRealFaseLigaAFC(plazas, cfg) {
   return { bombos, partidos, numJornadas, real: true };
 }
 
+// Sorteo real (no simulado) de la fase de liga de la Champions League 2026/27,
+// celebrado el 27/08/2026 — a diferencia del AFC Elite (rejilla derivable del
+// bombo), este es un sorteo biyectivo genuino: no se puede reconstruir por
+// posición de bombo, así que los 144 emparejamientos (36 equipos x 8 partidos
+// / 2) están codificados a mano en UCL_PARTIDOS_REAL tal y como se produjeron
+// (local, visitante), con los nombres canónicos del simulador (los mismos
+// que usan CL_DIRECTOS_FASE_LIGA y los clasificados del Playoff).
+// Verificado contra las restricciones del Art. 16 (ninguna federación repetida
+// como rival, máximo 2 rivales por federación ajena) antes de cargarlo.
+// El reparto en jornadas no está publicado con ese nivel de detalle, así que
+// se asigna igual que en un sorteo simulado (mismo criterio que sorteoRealFaseLigaAFC).
+const UCL_POT_REAL = {
+  // Bombo 1
+  "Barcelona": 1, "Manchester City": 1, "Arsenal": 1, "Atlético de Madrid": 1, "Inter": 1,
+  "Liverpool": 1, "Real Madrid": 1, "Paris Saint-Germain": 1, "Bayern de Múnich": 1,
+  // Bombo 2
+  "Roma": 2, "Aston Villa": 2, "Real Betis": 2, "Manchester United": 2, "PSV Eindhoven": 2,
+  "Porto": 2, "Club Brugge": 2, "Borussia Dortmund": 2, "Sporting CP": 2,
+  // Bombo 3
+  "Galatasaray": 3, "Villarreal": 3, "Bodø/Glimt": 3, "Lille": 3, "RB Leipzig": 3,
+  "Shakhtar Donetsk": 3, "Fenerbahçe": 3, "Feyenoord": 3, "Napoli": 3,
+  // Bombo 4
+  "Slovan Bratislava": 4, "Como": 4, "Slavia Praga": 4, "Viking": 4, "LASK Linz": 4,
+  "AEK Atenas": 4, "Lens": 4, "VfB Stuttgart": 4, "Sabah": 4,
+};
+// País de los 7 clasificados del Playoff (los 29 directos ya tienen país en
+// CL_DIRECTOS_FASE_LIGA). Mismos códigos que CL_RONDA1/CL_NUEVOS_PO.
+const UCL_PAIS_PLAYOFF = {
+  "Sabah": "AZE", "Slovan Bratislava": "SVK", "Fenerbahçe": "TUR", "Bodø/Glimt": "NOR",
+  "Viking": "NOR", "AEK Atenas": "GRE", "LASK Linz": "AUT",
+};
+const UCL_PARTIDOS_REAL = [
+  ["AEK Atenas", "Galatasaray"], ["AEK Atenas", "LASK Linz"], ["AEK Atenas", "Real Madrid"], ["AEK Atenas", "Roma"],
+  ["Arsenal", "Borussia Dortmund"], ["Arsenal", "Lille"], ["Arsenal", "Real Madrid"], ["Arsenal", "Sabah"],
+  ["Aston Villa", "Borussia Dortmund"], ["Aston Villa", "Fenerbahçe"], ["Aston Villa", "Paris Saint-Germain"], ["Aston Villa", "Viking"],
+  ["Atlético de Madrid", "Bayern de Múnich"], ["Atlético de Madrid", "Fenerbahçe"], ["Atlético de Madrid", "Manchester United"], ["Atlético de Madrid", "Viking"],
+  ["Barcelona", "Aston Villa"], ["Barcelona", "Como"], ["Barcelona", "Feyenoord"], ["Barcelona", "Manchester City"],
+  ["Bayern de Múnich", "Arsenal"], ["Bayern de Múnich", "Bodø/Glimt"], ["Bayern de Múnich", "Real Betis"], ["Bayern de Múnich", "Slavia Praga"],
+  ["Bodø/Glimt", "Atlético de Madrid"], ["Bodø/Glimt", "Borussia Dortmund"], ["Bodø/Glimt", "LASK Linz"], ["Bodø/Glimt", "Lille"],
+  ["Borussia Dortmund", "AEK Atenas"], ["Borussia Dortmund", "Inter"], ["Borussia Dortmund", "Real Betis"], ["Borussia Dortmund", "Villarreal"],
+  ["Club Brugge", "Aston Villa"], ["Club Brugge", "Bodø/Glimt"], ["Club Brugge", "Lens"], ["Club Brugge", "Liverpool"],
+  ["Como", "AEK Atenas"], ["Como", "Manchester United"], ["Como", "Paris Saint-Germain"], ["Como", "RB Leipzig"],
+  ["Fenerbahçe", "Liverpool"], ["Fenerbahçe", "Roma"], ["Fenerbahçe", "Slavia Praga"], ["Fenerbahçe", "Villarreal"],
+  ["Feyenoord", "Como"], ["Feyenoord", "Inter"], ["Feyenoord", "Porto"], ["Feyenoord", "RB Leipzig"],
+  ["Galatasaray", "Aston Villa"], ["Galatasaray", "Barcelona"], ["Galatasaray", "Feyenoord"], ["Galatasaray", "VfB Stuttgart"],
+  ["Inter", "Club Brugge"], ["Inter", "Liverpool"], ["Inter", "Shakhtar Donetsk"], ["Inter", "VfB Stuttgart"],
+  ["LASK Linz", "Fenerbahçe"], ["LASK Linz", "Liverpool"], ["LASK Linz", "Porto"], ["LASK Linz", "Slovan Bratislava"],
+  ["Lens", "Bodø/Glimt"], ["Lens", "Como"], ["Lens", "Manchester City"], ["Lens", "Sporting CP"],
+  ["Lille", "Bayern de Múnich"], ["Lille", "Galatasaray"], ["Lille", "Real Betis"], ["Lille", "Slovan Bratislava"],
+  ["Liverpool", "Atlético de Madrid"], ["Liverpool", "Lens"], ["Liverpool", "Porto"], ["Liverpool", "Villarreal"],
+  ["Manchester City", "AEK Atenas"], ["Manchester City", "Napoli"], ["Manchester City", "Paris Saint-Germain"], ["Manchester City", "Sporting CP"],
+  ["Manchester United", "Bayern de Múnich"], ["Manchester United", "RB Leipzig"], ["Manchester United", "Roma"], ["Manchester United", "Sabah"],
+  ["Napoli", "Arsenal"], ["Napoli", "Bodø/Glimt"], ["Napoli", "Club Brugge"], ["Napoli", "Viking"],
+  ["PSV Eindhoven", "Atlético de Madrid"], ["PSV Eindhoven", "Club Brugge"], ["PSV Eindhoven", "Shakhtar Donetsk"], ["PSV Eindhoven", "VfB Stuttgart"],
+  ["Paris Saint-Germain", "Barcelona"], ["Paris Saint-Germain", "Galatasaray"], ["Paris Saint-Germain", "Roma"], ["Paris Saint-Germain", "Slovan Bratislava"],
+  ["Porto", "Manchester City"], ["Porto", "Napoli"], ["Porto", "PSV Eindhoven"], ["Porto", "Slavia Praga"],
+  ["RB Leipzig", "Lens"], ["RB Leipzig", "Manchester City"], ["RB Leipzig", "PSV Eindhoven"], ["RB Leipzig", "Shakhtar Donetsk"],
+  ["Real Betis", "Arsenal"], ["Real Betis", "Como"], ["Real Betis", "Feyenoord"], ["Real Betis", "Porto"],
+  ["Real Madrid", "Inter"], ["Real Madrid", "LASK Linz"], ["Real Madrid", "PSV Eindhoven"], ["Real Madrid", "RB Leipzig"],
+  ["Roma", "Lille"], ["Roma", "Real Madrid"], ["Roma", "Slovan Bratislava"], ["Roma", "Sporting CP"],
+  ["Sabah", "Barcelona"], ["Sabah", "Borussia Dortmund"], ["Sabah", "Napoli"], ["Sabah", "Slavia Praga"],
+  ["Shakhtar Donetsk", "AEK Atenas"], ["Shakhtar Donetsk", "Fenerbahçe"], ["Shakhtar Donetsk", "Real Madrid"], ["Shakhtar Donetsk", "Sporting CP"],
+  ["Slavia Praga", "Arsenal"], ["Slavia Praga", "Aston Villa"], ["Slavia Praga", "Lens"], ["Slavia Praga", "Villarreal"],
+  ["Slovan Bratislava", "Inter"], ["Slovan Bratislava", "Real Betis"], ["Slovan Bratislava", "Shakhtar Donetsk"], ["Slovan Bratislava", "VfB Stuttgart"],
+  ["Sporting CP", "Barcelona"], ["Sporting CP", "Galatasaray"], ["Sporting CP", "LASK Linz"], ["Sporting CP", "Manchester United"],
+  ["VfB Stuttgart", "Atlético de Madrid"], ["VfB Stuttgart", "Club Brugge"], ["VfB Stuttgart", "Lille"], ["VfB Stuttgart", "Viking"],
+  ["Viking", "Bayern de Múnich"], ["Viking", "Feyenoord"], ["Viking", "PSV Eindhoven"], ["Viking", "Sabah"],
+  ["Villarreal", "Manchester United"], ["Villarreal", "Napoli"], ["Villarreal", "Paris Saint-Germain"], ["Villarreal", "Sabah"],
+];
+function sorteoRealFaseLigaUCL() {
+  const paisDe = (nombre) => CL_DIRECTOS_FASE_LIGA.find((e) => e.nombre === nombre)?.pais ?? UCL_PAIS_PLAYOFF[nombre];
+  const equipoDe = new Map(Object.keys(UCL_POT_REAL).map((nombre) => [nombre, { nombre, pais: paisDe(nombre), coef: coefFaseLiga(nombre) }]));
+  const bombos = [1, 2, 3, 4].map((p) => {
+    const ordenado = Object.keys(UCL_POT_REAL).filter((n) => UCL_POT_REAL[n] === p)
+      .sort((a, b) => equipoDe.get(b).coef - equipoDe.get(a).coef);
+    if (p === 1) {
+      const i = ordenado.findIndex((n) => n === CL_CAMPEON_VIGENTE);
+      if (i > 0) ordenado.unshift(ordenado.splice(i, 1)[0]);
+    }
+    return ordenado.map((n) => equipoDe.get(n));
+  });
+  const bomboDeNombre = new Map();
+  bombos.forEach((bombo, p) => bombo.forEach((e) => bomboDeNombre.set(e.nombre, p)));
+  const partidos = UCL_PARTIDOS_REAL.map(([local, visitante]) => ({
+    local: equipoDe.get(local), visitante: equipoDe.get(visitante),
+    bomboLocal: bomboDeNombre.get(local), bomboVisitante: bomboDeNombre.get(visitante),
+    clave: `${local}|${visitante}`,
+  }));
+  const numJornadas = FL_CFG_UCL.bombos * 2;
+  if (!repartirJornadas(partidos, numJornadas)) return { error: "No se pudo repartir el sorteo real en jornadas — no debería ocurrir con un sorteo completo." };
+  return { bombos, partidos, numJornadas, real: true };
+}
+const UCL_SORTEO_REAL = sorteoRealFaseLigaUCL();
+
 // ---- Edición tras el sorteo: intercambio de visitantes entre dos partidos ----
 // Intercambiar los visitantes de dos partidos del mismo "bloque" (mismo bombo
 // del local y mismo bombo del visitante) conserva todas las cuotas del Art. 16
@@ -1324,9 +1418,10 @@ function resolverCuadro(ko, resKO, posiciones) {
 
 // ---- Estado de la fase liga de una competición (compartido por las 3) ----
 // sorteoReal (opcional): sorteo ya conocido (no simulado) que se precarga en
-// vez de arrancar vacío, con opción de volver a él tras simular. Solo lo usa
-// el AFC Elite (su sorteo del 18/08/2026 ya se produjo) — UCL/UEL/UECL no lo
-// pasan y siguen arrancando vacíos, como siempre.
+// vez de arrancar vacío, con opción de volver a él tras simular. Lo usan el
+// AFC Elite (sorteo del 18/08/2026) y la Champions League (sorteo de la fase
+// de liga del 27/08/2026) — UEL/UECL todavía no tienen su sorteo real cargado
+// y siguen arrancando vacíos, como siempre.
 function useFaseLiga(poolLiga, cfg, sorteoReal) {
   const [sorteoLiga, setSorteoLiga] = useState(sorteoReal ?? null);
   const [resLiga, setResLiga] = useState({});
@@ -1733,7 +1828,7 @@ function useChampions(datosReales) {
     ];
     return { plazas, error: null };
   }, [clasificados]);
-  const liga = useFaseLiga(poolLiga, FL_CFG_UCL);
+  const liga = useFaseLiga(poolLiga, FL_CFG_UCL, UCL_SORTEO_REAL);
 
   return {
     coefs, allTeams,
