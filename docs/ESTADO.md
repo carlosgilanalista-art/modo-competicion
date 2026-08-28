@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 27/08/2026 — cierre de sesión de jueves (2ª actualización del día)
+**Última actualización:** 28/08/2026 — cierre de sesión de viernes (Playoff UEL/UECL)
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -40,19 +40,19 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 
 ## 3. Tarea única de la próxima sesión
 
-**Sesión:** 27/08/2026 (jueves) — COMPLETADA
-**Tarea:** Artículo del procedimiento del sorteo de la fase de liga de la Champions 2026/27, accesible desde el simulador de Champions junto al botón de sorteo.
-**Criterio de hecho:** CUMPLIDO — ruta `#/procedimiento-sorteo-ucl` resuelve, enlace visible junto al botón "Sortear fase de liga" en `#/simulador/cl` (sin competir visualmente con él), navegación de vuelta verificada sin pérdida del estado de la simulación (comprobado con Playwright: mismo sorteo de bombos antes y después de visitar el artículo). Texto íntegro del usuario, sin reescribir ni inventar emparejamientos. Fusionado a `main` (fast-forward, commit `0d39dab`).
+**Sesión:** 28/08/2026 (viernes) — COMPLETADA
+**Tarea:** Cargar los resultados reales del Playoff UEFA de Europa League (12 eliminatorias) y Conference League (24 eliminatorias), pegados directamente por Carlos.
+**Criterio de hecho:** CUMPLIDO — 36/36 eliminatorias cargadas (12 UEL + 24 UECL), verificadas aritméticamente una a una (agregado = ida+vuelta, ganador recalculado independientemente, penaltis solo con agregado empatado). Resolución directa por penaltis sin asumir prórroga en las 3 eliminatorias sin prórroga registrada (Heart of Midlothian–Rapid Wien, Rangers–Jablonec, Drita–Inter Club d'Escaldes). Corregida además una ida ya cargada que era incorrecta (Lincoln Red Imps–Larne, "2-1" → "0-2", confirmado por Carlos contra la página oficial de "Play-offs - Ida"). Detalle completo en `docs/clasificados-2026-27.md`. Fusionado a `main` (squash, commit `53d7cc7`, PR #46, rama `claude/playoff-uefa-resultados-851dma`).
 **Herramienta:** Claude Code
 
-**Sesión siguiente:** (por definir — se fija el viernes)
+**Sesión siguiente:** (por definir — Carlos está lanzando otra tarea en un chat distinto en paralelo; documentar aquí al cierre de esa sesión)
 **Tarea:** (por definir)
 **Criterio de hecho:**
 **Herramienta:** Claude Code
 
 ## 4. En curso
 
-- Datos reales UEFA fase previa 2026/27 — Playoff de Champions League cargado y resuelto (7/7), fase de liga UCL completa (36/36), confirmado en producción. Pendiente Europa League (Playoff 0/12) y Conference League (Playoff 0/24): ninguna se ha jugado aún. Detalle en `docs/clasificados-2026-27.md`. Fusionado a `main` vía PR #43 y PR #44 (rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta).
+- Datos reales UEFA fase previa 2026/27 — Playoff de las tres competiciones completo: Champions League (7/7, fase de liga UCL 36/36), Europa League (12/12) y Conference League (24/24). Fusionado a `main` vía PR #43, PR #44 (Champions, rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta) y PR #46 (EL+UECL, rama `claude/playoff-uefa-resultados-851dma`, resuelta — merge confirmado en `main`, pendiente confirmar deployment de Production en Vercel por el precedente del 27/08, ver Decisiones cerradas). Las fases de liga de Europa League y Conference League siguen bloqueadas: faltan 4 caídos de Ronda 3 Ruta Liga de Champions para la fase de liga UEL, y a su vez la fase de liga UECL depende de que la UEL esté cerrada. Detalle en `docs/clasificados-2026-27.md`.
 
 ## 5. Backlog congelado
 
@@ -90,6 +90,9 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 27/08 | Playoff de Champions League 2026/27 cargado y resuelto (7/7 eliminatorias, fase de liga UCL 36/36) vía PR #43. Europa League y Conference League quedan pendientes — sus Playoff (12 y 24 eliminatorias) no se han jugado. Incidencia detectada tras el PR #43: Vercel no generó deployment de Production para el commit de fusión (Production se quedó clavada en el commit de 3 días antes, sin Building ni Error para el nuevo). Se descartaron caché de navegador y proyecto/dominio equivocado. Se resolvió con un push adicional a `main` (PR #44, doc): el deployment siguiente sí se disparó y Carlos confirmó el cambio en producción. Causa raíz del fallo puntual del webhook sin confirmar |
 | 27/08 | Artículo "Procedimiento del sorteo de la fase de liga UCL 2026/27" fusionado a `main` (fast-forward, commit `0d39dab`, rama `claude/articulo-procedimiento-sorteo-ucl-15e1g6`). Rama local borrada. El borrado de la rama remota falló con HTTP 403 en tres intentos (dos vía `git push --delete`, uno con refspec explícito `:refs/heads/...`), mismo error en los tres; no hay tool de borrado de rama en el set de GitHub MCP disponible. Es una restricción del proxy git de la sesión, no bloqueo de protección de rama de GitHub. Pendiente borrarla a mano desde GitHub — no bloquea nada, ya está fusionada e íntegra en `main` |
 | 27/08 | Hilo de X para el artículo del procedimiento del sorteo redactado y entregado a Carlos (gancho + 4 tweets de desarrollo + cierre con enlaces a artículo y simulador, hashtags solo en el primer y último tweet). Pensado para publicarse a las 15:00, tres horas antes del sorteo real de Champions (18:00) para capturar la expectación sin arriesgar desfase, ya que el artículo es solo procedimiento y no caduca con el resultado del sorteo. Publicación manual pendiente por parte de Carlos, no se gestiona desde el repo |
+| 28/08 | Playoff de Europa League (12/12) y Conference League (24/24) 2026/27 cargado y resuelto vía PR #46 (rama `claude/playoff-uefa-resultados-851dma`, squash-merge a `main`, commit `53d7cc7`). Corregida una ida ya cargada e incorrecta (Lincoln Red Imps–Larne, "2-1" → "0-2") tras confirmación explícita de Carlos contra la página oficial de "Play-offs - Ida" de la UEFA — no se asumió, se paró y se preguntó antes de tocar un dato marcado como real. Aclarado (sin resolver la pregunta abierta de §8) que el contrato de campo `origen_ida`/`origen_vuelta` de ARQUITECTURA.md §2 y el campo único `origen` del código conviven en capas distintas: el JSON de datos usa el primero, el estado en vivo de React deriva el segundo a partir de los marcadores — no son versiones contradictorias del mismo dato, sino dos representaciones a distinto nivel |
+| 28/08 | Precedente del 27/08 (Vercel sin generar deployment de Production tras un merge) no verificado todavía para este merge (PR #46, commit `53d7cc7`) — pendiente que Carlos confirme en el dashboard de Vercel o en producción; si no dispara, el fix conocido es un push adicional a `main` |
+| 28/08 | Carlos lanza en paralelo otra tarea en un chat de Code distinto mientras se cerraba esta sesión. Recomendado que esa sesión arranque su rama desde `main` en su punta actual (ya incluye el merge de PR #46) para evitar una base obsoleta, sobre todo si toca `docs/ESTADO.md` o el mismo dataset JSON de resultados reales |
 
 ## 7. Aparcadero
 
