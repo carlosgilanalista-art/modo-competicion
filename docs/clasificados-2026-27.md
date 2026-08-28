@@ -1,9 +1,11 @@
-# Clasificados 2026/27 — Fase de liga UEFA (estado parcial, 27/08/2026)
+# Clasificados 2026/27 — Fase de liga UEFA (estado parcial, 28/08/2026)
 
-**Rama:** `claude/datos-playoff-uefa-2026-27-2n5owl`
-**Fuente de datos:** `public/uefa-fase-previa-2026-27-eliminatorias.json` — Playoff de Champions League actualizado con las 7 vueltas jugadas el 25/08/2026 (dato aportado directamente en sesión, sin URL individual por partido; reutiliza el enlace genérico de calendario que ya usaba el resto del dataset UCL).
+**Rama:** `claude/playoff-uefa-resultados-851dma`
+**Fuente de datos:** `public/uefa-fase-previa-2026-27-eliminatorias.json` — Playoff de Champions League (7/7, 25/08/2026) y Playoff de Europa League (12/12) y Conference League (24/24), vueltas jugadas el 26–27/08/2026 (dato aportado directamente en sesión, sin URL individual por partido; reutiliza el enlace genérico de calendario que ya usaba el resto del dataset de cada competición).
 
-**Estado: PARCIAL.** Solo la Champions League tiene su Playoff completo. Europa League y Conference League siguen con su Playoff propio sin jugar — sus fases de liga NO están cerradas y no aparecen en este documento como clasificación final, solo como pendiente marcado.
+**Corrección de dato:** `UECL-PO-CH-05` (Lincoln Red Imps – Larne) tenía cargada una ida incorrecta ("2-1"). Confirmada contra la página "Play-offs - Ida" de la UEFA y corregida a "0-2" (Lincoln Red Imps 0 – Larne 2) antes de cargar la vuelta.
+
+**Estado: Playoff de las tres competiciones completo (7/7 UCL + 12/12 UEL + 24/24 UECL).** Las fases de liga de Europa League y Conference League siguen bloqueadas — no por su propio Playoff (ya resuelto), sino porque aún faltan los caídos que llegan desde la competición superior (ver §2 y §3).
 
 ---
 
@@ -59,61 +61,61 @@ Eliminados en el Playoff (descienden a la fase de liga de Europa League — `cl.
 
 ---
 
-## 2. Europa League — PENDIENTE (Playoff 0/12 jugado)
+## 2. Europa League — Playoff COMPLETO (12/12), fase de liga sigue bloqueada
 
-`src/App.jsx` (`poolsPO()` de `useEuropa`) exige 12 eliminatorias propias (6 Ruta Campeones + 6 Ruta Liga) para completar los 36 de su fase de liga (13 directos + 12 propios + 11 caídos de Champions). Ninguna tiene vuelta todavía — solo la ida, ya cargada en el dataset:
+`src/App.jsx` (`poolsPO()` de `useEuropa`) exige 12 eliminatorias propias (6 Ruta Campeones + 6 Ruta Liga) para completar los 36 de su fase de liga (13 directos + 12 propios + 11 caídos de Champions).
 
-| Eliminatoria | Ida | Vuelta |
-|---|---|---|
-| Trabzonspor – Ferencváros | 0-1 | pendiente |
-| Universitatea Craiova – Ararat-Armenia | 1-1 | pendiente |
-| Sint-Truiden – Omonia | 1-0 | pendiente |
-| Red Star Belgrade – Viktoria Plzeň | 3-0 | pendiente |
-| Egnatia – Lillestrøm | 0-0 | pendiente |
-| Jagiellonia Białystok – Iberia 1999 | 4-0 | pendiente |
-| Mjällby AIF – Red Bull Salzburg | 0-1 | pendiente |
-| Kairat – Anderlecht | 0-3 | pendiente |
-| Lech Poznań – Thun | 7-0 | pendiente |
-| Beşiktaş – Kauno Žalgiris | 3-0 | pendiente |
-| Benfica – AGF | 3-1 | pendiente |
-| OFI – CSKA Sofia | 3-0 | pendiente |
+| Eliminatoria | Ida | Vuelta | Agregado | Clasifica |
+|---|---|---|---|---|
+| Trabzonspor – Ferencváros | 0-1 | 0-4 | 0-5 | **Ferencváros** |
+| Universitatea Craiova – Ararat-Armenia | 1-1 | 0-1 | 1-2 | **Ararat-Armenia** |
+| Sint-Truiden – Omonia | 1-0 | 2-4 | 3-4 | **Omonia** |
+| Red Star Belgrade – Viktoria Plzeň | 3-0 | 1-5 | 4-5 | **Viktoria Plzeň** (prórroga) |
+| Egnatia – Lillestrøm | 0-0 | 1-2 | 1-2 | **Lillestrøm** (prórroga) |
+| Jagiellonia Białystok – Iberia 1999 | 4-0 | 2-1 | 6-1 | **Jagiellonia Białystok** |
+| Mjällby AIF – Red Bull Salzburg | 0-1 | 0-3 | 0-4 | **Red Bull Salzburg** |
+| Kairat – Anderlecht | 0-3 | 0-3 | 0-6 | **Anderlecht** |
+| Lech Poznań – Thun | 7-0 | 2-2 | 9-2 | **Lech Poznań** |
+| Beşiktaş – Kauno Žalgiris | 3-0 | 0-1 | 3-1 | **Beşiktaş** |
+| Benfica – AGF | 3-1 | 3-1 | 6-2 | **Benfica** |
+| OFI – CSKA Sofia | 3-0 | 2-0 | 5-0 | **OFI** |
 
-**⚠️ NO CUADRA — 0/12 resueltas.** Además, de los 11 "caídos de Champions" que también necesita esta fase de liga, solo se conocen 7 (los perdedores del Playoff de Champions, arriba); los otros 4 (perdedores de Ronda 3 Ruta Liga de Champions) no se han cargado en esta sesión.
+**12/12 resueltas ✓.** Sigue bloqueada la fase de liga: de los 11 "caídos de Champions" que también necesita, solo se conocen 7 (los perdedores del Playoff de Champions, §1); los otros 4 (perdedores de Ronda 3 Ruta Liga de Champions) no se han cargado — fuera del alcance de esta sesión.
 
 ---
 
-## 3. Conference League — PENDIENTE (Playoff 0/24 jugado)
+## 3. Conference League — Playoff COMPLETO (24/24), fase de liga sigue bloqueada
 
-`src/App.jsx` (`poolsPO()` de `useConference`) exige 24 eliminatorias propias (5 Ruta Campeones + 19 Ruta Liga) para completar los 36 de su fase de liga (24 propios + 12 caídos del Playoff de Europa League — la Conference no reparte plazas directas). Ninguna tiene vuelta todavía:
+`src/App.jsx` (`poolsPO()` de `useConference`) exige 24 eliminatorias propias (5 Ruta Campeones + 19 Ruta Liga) para completar los 36 de su fase de liga (24 propios + 12 caídos del Playoff de Europa League — la Conference no reparte plazas directas).
 
-| Eliminatoria | Ida | Vuelta |
-|---|---|---|
-| Víkingur Reykjavík – Borac Banja Luka | 1-3 | pendiente |
-| Shamrock Rovers – KuPS | 1-1 | pendiente |
-| Drita – Inter Club d'Escaldes | 2-2 | pendiente |
-| KÍ – Riga | 0-0 | pendiente |
-| Lincoln Red Imps – Larne | 2-1 | pendiente |
-| Motherwell – Freiburg | 1-3 | pendiente |
-| Górnik Zabrze – Monaco | 2-3 | pendiente |
-| Inter Turku – Copenhagen | 0-0 | pendiente |
-| Heart of Midlothian – Rapid Wien | 2-2 | pendiente |
-| Tromsø – Brighton & Hove Albion | 0-0 | pendiente |
-| Hajduk Split – Raków Częstochowa | 2-2 | pendiente |
-| Panathinaikos – Hradec Králové | 2-2 | pendiente |
-| Gent – Hibernian | 0-0 | pendiente |
-| PAOK – Brann | 1-1 | pendiente |
-| Atalanta – Hapoel Tel Aviv | 0-0 | pendiente |
-| Midtjylland – Rijeka | 2-0 | pendiente |
-| Rangers – Jablonec | 1-0 | pendiente |
-| Nordsjælland – St. Gallen | 1-0 | pendiente |
-| Dinamo City – Pafos | 1-1 | pendiente |
-| Sion – Ajax | 2-4 | pendiente |
-| Braga – Austria Wien | 2-0 | pendiente |
-| Twente – Qarabağ | 0-1 | pendiente |
-| Getafe – Partizan | 3-1 | pendiente |
-| Lugano – Maccabi Tel Aviv | 2-1 | pendiente |
+| Eliminatoria | Ida | Vuelta | Agregado | Clasifica |
+|---|---|---|---|---|
+| Víkingur Reykjavík – Borac Banja Luka | 1-3 | 1-3 | 2-6 | **Borac Banja Luka** |
+| Shamrock Rovers – KuPS | 1-1 | 0-1 | 1-2 | **KuPS** |
+| Drita – Inter Club d'Escaldes | 2-2 | 0-0 | 2-2 (4-2 pen.) | **Inter Club d'Escaldes** (penaltis, sin prórroga registrada) |
+| KÍ – Riga | 0-0 | 1-2 | 1-2 | **Riga** |
+| Lincoln Red Imps – Larne | 0-2 (corregido, ver arriba) | 3-0 | 3-2 | **Lincoln Red Imps** (prórroga) |
+| Motherwell – Freiburg | 1-3 | 1-4 | 2-7 | **Freiburg** |
+| Górnik Zabrze – Monaco | 2-3 | 1-4 | 3-7 | **Monaco** |
+| Inter Turku – Copenhagen | 0-0 | 1-4 | 1-4 | **Copenhagen** |
+| Heart of Midlothian – Rapid Wien | 2-2 | 2-2 | 4-4 (4-3 pen.) | **Heart of Midlothian** (penaltis, sin prórroga registrada) |
+| Tromsø – Brighton & Hove Albion | 0-0 | 0-4 | 0-4 | **Brighton & Hove Albion** |
+| Hajduk Split – Raków Częstochowa | 2-2 | 3-2 | 5-4 | **Hajduk Split** (prórroga) |
+| Panathinaikos – Hradec Králové | 2-2 | 2-1 | 4-3 | **Panathinaikos** (prórroga) |
+| Gent – Hibernian | 0-0 | 3-2 | 3-2 | **Gent** |
+| PAOK – Brann | 1-1 | 2-3 | 3-4 | **Brann** |
+| Atalanta – Hapoel Tel Aviv | 0-0 | 1-0 | 1-0 | **Atalanta** |
+| Midtjylland – Rijeka | 2-0 | 4-1 | 6-1 | **Midtjylland** |
+| Rangers – Jablonec | 1-0 | 0-1 | 1-1 (3-4 pen.) | **Jablonec** (penaltis, sin prórroga registrada) |
+| Nordsjælland – St. Gallen | 1-0 | 3-2 | 4-2 | **Nordsjælland** |
+| Dinamo City – Pafos | 1-1 | 2-4 | 3-5 | **Pafos** (prórroga) |
+| Sion – Ajax | 2-4 | 3-5 | 5-9 | **Ajax** |
+| Braga – Austria Wien | 2-0 | 0-0 | 2-0 | **Braga** |
+| Twente – Qarabağ | 0-1 | 4-1 | 4-2 | **Twente** (prórroga) |
+| Getafe – Partizan | 3-1 | 1-2 | 4-3 | **Getafe** |
+| Lugano – Maccabi Tel Aviv | 2-1 | 1-1 | 3-2 | **Lugano** |
 
-**⚠️ NO CUADRA — 0/24 resueltas.** Además depende de los 12 perdedores del Playoff de Europa League (sección 2), que tampoco están.
+**24/24 resueltas ✓.** Sigue bloqueada la fase de liga: depende de los 12 perdedores del Playoff de Europa League (§2), que ya están resueltos y disponibles vía la cadena de hooks `useEuropa → useConference` (no requiere carga manual adicional).
 
 ---
 
@@ -122,12 +124,10 @@ Eliminados en el Playoff (descienden a la fase de liga de Europa League — `cl.
 | Competición | Playoff esperado | Playoff resuelto | Fase de liga |
 |---|---|---|---|
 | Champions League (UCL) | 7 | **7/7** | **36/36 ✓** |
-| Europa League (UEL) | 12 | **0/12** | ⚠️ bloqueada — faltan 12 propios + 4 caídos de Champions Ronda 3 |
-| Conference League (UECL) | 24 | **0/24** | ⚠️ bloqueada — faltan 24 propios + 12 caídos del Playoff de Europa League |
+| Europa League (UEL) | 12 | **12/12 ✓** | ⚠️ bloqueada — faltan 4 caídos de Champions Ronda 3 Ruta Liga (fuera de alcance) |
+| Conference League (UECL) | 24 | **24/24 ✓** | ⚠️ bloqueada — depende de que se cargue la fase de liga de Europa League primero |
 
 ## 5. Veredicto
 
-- **Tarea original (las tres fases de liga completas): NO APTO.** Faltan 36 eliminatorias (12 UEL + 24 UECL).
-- **Actualización parcial de Champions League (única parte con dato real disponible hoy): APTO.** 7/7 Playoff, 36/36 fase de liga, conteos verificados contra `src/App.jsx`.
-
-Esta es la parte que se sube a producción hoy, a petición explícita, a falta de que se jueguen los Playoff de Europa League y Conference League.
+- **Playoff de las tres competiciones (43 eliminatorias UCL+UEL+UECL): APTO.** 7/7 + 12/12 + 24/24, conteos verificados contra `src/App.jsx` y agregados verificados aritméticamente (ida+vuelta=agregado, penaltis solo donde el agregado queda empatado) para las 36 cargadas hoy.
+- **Fases de liga de Europa League y Conference League: siguen NO APTO**, no por su Playoff (ya resuelto) sino por datos de rondas anteriores de Champions que no se han cargado — pendiente de otra sesión.
