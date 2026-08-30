@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 28/08/2026 — cierre de sesión (sorteo real de la fase de liga UCL)
+**Última actualización:** 30/08/2026 — cierre de sesión (calendario real de jornadas UCL)
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -20,6 +20,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - Datos reales de la fase previa 2026/27 cargados y editables, hasta Ronda 3 completa y sorteo de Playoff.
 - "Restaurar sorteo real" y "Restaurar todos los reales"; resolución directa por penaltis cuando no hay prórroga registrada.
 - Sorteo real de la fase de liga de la Champions League 2026/27 (36 equipos, 144 partidos), celebrado el 27/08/2026, cargado y editable con el mismo patrón "sorteo real" / restauración / edición campo a campo, y las restricciones de federación (Art. 16) validadas también al editar a mano.
+- Calendario real de jornadas de la fase de liga UCL 2026/27 (8 jornadas, fechas oficiales publicadas por la UEFA) cargado y visible junto a cada jornada en el simulador. Europa League y Conference League no lo tienen — sus fases de liga siguen sin sorteo real cargado (ver "En curso").
 - Simulador de selecciones: Nations League 2026/27 y clasificación para la EURO 2028.
 - Simulador AFC Champions League Elite — Capa 1 (solo fase de liga): dos regiones independientes (Oeste/Este, 16 equipos cada una), motor de sorteo por rejilla propio (no es el bombo-contra-bombo de la UEFA), sorteo real del 18/08/2026 precargado con opción de simular y volver a él. Enlazado desde el menú "Clubes". `#/simulador-afc-champions-elite`.
 
@@ -49,6 +50,13 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 **Sesión:** 28/08/2026 — COMPLETADA
 **Tarea:** Cargar el sorteo real de la fase de liga de la Champions League 2026/27, celebrado el jueves 27/08/2026, como dato confirmado, con la misma lógica híbrida real/simulado que ya existe para otros datos. Cambio de alcance consciente sobre la tarea de resultados de Playoff de la sesión anterior, decidido por Carlos.
 **Criterio de hecho:** CUMPLIDO — 36 equipos en 4 bombos de 9, 144 emparejamientos (36×8÷2) cargados como sorteo real, reutilizando el patrón `sorteoReal`/`esSorteoReal`/`restaurarSorteoReal` ya existente (AFC Elite y Ronda 3/Playoff de Champions, `ARQUITECTURA.md §2`) — no el contrato `origen_ida`/`origen_vuelta` ni el campo `origen` de resultados, que no aplican a sorteos. Edición campo a campo (intercambio de visitante) y restauración al sorteo real ya funcionaban de forma genérica en `FaseLigaPanel`/`useFaseLiga`; solo hizo falta conectar los datos reales, sin tocar la UI. Restricciones de federación (Art. 16) validadas en el propio dataset (0 infracciones) y en la edición en vivo. Verificado por conteos exactos: 36 bloques de equipo parseados (288 líneas), pot derivado sin discrepancias, 144 parejas local/visitante simétricas, 8 partidos por equipo, 8 jornadas de 18 partidos sin choques. Probado en navegador (build limpio + Playwright). Fusionado a `main` (squash, commit `9afa0f1`, PR #47, rama `claude/load-champions-league-draw-pstwwu`), deployment de Production confirmado por Carlos.
+**Herramienta:** Claude Code
+
+**Sesión:** 30/08/2026 (domingo) — COMPLETADA (alcance reducido, decidido por Carlos en sesión)
+**Tarea:** Cargar el calendario real de jornadas (fechas) de la fase de liga de Champions, Europa y Conference League 2026/27.
+**Criterio de hecho:** PARCIALMENTE CUMPLIDO, por decisión consciente de alcance — solo Champions League. Al arrancar se detectó que Europa League y Conference League no tienen sorteo real cargado en el simulador (`useFaseLiga` se invoca sin `sorteoReal` en ambas, `src/App.jsx` líneas ~2120 y ~2459): sus pools de 36 equipos siguen incompletos (faltan los 4 caídos de Ronda 3 Ruta Liga de Champions, ya documentado en `docs/clasificados-2026-27.md`). Sin sorteo real no hay partidos a los que asignar jornada/fecha, así que no se tocó el PDF de calendario de Europa League adjuntado en sesión ni se cargaron datos de Conference League (aunque Carlos los pegó en el mensaje). Carlos confirmó reducir el alcance de hoy solo a Champions League.
+Para Champions League: verificado por script que las 144 parejas del calendario real de jornadas pegado por Carlos coinciden exactamente (mismo local/visitante, sin duplicados ni inversiones) con las 144 ya cargadas en `UCL_PARTIDOS_REAL` — no se introdujo ningún emparejamiento nuevo, solo se fijó su jornada real (1-8) y su fecha. Verificado también que cada uno de los 36 equipos aparece exactamente una vez en cada una de las 8 jornadas. `sorteoRealFaseLigaUCL()` ya no reparte las jornadas con el algoritmo genérico (`repartirJornadas`) sino con el mapa real `UCL_JORNADA_REAL`; las fechas (`UCL_FECHAS_JORNADA`) se muestran junto a cada cabecera "JORNADA N" en el panel. Probado en navegador (build limpio + Playwright): las 8 fechas se muestran correctamente y el indicador "✓ SORTEO REAL" se conserva.
+Limitación conocida, aparcada: el intercambio manual de visitantes (edición campo a campo) sigue regenerando el reparto de jornadas con el algoritmo genérico, no con el calendario real — tras un intercambio, la fecha mostrada junto a una jornada deja de corresponder con exactitud a los partidos que contiene. Ver Aparcadero.
 **Herramienta:** Claude Code
 
 **Sesión siguiente:** (por definir)
@@ -101,6 +109,8 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 | 28/08 | Carlos lanza en paralelo otra tarea en un chat de Code distinto mientras se cerraba esta sesión. Recomendado que esa sesión arranque su rama desde `main` en su punta actual (ya incluye el merge de PR #46) para evitar una base obsoleta, sobre todo si toca `docs/ESTADO.md` o el mismo dataset JSON de resultados reales |
 | 28/08 | Esa sesión en paralelo era la tarea de cargar el sorteo real de la fase de liga de la Champions League 2026/27 (sorteo del 27/08/2026) — cambio de alcance consciente por Carlos respecto a la tarea de resultados de Playoff, no continuación de ella. Confirmado que para *sorteos* (a diferencia de *resultados*) el código ya usaba un tercer patrón, distinto de los dos que documenta la pregunta abierta de §8 (`origen_ida`/`origen_vuelta` vs. campo `origen`): un objeto `sorteoReal` fijo a nivel de módulo, comparado por referencia (`esSorteoReal`), con `restaurarSorteoReal()` — ya usado por el sorteo real del AFC Champions Elite y por Ronda 3/Playoff de Champions. Se ha extendido ese mismo patrón a la fase de liga UCL sin mecanismo nuevo; la UI de edición campo a campo y restauración (`FaseLigaPanel`) ya era genérica y no ha hecho falta tocarla. 144 emparejamientos verificados por conteos exactos (ver §3). Fusionado a `main` (squash, commit `9afa0f1`, PR #47, rama `claude/load-champions-league-draw-pstwwu`), deployment de Production confirmado por Carlos sin el problema de webhook del 27/08 |
 | 28/08 | Intento de borrar la rama remota `claude/load-champions-league-draw-pstwwu` tras su fusión: mismo error HTTP 403 ya documentado el 27/08 (restricción del proxy git de la sesión, no protección de rama de GitHub; tampoco hay tool de borrado de rama en el set de GitHub MCP disponible). Rama fusionada e íntegra en `main`, pendiente borrarla a mano desde GitHub — no bloquea nada |
+| 30/08 | Sesión de calendario de jornadas UEFA abierta en una rama nueva (`claude/calendario-jornadas-uefa-o25mv4`), no en `claude/load-champions-league-draw-pstwwu` (la del sorteo del 27/08, ya fusionada a `main`). Carlos confirmó seguir en la rama nueva al preguntársele, ya que reabrir la original no tenía sentido (ya integrada). Ambas ramas parten del mismo commit (`9d6a2df`, punta de `main`), sin pérdida de contexto |
+| 30/08 | Alcance de la tarea de calendario de jornadas reducido a solo Champions League tras detectar que Europa League y Conference League no tienen sorteo real cargado (sus fases de liga siguen bloqueadas, ver "En curso"). Carlos decidió no ampliar hoy a cargar también esos sorteos reales — queda como tarea separada, futura, cuando se resuelva el bloqueo de los 4 caídos de Ronda 3 UCL |
 
 ## 7. Aparcadero
 
@@ -108,6 +118,8 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 
 - Script de PowerShell para repartir de golpe los archivos antiguos de la carpeta local
 - Formalizar como skill el ciclo modificar → gate → desplegar en Code
+- El intercambio manual de visitantes en la fase de liga UCL (edición campo a campo) regenera el reparto de jornadas con el algoritmo genérico (`repartirJornadas`), no con el calendario real (`UCL_JORNADA_REAL`) cargado el 30/08. Tras un intercambio, la fecha mostrada junto a una jornada deja de corresponder con exactitud a los partidos que contiene. No bloquea nada mientras no se edite, pero es una inconsistencia latente
+- Calendario real de jornadas de Europa League (PDF de 63 páginas adjuntado el 30/08) y de Conference League (texto pegado el 30/08, 6 jornadas) sin cargar — bloqueado porque esas dos fases de liga no tienen sorteo real cargado en el simulador (falta que llegue primero la fase de liga UEL, que depende de 4 caídos de Ronda 3 Ruta Liga de Champions). Cuando se desbloquee el sorteo real de esas dos competiciones, retomar con los datos ya aportados por Carlos
 
 ## 8. Preguntas abiertas
 

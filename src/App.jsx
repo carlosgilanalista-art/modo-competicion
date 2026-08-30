@@ -1161,8 +1161,13 @@ function sorteoRealFaseLigaAFC(plazas, cfg) {
 // que usan CL_DIRECTOS_FASE_LIGA y los clasificados del Playoff).
 // Verificado contra las restricciones del Art. 16 (ninguna federación repetida
 // como rival, máximo 2 rivales por federación ajena) antes de cargarlo.
-// El reparto en jornadas no está publicado con ese nivel de detalle, así que
-// se asigna igual que en un sorteo simulado (mismo criterio que sorteoRealFaseLigaAFC).
+// El reparto real en jornadas (con fecha) se publicó después del sorteo y está
+// cargado en UCL_JORNADA_REAL / UCL_FECHAS_JORNADA (calendario oficial, sesión
+// del 30/08/2026). Nota: el intercambio manual de visitantes (aplicarIntercambio)
+// sigue regenerando el reparto de jornadas con el algoritmo genérico
+// (repartirJornadas), no con el calendario real — tras un intercambio, la fecha
+// mostrada junto a cada jornada deja de corresponder con exactitud a los
+// partidos que contiene. Aparcado, ver ESTADO.md §7.
 const UCL_POT_REAL = {
   // Bombo 1
   "Barcelona": 1, "Manchester City": 1, "Arsenal": 1, "Atlético de Madrid": 1, "Inter": 1,
@@ -1221,6 +1226,63 @@ const UCL_PARTIDOS_REAL = [
   ["Viking", "Bayern de Múnich"], ["Viking", "Feyenoord"], ["Viking", "PSV Eindhoven"], ["Viking", "Sabah"],
   ["Villarreal", "Manchester United"], ["Villarreal", "Napoli"], ["Villarreal", "Paris Saint-Germain"], ["Villarreal", "Sabah"],
 ];
+// Calendario real de jornadas de la fase de liga UCL 2026/27, publicado por la
+// UEFA tras el sorteo del 27/08/2026 (pegado directamente en sesión). Verificado
+// contra UCL_PARTIDOS_REAL: las 144 parejas del calendario (local y visitante)
+// coinciden exactamente, sin duplicados, sin inversiones, con 8 apariciones por
+// equipo (una por jornada) — no se ha introducido ningún emparejamiento nuevo,
+// solo se fija en qué jornada cae cada uno ya cargado y su fecha.
+const UCL_JORNADA_REAL = {
+  "AEK Atenas|Galatasaray": 6, "AEK Atenas|LASK Linz": 1, "AEK Atenas|Real Madrid": 4, "AEK Atenas|Roma": 7,
+  "Arsenal|Borussia Dortmund": 5, "Arsenal|Lille": 2, "Arsenal|Real Madrid": 6, "Arsenal|Sabah": 8,
+  "Aston Villa|Borussia Dortmund": 7, "Aston Villa|Fenerbahçe": 2, "Aston Villa|Paris Saint-Germain": 6, "Aston Villa|Viking": 3,
+  "Atlético de Madrid|Bayern de Múnich": 4, "Atlético de Madrid|Fenerbahçe": 8, "Atlético de Madrid|Manchester United": 2, "Atlético de Madrid|Viking": 5,
+  "Barcelona|Aston Villa": 4, "Barcelona|Como": 8, "Barcelona|Feyenoord": 1, "Barcelona|Manchester City": 6,
+  "Bayern de Múnich|Arsenal": 3, "Bayern de Múnich|Bodø/Glimt": 1, "Bayern de Múnich|Real Betis": 8, "Bayern de Múnich|Slavia Praga": 6,
+  "Bodø/Glimt|Atlético de Madrid": 7, "Bodø/Glimt|Borussia Dortmund": 2, "Bodø/Glimt|LASK Linz": 5, "Bodø/Glimt|Lille": 4,
+  "Borussia Dortmund|AEK Atenas": 8, "Borussia Dortmund|Inter": 6, "Borussia Dortmund|Real Betis": 4, "Borussia Dortmund|Villarreal": 1,
+  "Club Brugge|Aston Villa": 1, "Club Brugge|Bodø/Glimt": 8, "Club Brugge|Lens": 3, "Club Brugge|Liverpool": 5,
+  "Como|AEK Atenas": 5, "Como|Manchester United": 3, "Como|Paris Saint-Germain": 7, "Como|RB Leipzig": 1,
+  "Fenerbahçe|Liverpool": 4, "Fenerbahçe|Roma": 1, "Fenerbahçe|Slavia Praga": 3, "Fenerbahçe|Villarreal": 7,
+  "Feyenoord|Como": 2, "Feyenoord|Inter": 4, "Feyenoord|Porto": 5, "Feyenoord|RB Leipzig": 8,
+  "Galatasaray|Aston Villa": 5, "Galatasaray|Barcelona": 2, "Galatasaray|Feyenoord": 7, "Galatasaray|VfB Stuttgart": 4,
+  "Inter|Club Brugge": 2, "Inter|Liverpool": 7, "Inter|Shakhtar Donetsk": 3, "Inter|VfB Stuttgart": 5,
+  "LASK Linz|Fenerbahçe": 6, "LASK Linz|Liverpool": 2, "LASK Linz|Porto": 8, "LASK Linz|Slovan Bratislava": 4,
+  "Lens|Bodø/Glimt": 6, "Lens|Como": 4, "Lens|Manchester City": 7, "Lens|Sporting CP": 2,
+  "Lille|Bayern de Múnich": 5, "Lille|Galatasaray": 3, "Lille|Real Betis": 1, "Lille|Slovan Bratislava": 7,
+  "Liverpool|Atlético de Madrid": 1, "Liverpool|Lens": 8, "Liverpool|Porto": 6, "Liverpool|Villarreal": 3,
+  "Manchester City|AEK Atenas": 3, "Manchester City|Napoli": 5, "Manchester City|Paris Saint-Germain": 2, "Manchester City|Sporting CP": 8,
+  "Manchester United|Bayern de Múnich": 7, "Manchester United|RB Leipzig": 6, "Manchester United|Roma": 4, "Manchester United|Sabah": 1,
+  "Napoli|Arsenal": 1, "Napoli|Bodø/Glimt": 3, "Napoli|Club Brugge": 6, "Napoli|Viking": 8,
+  "PSV Eindhoven|Atlético de Madrid": 6, "PSV Eindhoven|Club Brugge": 4, "PSV Eindhoven|Shakhtar Donetsk": 1, "PSV Eindhoven|VfB Stuttgart": 8,
+  "Paris Saint-Germain|Barcelona": 3, "Paris Saint-Germain|Galatasaray": 8, "Paris Saint-Germain|Roma": 5, "Paris Saint-Germain|Slovan Bratislava": 1,
+  "Porto|Manchester City": 1, "Porto|Napoli": 4, "Porto|PSV Eindhoven": 3, "Porto|Slavia Praga": 7,
+  "RB Leipzig|Lens": 5, "RB Leipzig|Manchester City": 4, "RB Leipzig|PSV Eindhoven": 2, "RB Leipzig|Shakhtar Donetsk": 7,
+  "Real Betis|Arsenal": 7, "Real Betis|Como": 6, "Real Betis|Feyenoord": 3, "Real Betis|Porto": 2,
+  "Real Madrid|Inter": 1, "Real Madrid|LASK Linz": 7, "Real Madrid|PSV Eindhoven": 5, "Real Madrid|RB Leipzig": 3,
+  "Roma|Lille": 8, "Roma|Real Madrid": 2, "Roma|Slovan Bratislava": 3, "Roma|Sporting CP": 6,
+  "Sabah|Barcelona": 5, "Sabah|Borussia Dortmund": 3, "Sabah|Napoli": 7, "Sabah|Slavia Praga": 2,
+  "Shakhtar Donetsk|AEK Atenas": 2, "Shakhtar Donetsk|Fenerbahçe": 5, "Shakhtar Donetsk|Real Madrid": 8, "Shakhtar Donetsk|Sporting CP": 4,
+  "Slavia Praga|Arsenal": 4, "Slavia Praga|Aston Villa": 8, "Slavia Praga|Lens": 1, "Slavia Praga|Villarreal": 5,
+  "Slovan Bratislava|Inter": 8, "Slovan Bratislava|Real Betis": 5, "Slovan Bratislava|Shakhtar Donetsk": 6, "Slovan Bratislava|VfB Stuttgart": 2,
+  "Sporting CP|Barcelona": 7, "Sporting CP|Galatasaray": 1, "Sporting CP|LASK Linz": 3, "Sporting CP|Manchester United": 5,
+  "VfB Stuttgart|Atlético de Madrid": 3, "VfB Stuttgart|Club Brugge": 7, "VfB Stuttgart|Lille": 6, "VfB Stuttgart|Viking": 1,
+  "Viking|Bayern de Múnich": 2, "Viking|Feyenoord": 6, "Viking|PSV Eindhoven": 7, "Viking|Sabah": 4,
+  "Villarreal|Manchester United": 8, "Villarreal|Napoli": 2, "Villarreal|Paris Saint-Germain": 4, "Villarreal|Sabah": 6,
+};
+// Fechas reales de cada jornada (fuente: calendario oficial UEFA pegado en
+// sesión). La jornada 8 se juega en una sola fecha (todos los partidos
+// simultáneos, como marca el reglamento para la última jornada).
+const UCL_FECHAS_JORNADA = [
+  "Martes 8 – jueves 10 de septiembre de 2026",
+  "Martes 13 – miércoles 14 de octubre de 2026",
+  "Martes 20 – miércoles 21 de octubre de 2026",
+  "Martes 3 – miércoles 4 de noviembre de 2026",
+  "Martes 24 – miércoles 25 de noviembre de 2026",
+  "Martes 8 – miércoles 9 de diciembre de 2026",
+  "Martes 19 – miércoles 20 de enero de 2027",
+  "Miércoles 27 de enero de 2027",
+];
 function sorteoRealFaseLigaUCL() {
   const paisDe = (nombre) => CL_DIRECTOS_FASE_LIGA.find((e) => e.nombre === nombre)?.pais ?? UCL_PAIS_PLAYOFF[nombre];
   const equipoDe = new Map(Object.keys(UCL_POT_REAL).map((nombre) => [nombre, { nombre, pais: paisDe(nombre), coef: coefFaseLiga(nombre) }]));
@@ -1239,10 +1301,10 @@ function sorteoRealFaseLigaUCL() {
     local: equipoDe.get(local), visitante: equipoDe.get(visitante),
     bomboLocal: bomboDeNombre.get(local), bomboVisitante: bomboDeNombre.get(visitante),
     clave: `${local}|${visitante}`,
+    jornada: UCL_JORNADA_REAL[`${local}|${visitante}`] - 1,
   }));
   const numJornadas = FL_CFG_UCL.bombos * 2;
-  if (!repartirJornadas(partidos, numJornadas)) return { error: "No se pudo repartir el sorteo real en jornadas — no debería ocurrir con un sorteo completo." };
-  return { bombos, partidos, numJornadas, real: true };
+  return { bombos, partidos, numJornadas, real: true, fechasJornada: UCL_FECHAS_JORNADA };
 }
 const UCL_SORTEO_REAL = sorteoRealFaseLigaUCL();
 
@@ -2783,6 +2845,9 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercamb
             <div key={j} style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 12, letterSpacing: 2 }}>JORNADA {j + 1}</div>
+                {sorteo.fechasJornada?.[j] && (
+                  <span style={{ color: colores.textoSuave, fontSize: 11 }}>{sorteo.fechasJornada[j]}</span>
+                )}
                 <BotonAleatorio onClick={() => liga.simularJornada(j)} label="Simular" colores={colores} />
                 <button onClick={() => setClasifAbierta(clasifAbierta === j ? null : j)}
                   style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 6, padding: "4px 10px", fontSize: 11, cursor: "pointer" }}>
