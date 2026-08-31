@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 30/08/2026 — cierre de sesión (sorteo real y calendario de jornadas de las 3 fases de liga UEFA)
+**Última actualización:** 31/08/2026 — cierre de sesión (sorteo real, calendario de jornadas, día y hora de las 3 fases de liga UEFA, fusionado a `main`)
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -75,6 +75,7 @@ Implementado `sorteoRealFaseLigaEL()` y `sorteoRealFaseLigaUECL()`, mismo patró
 **Sesión:** 31/08/2026 (2ª continuación) — COMPLETADA
 **Tarea:** Añadir el día concreto de cada partido (no solo la jornada y el rango de fechas de cabecera) a las tres fases de liga UEFA.
 **Criterio de hecho:** CUMPLIDO. Reconstruido el día por partido a partir de los textos originales con cabeceras de fecha por día (el mensaje de horarios había agrupado los partidos solo por jornada, sin distinguir el día dentro de cada una) — verificado por script que las 144 (UCL) + 144 (UEL) + 108 (UECL) parejas y su jornada coinciden al 100% con los datos ya cargados, sin discrepancias. Añadidos `UCL_DIA_REAL`, `UEL_DIA_REAL` y `UECL_DIA_REAL` (formato abreviado "Mar 8", sin repetir el mes que ya está en la cabecera de jornada), campo `dia` en cada partido de las tres funciones `sorteoRealFaseLiga*()`, mostrado junto a la hora en cada tarjeta ("Mar 8 · 18:45"). El día solo aporta información nueva en Champions (jornadas a 2-3 días) y en la Jornada 1 de Europa League (miércoles + jueves); el resto de Europa League y toda Conference League se juegan en un único día por jornada, así que coincide con la cabecera. Probado en navegador (build limpio + Playwright).
+Fusionado a `main` (squash, commit `dba47b2`, PR #49, rama `claude/calendario-jornadas-uefa-o25mv4`), tras confirmación explícita de Carlos.
 **Herramienta:** Claude Code
 
 **Sesión siguiente:** (por definir)
