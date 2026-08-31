@@ -1283,6 +1283,58 @@ const UCL_FECHAS_JORNADA = [
   "Martes 19 – miércoles 20 de enero de 2027",
   "Miércoles 27 de enero de 2027",
 ];
+// Horarios reales por partido (calendario oficial UEFA, sesión 31/08/2026).
+// Por defecto 21:00 CET salvo que se indique otra hora explícita.
+const UCL_HORA_REAL = {
+  "AEK Atenas|Galatasaray": "21:00", "AEK Atenas|LASK Linz": "18:45", "AEK Atenas|Real Madrid": "18:45",
+  "AEK Atenas|Roma": "21:00", "Arsenal|Borussia Dortmund": "21:00", "Arsenal|Lille": "21:00",
+  "Arsenal|Real Madrid": "21:00", "Arsenal|Sabah": "21:00", "Aston Villa|Borussia Dortmund": "21:00",
+  "Aston Villa|Fenerbahçe": "21:00", "Aston Villa|Paris Saint-Germain": "21:00", "Aston Villa|Viking": "21:00",
+  "Atlético de Madrid|Bayern de Múnich": "21:00", "Atlético de Madrid|Fenerbahçe": "21:00", "Atlético de Madrid|Manchester United": "21:00",
+  "Atlético de Madrid|Viking": "21:00", "Barcelona|Aston Villa": "21:00", "Barcelona|Como": "21:00",
+  "Barcelona|Feyenoord": "18:45", "Barcelona|Manchester City": "21:00", "Bayern de Múnich|Arsenal": "21:00",
+  "Bayern de Múnich|Bodø/Glimt": "21:00", "Bayern de Múnich|Real Betis": "21:00", "Bayern de Múnich|Slavia Praga": "21:00",
+  "Bodø/Glimt|Atlético de Madrid": "18:45", "Bodø/Glimt|Borussia Dortmund": "21:00", "Bodø/Glimt|LASK Linz": "18:45",
+  "Bodø/Glimt|Lille": "21:00", "Borussia Dortmund|AEK Atenas": "21:00", "Borussia Dortmund|Inter": "21:00",
+  "Borussia Dortmund|Real Betis": "21:00", "Borussia Dortmund|Villarreal": "21:00", "Club Brugge|Aston Villa": "18:45",
+  "Club Brugge|Bodø/Glimt": "21:00", "Club Brugge|Lens": "21:00", "Club Brugge|Liverpool": "21:00",
+  "Como|AEK Atenas": "21:00", "Como|Manchester United": "18:45", "Como|Paris Saint-Germain": "21:00",
+  "Como|RB Leipzig": "21:00", "Fenerbahçe|Liverpool": "18:45", "Fenerbahçe|Roma": "18:45",
+  "Fenerbahçe|Slavia Praga": "18:45", "Fenerbahçe|Villarreal": "18:45", "Feyenoord|Como": "18:45",
+  "Feyenoord|Inter": "21:00", "Feyenoord|Porto": "21:00", "Feyenoord|RB Leipzig": "21:00",
+  "Galatasaray|Aston Villa": "18:45", "Galatasaray|Barcelona": "21:00", "Galatasaray|Feyenoord": "18:45",
+  "Galatasaray|VfB Stuttgart": "18:45", "Inter|Club Brugge": "21:00", "Inter|Liverpool": "21:00",
+  "Inter|Shakhtar Donetsk": "21:00", "Inter|VfB Stuttgart": "21:00", "LASK Linz|Fenerbahçe": "21:00",
+  "LASK Linz|Liverpool": "18:45", "LASK Linz|Porto": "21:00", "LASK Linz|Slovan Bratislava": "21:00",
+  "Lens|Bodø/Glimt": "21:00", "Lens|Como": "21:00", "Lens|Manchester City": "21:00",
+  "Lens|Sporting CP": "18:45", "Lille|Bayern de Múnich": "21:00", "Lille|Galatasaray": "18:45",
+  "Lille|Real Betis": "21:00", "Lille|Slovan Bratislava": "21:00", "Liverpool|Atlético de Madrid": "21:00",
+  "Liverpool|Lens": "21:00", "Liverpool|Porto": "21:00", "Liverpool|Villarreal": "21:00",
+  "Manchester City|AEK Atenas": "21:00", "Manchester City|Napoli": "21:00", "Manchester City|Paris Saint-Germain": "21:00",
+  "Manchester City|Sporting CP": "21:00", "Manchester United|Bayern de Múnich": "21:00", "Manchester United|RB Leipzig": "21:00",
+  "Manchester United|Roma": "21:00", "Manchester United|Sabah": "21:00", "Napoli|Arsenal": "21:00",
+  "Napoli|Bodø/Glimt": "21:00", "Napoli|Club Brugge": "21:00", "Napoli|Viking": "21:00",
+  "PSV Eindhoven|Atlético de Madrid": "21:00", "PSV Eindhoven|Club Brugge": "21:00", "PSV Eindhoven|Shakhtar Donetsk": "18:45",
+  "PSV Eindhoven|VfB Stuttgart": "21:00", "Paris Saint-Germain|Barcelona": "21:00", "Paris Saint-Germain|Galatasaray": "21:00",
+  "Paris Saint-Germain|Roma": "21:00", "Paris Saint-Germain|Slovan Bratislava": "21:00", "Porto|Manchester City": "21:00",
+  "Porto|Napoli": "21:00", "Porto|PSV Eindhoven": "21:00", "Porto|Slavia Praga": "21:00",
+  "RB Leipzig|Lens": "21:00", "RB Leipzig|Manchester City": "21:00", "RB Leipzig|PSV Eindhoven": "21:00",
+  "RB Leipzig|Shakhtar Donetsk": "21:00", "Real Betis|Arsenal": "21:00", "Real Betis|Como": "18:45",
+  "Real Betis|Feyenoord": "21:00", "Real Betis|Porto": "21:00", "Real Madrid|Inter": "21:00",
+  "Real Madrid|LASK Linz": "21:00", "Real Madrid|PSV Eindhoven": "21:00", "Real Madrid|RB Leipzig": "21:00",
+  "Roma|Lille": "21:00", "Roma|Real Madrid": "21:00", "Roma|Slovan Bratislava": "21:00",
+  "Roma|Sporting CP": "21:00", "Sabah|Barcelona": "18:45", "Sabah|Borussia Dortmund": "18:45",
+  "Sabah|Napoli": "18:45", "Sabah|Slavia Praga": "18:45", "Shakhtar Donetsk|AEK Atenas": "21:00",
+  "Shakhtar Donetsk|Fenerbahçe": "21:00", "Shakhtar Donetsk|Real Madrid": "21:00", "Shakhtar Donetsk|Sporting CP": "18:45",
+  "Slavia Praga|Arsenal": "21:00", "Slavia Praga|Aston Villa": "21:00", "Slavia Praga|Lens": "21:00",
+  "Slavia Praga|Villarreal": "18:45", "Slovan Bratislava|Inter": "21:00", "Slovan Bratislava|Real Betis": "21:00",
+  "Slovan Bratislava|Shakhtar Donetsk": "18:45", "Slovan Bratislava|VfB Stuttgart": "21:00", "Sporting CP|Barcelona": "21:00",
+  "Sporting CP|Galatasaray": "21:00", "Sporting CP|LASK Linz": "21:00", "Sporting CP|Manchester United": "21:00",
+  "VfB Stuttgart|Atlético de Madrid": "21:00", "VfB Stuttgart|Club Brugge": "21:00", "VfB Stuttgart|Lille": "21:00",
+  "VfB Stuttgart|Viking": "18:45", "Viking|Bayern de Múnich": "21:00", "Viking|Feyenoord": "18:45",
+  "Viking|PSV Eindhoven": "21:00", "Viking|Sabah": "21:00", "Villarreal|Manchester United": "21:00",
+  "Villarreal|Napoli": "21:00", "Villarreal|Paris Saint-Germain": "21:00", "Villarreal|Sabah": "18:45",
+};
 function sorteoRealFaseLigaUCL() {
   const paisDe = (nombre) => CL_DIRECTOS_FASE_LIGA.find((e) => e.nombre === nombre)?.pais ?? UCL_PAIS_PLAYOFF[nombre];
   const equipoDe = new Map(Object.keys(UCL_POT_REAL).map((nombre) => [nombre, { nombre, pais: paisDe(nombre), coef: coefFaseLiga(nombre) }]));
@@ -1302,6 +1354,7 @@ function sorteoRealFaseLigaUCL() {
     bomboLocal: bomboDeNombre.get(local), bomboVisitante: bomboDeNombre.get(visitante),
     clave: `${local}|${visitante}`,
     jornada: UCL_JORNADA_REAL[`${local}|${visitante}`] - 1,
+    hora: UCL_HORA_REAL[`${local}|${visitante}`],
   }));
   const numJornadas = FL_CFG_UCL.bombos * 2;
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UCL_FECHAS_JORNADA };
@@ -1422,6 +1475,58 @@ const UEL_FECHAS_JORNADA = [
   "Jueves 21 de enero de 2027",
   "Jueves 28 de enero de 2027",
 ];
+// Horarios reales por partido (calendario oficial UEFA, sesión 31/08/2026).
+// Por defecto 21:00 CET salvo que se indique otra hora explícita.
+const UEL_HORA_REAL = {
+  "AZ Alkmaar|GNK Dinamo": "21:00", "AZ Alkmaar|Hapoel Beer-Sheva": "18:45", "AZ Alkmaar|Juventus": "21:00",
+  "AZ Alkmaar|Sturm Graz": "18:45", "Anderlecht|Lyon": "21:00", "Anderlecht|Salzburgo": "18:45",
+  "Anderlecht|Sunderland": "21:00", "Anderlecht|TSG Hoffenheim": "18:45", "Ararat-Armenia|AZ Alkmaar": "18:45",
+  "Ararat-Armenia|Celje": "18:45", "Ararat-Armenia|NEC Nijmegen": "18:45", "Ararat-Armenia|Sparta Praga": "18:45",
+  "Bayer Leverkusen|Beşiktaş": "21:00", "Bayer Leverkusen|Celje": "21:00", "Bayer Leverkusen|Marsella": "21:00",
+  "Bayer Leverkusen|Salzburgo": "21:00", "Benfica|AZ Alkmaar": "21:00", "Benfica|Celtic": "21:00",
+  "Benfica|Lech Poznań": "21:00", "Benfica|OFI Creta": "21:00", "Beşiktaş|Crystal Palace": "21:00",
+  "Beşiktaş|Hapoel Beer-Sheva": "18:45", "Beşiktaş|Marsella": "21:00", "Beşiktaş|Union Saint-Gilloise": "18:45",
+  "Bournemouth|Hapoel Beer-Sheva": "21:00", "Bournemouth|Milan": "21:00", "Bournemouth|Sturm Graz": "21:00",
+  "Bournemouth|Viktoria Plzeň": "21:00", "Celje|NEC Nijmegen": "21:00", "Celje|Olympiakos": "21:00",
+  "Celje|Omonoia": "18:45", "Celje|Salzburgo": "21:00", "Celta de Vigo|Bournemouth": "18:45",
+  "Celta de Vigo|Juventus": "21:00", "Celta de Vigo|Lillestrøm": "21:00", "Celta de Vigo|Union Saint-Gilloise": "21:00",
+  "Celtic|Beşiktaş": "21:00", "Celtic|Celta de Vigo": "21:00", "Celtic|Ferencváros": "21:00",
+  "Celtic|Marsella": "21:00", "Crystal Palace|Lech Poznań": "21:00", "Crystal Palace|Real Sociedad": "21:00",
+  "Crystal Palace|Sparta Praga": "21:00", "Crystal Palace|TSG Hoffenheim": "18:45", "Ferencváros|Celje": "21:00",
+  "Ferencváros|Juventus": "18:45", "Ferencváros|Torreense": "18:45", "Ferencváros|Viktoria Plzeň": "21:00",
+  "GNK Dinamo|Anderlecht": "21:00", "GNK Dinamo|Bayer Leverkusen": "18:45", "GNK Dinamo|NEC Nijmegen": "18:45",
+  "GNK Dinamo|Sturm Graz": "21:00", "Hapoel Beer-Sheva|Celta de Vigo": "21:00", "Hapoel Beer-Sheva|GNK Dinamo": "21:00",
+  "Hapoel Beer-Sheva|Juventus": "18:45", "Hapoel Beer-Sheva|OFI Creta": "21:00", "Jagiellonia Białystok|Anderlecht": "21:00",
+  "Jagiellonia Białystok|Ararat-Armenia": "21:00", "Jagiellonia Białystok|Crystal Palace": "18:45", "Jagiellonia Białystok|Lyon": "18:45",
+  "Juventus|NEC Nijmegen": "21:00", "Juventus|Omonoia": "21:00", "Juventus|Real Sociedad": "21:00",
+  "Juventus|Rennes": "18:45", "Lech Poznań|Bayer Leverkusen": "18:45", "Lech Poznań|Ferencváros": "21:00",
+  "Lech Poznań|Sunderland": "18:45", "Lech Poznań|Torreense": "21:00", "Levski Sofia|Jagiellonia Białystok": "18:45",
+  "Levski Sofia|Lillestrøm": "21:00", "Levski Sofia|Milan": "21:00", "Levski Sofia|Salzburgo": "18:45",
+  "Lillestrøm|Bournemouth": "18:45", "Lillestrøm|Real Sociedad": "21:00", "Lillestrøm|Torreense": "21:00",
+  "Lillestrøm|Viktoria Plzeň": "18:45", "Lyon|Bayer Leverkusen": "21:00", "Lyon|Crystal Palace": "18:45",
+  "Lyon|Lillestrøm": "21:00", "Lyon|Union Saint-Gilloise": "21:00", "Marsella|Anderlecht": "21:00",
+  "Marsella|Celta de Vigo": "18:45", "Marsella|Levski Sofia": "18:45", "Marsella|Olympiakos": "21:00",
+  "Milan|Ararat-Armenia": "21:00", "Milan|Benfica": "21:00", "Milan|Ferencváros": "18:45",
+  "Milan|Sunderland": "21:00", "NEC Nijmegen|Benfica": "18:45", "NEC Nijmegen|Levski Sofia": "21:00",
+  "NEC Nijmegen|Omonoia": "18:45", "NEC Nijmegen|Rennes": "21:00", "OFI Creta|Anderlecht": "21:00",
+  "OFI Creta|Bayer Leverkusen": "18:45", "OFI Creta|Lech Poznań": "21:00", "OFI Creta|TSG Hoffenheim": "18:45",
+  "Olympiakos|Jagiellonia Białystok": "21:00", "Olympiakos|Milan": "18:45", "Olympiakos|Sparta Praga": "21:00",
+  "Olympiakos|TSG Hoffenheim": "18:45", "Omonoia|Benfica": "21:00", "Omonoia|Beşiktaş": "21:00",
+  "Omonoia|Celta de Vigo": "18:45", "Omonoia|Celtic": "18:45", "Real Sociedad|Bournemouth": "21:00",
+  "Real Sociedad|Lyon": "18:45", "Real Sociedad|Torreense": "21:00", "Real Sociedad|Viktoria Plzeň": "18:45",
+  "Rennes|GNK Dinamo": "18:45", "Rennes|OFI Creta": "21:00", "Rennes|Olympiakos": "18:45",
+  "Rennes|Omonoia": "21:00", "Salzburgo|Ararat-Armenia": "18:45", "Salzburgo|Crystal Palace": "21:00",
+  "Salzburgo|Milan": "18:45", "Salzburgo|Sparta Praga": "21:00", "Sparta Praga|AZ Alkmaar": "21:00",
+  "Sparta Praga|Bournemouth": "18:45", "Sparta Praga|Lillestrøm": "18:45", "Sparta Praga|Rennes": "21:00",
+  "Sturm Graz|Celje": "21:00", "Sturm Graz|Marsella": "18:45", "Sturm Graz|OFI Creta": "18:45",
+  "Sturm Graz|Rennes": "21:00", "Sunderland|AZ Alkmaar": "21:00", "Sunderland|GNK Dinamo": "21:00",
+  "Sunderland|Jagiellonia Białystok": "21:00", "Sunderland|Levski Sofia": "21:00", "TSG Hoffenheim|Beşiktaş": "21:00",
+  "TSG Hoffenheim|Ferencváros": "21:00", "TSG Hoffenheim|Lyon": "21:00", "TSG Hoffenheim|Sturm Graz": "21:00",
+  "Torreense|Ararat-Armenia": "21:00", "Torreense|Celtic": "21:00", "Torreense|Olympiakos": "21:00",
+  "Torreense|Sunderland": "18:45", "Union Saint-Gilloise|Celtic": "21:00", "Union Saint-Gilloise|Hapoel Beer-Sheva": "18:45",
+  "Union Saint-Gilloise|Lech Poznań": "18:45", "Union Saint-Gilloise|Real Sociedad": "18:45", "Viktoria Plzeň|Benfica": "18:45",
+  "Viktoria Plzeň|Jagiellonia Białystok": "21:00", "Viktoria Plzeň|Levski Sofia": "21:00", "Viktoria Plzeň|Union Saint-Gilloise": "21:00",
+};
 function sorteoRealFaseLigaEL() {
   const equipoDe = new Map(Object.keys(UEL_POT_REAL).map((nombre) => [nombre, { nombre, pais: UEL_PAIS_REAL[nombre], coef: coefFaseLiga(nombre) }]));
   const bombos = [1, 2, 3, 4].map((p) => Object.keys(UEL_POT_REAL).filter((n) => UEL_POT_REAL[n] === p)
@@ -1433,6 +1538,7 @@ function sorteoRealFaseLigaEL() {
     bomboLocal: bomboDeNombre.get(local), bomboVisitante: bomboDeNombre.get(visitante),
     clave: `${local}|${visitante}`,
     jornada: UEL_JORNADA_REAL[`${local}|${visitante}`] - 1,
+    hora: UEL_HORA_REAL[`${local}|${visitante}`],
   }));
   const numJornadas = FL_CFG_UEL.bombos * 2;
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UEL_FECHAS_JORNADA };
@@ -1530,6 +1636,46 @@ const UECL_FECHAS_JORNADA = [
   "Jueves 10 de diciembre de 2026",
   "Jueves 17 de diciembre de 2026",
 ];
+// Horarios reales por partido (calendario oficial UEFA, sesión 31/08/2026).
+// Por defecto 21:00 CET salvo que se indique otra hora explícita.
+const UECL_HORA_REAL = {
+  "Aarhus|Braga": "18:45", "Aarhus|Egnatia": "21:00", "Aarhus|Twente": "21:00",
+  "Ajax|Atalanta": "21:00", "Ajax|Getafe": "21:00", "Ajax|Thun": "18:45",
+  "Atalanta|Kairat Almaty": "18:45", "Atalanta|Mjällby": "21:00", "Atalanta|Pafos": "21:00",
+  "Borac|Atalanta": "21:00", "Borac|KuPS Kuopio": "21:00", "Borac|Riga": "21:00",
+  "Braga|Egnatia": "21:00", "Braga|Gent": "21:00", "Braga|KuPS Kuopio": "21:00",
+  "Brann|Aarhus": "18:45", "Brann|Braga": "18:45", "Brann|Lincoln Red Imps": "21:00",
+  "Brighton & Hove Albion|Kauno Žalgiris": "21:00", "Brighton & Hove Albion|Mónaco": "21:00", "Brighton & Hove Albion|Universitatea Craiova": "18:45",
+  "CSKA Sofia|Mónaco": "18:45", "CSKA Sofia|Thun": "21:00", "CSKA Sofia|Trabzonspor": "21:00",
+  "Copenhagen|Braga": "21:00", "Copenhagen|Iberia Tbilisi": "21:00", "Copenhagen|Lugano": "18:45",
+  "Crvena Zvezda|Copenhagen": "18:45", "Crvena Zvezda|Inter Escaldes": "18:45", "Crvena Zvezda|Trabzonspor": "21:00",
+  "Egnatia|Kauno Žalgiris": "21:00", "Egnatia|Lincoln Red Imps": "18:45", "Egnatia|Midtjylland": "18:45",
+  "Friburgo|Jablonec": "21:00", "Friburgo|Panathinaikos": "18:45", "Friburgo|Twente": "21:00",
+  "Gent|Aarhus": "18:45", "Gent|Brann": "21:00", "Gent|Crvena Zvezda": "21:00",
+  "Getafe|Brighton & Hove Albion": "21:00", "Getafe|Inter Escaldes": "18:45", "Getafe|Lugano": "18:45",
+  "Hajduk Split|Ajax": "18:45", "Hajduk Split|Nordsjælland": "21:00", "Hajduk Split|Sint-Truidense": "21:00",
+  "Hearts|Borac": "21:00", "Hearts|Mónaco": "18:45", "Hearts|Nordsjælland": "21:00",
+  "Iberia Tbilisi|Crvena Zvezda": "18:45", "Iberia Tbilisi|Getafe": "18:45", "Iberia Tbilisi|Mjällby": "18:45",
+  "Inter Escaldes|Aarhus": "21:00", "Inter Escaldes|Copenhagen": "21:00", "Inter Escaldes|Universitatea Craiova": "18:45",
+  "Jablonec|Brighton & Hove Albion": "18:45", "Jablonec|Iberia Tbilisi": "21:00", "Jablonec|Lugano": "18:45",
+  "Kairat Almaty|Mjällby": "16:30", "Kairat Almaty|Panathinaikos": "16:30", "Kairat Almaty|Universitatea Craiova": "16:30",
+  "Kauno Žalgiris|Brann": "18:45", "Kauno Žalgiris|Friburgo": "21:00", "Kauno Žalgiris|Riga": "18:45",
+  "KuPS Kuopio|CSKA Sofia": "18:45", "KuPS Kuopio|Gent": "18:45", "KuPS Kuopio|Trabzonspor": "18:45",
+  "Lincoln Red Imps|Hajduk Split": "18:45", "Lincoln Red Imps|Midtjylland": "18:45", "Lincoln Red Imps|Twente": "21:00",
+  "Lugano|Crvena Zvezda": "18:45", "Lugano|Kauno Žalgiris": "21:00", "Lugano|Sint-Truidense": "21:00",
+  "Midtjylland|Ajax": "18:45", "Midtjylland|Hajduk Split": "21:00", "Midtjylland|Sint-Truidense": "21:00",
+  "Mjällby|Borac": "18:45", "Mjällby|Inter Escaldes": "18:45", "Mjällby|Pafos": "21:00",
+  "Mónaco|Friburgo": "21:00", "Mónaco|Lincoln Red Imps": "21:00", "Mónaco|Nordsjælland": "21:00",
+  "Nordsjælland|CSKA Sofia": "18:45", "Nordsjælland|KuPS Kuopio": "21:00", "Nordsjælland|Panathinaikos": "21:00",
+  "Pafos|Hearts": "21:00", "Pafos|Midtjylland": "18:45", "Pafos|Riga": "18:45",
+  "Panathinaikos|Borac": "18:45", "Panathinaikos|Brighton & Hove Albion": "21:00", "Panathinaikos|CSKA Sofia": "21:00",
+  "Riga|Atalanta": "18:45", "Riga|Jablonec": "21:00", "Riga|Kairat Almaty": "18:45",
+  "Sint-Truidense|Ajax": "21:00", "Sint-Truidense|Brann": "21:00", "Sint-Truidense|Iberia Tbilisi": "21:00",
+  "Thun|Gent": "21:00", "Thun|Hajduk Split": "21:00", "Thun|Hearts": "18:45",
+  "Trabzonspor|Friburgo": "18:45", "Trabzonspor|Hearts": "18:45", "Trabzonspor|Jablonec": "18:45",
+  "Twente|Kairat Almaty": "21:00", "Twente|Pafos": "21:00", "Twente|Thun": "21:00",
+  "Universitatea Craiova|Copenhagen": "21:00", "Universitatea Craiova|Egnatia": "21:00", "Universitatea Craiova|Getafe": "18:45",
+};
 function sorteoRealFaseLigaUECL() {
   const equipoDe = new Map(Object.keys(UECL_POT_REAL).map((nombre) => [nombre, { nombre, pais: UECL_PAIS_REAL[nombre], coef: coefFaseLiga(nombre) }]));
   const bombos = [1, 2, 3, 4, 5, 6].map((p) => Object.keys(UECL_POT_REAL).filter((n) => UECL_POT_REAL[n] === p)
@@ -1541,6 +1687,7 @@ function sorteoRealFaseLigaUECL() {
     bomboLocal: bomboDeNombre.get(local), bomboVisitante: bomboDeNombre.get(visitante),
     clave: `${local}|${visitante}`,
     jornada: UECL_JORNADA_REAL[`${local}|${visitante}`] - 1,
+    hora: UECL_HORA_REAL[`${local}|${visitante}`],
   }));
   const numJornadas = FL_CFG_UECL.bombos;
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UECL_FECHAS_JORNADA };
@@ -3113,6 +3260,7 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercamb
                           <button onClick={() => liga.reiniciarPartido(m.clave)} title="Reiniciar resultado"
                             style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
                         )}
+                        {m.hora && <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>{m.hora}</span>}
                       </div>
                       {editando && (
                         <select value="" onChange={(e) => { if (e.target.value) liga.intercambiar(m.clave, e.target.value); }}
