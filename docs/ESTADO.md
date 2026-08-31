@@ -134,6 +134,7 @@ Fusionado a `main` (squash, commit `dba47b2`, PR #49, rama `claude/calendario-jo
 | 31/08 | Sorteo real, calendario de jornadas, día y hora de las tres fases de liga UEFA (Champions, Europa League, Conference League) fusionados a `main` (squash, commit `dba47b2`, PR #49, rama `claude/calendario-jornadas-uefa-o25mv4`), confirmado por Carlos ("es correcta la subida"). Cierre de documentación empujado directo a `main` (commit `9e8a7f2`), sin PR, por ser un cambio de un solo archivo de texto — mismo patrón que el 27/08 (PR #44) |
 | 31/08 | Deployment de Production en Vercel para el commit de fusión (`dba47b2`) no verificado todavía — pendiente que Carlos lo confirme en el dashboard o en producción. Si no dispara (precedente del 27/08), el fix conocido es un push adicional a `main` |
 | 31/08 | Plan de difusión por X para el calendario de jornadas entregado a Carlos: 2 momentos (anuncio esta semana + recordatorio víspera de la Jornada 1, 6-7/09), formato corto con captura del simulador en vez de hilo largo, porque el contenido es utilidad de calendario, no un notición. Publicación manual pendiente por Carlos |
+| 31/08 | Intento de borrar la rama remota `claude/calendario-jornadas-uefa-o25mv4` tras su fusión: mismo error HTTP 403 ya documentado el 27/08 y el 28/08 (restricción del proxy git de la sesión). Rama fusionada e íntegra en `main`, pendiente borrarla a mano desde GitHub — no bloquea nada |
 
 ## 7. Aparcadero
 
