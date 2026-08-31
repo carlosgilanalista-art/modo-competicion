@@ -1335,6 +1335,59 @@ const UCL_HORA_REAL = {
   "Viking|PSV Eindhoven": "21:00", "Viking|Sabah": "21:00", "Villarreal|Manchester United": "21:00",
   "Villarreal|Napoli": "21:00", "Villarreal|Paris Saint-Germain": "21:00", "Villarreal|Sabah": "18:45",
 };
+// Día concreto de cada partido (abreviado: no repite el mes, ya está en
+// UCL_FECHAS_JORNADA). Solo aporta información nueva en las jornadas que se
+// juegan en más de un día (la mayoría, martes+miércoles, alguna con jueves).
+const UCL_DIA_REAL = {
+  "AEK Atenas|Galatasaray": "Mar 8", "AEK Atenas|LASK Linz": "Mar 8", "AEK Atenas|Real Madrid": "Mié 4",
+  "AEK Atenas|Roma": "Mar 19", "Arsenal|Borussia Dortmund": "Mar 24", "Arsenal|Lille": "Mar 13",
+  "Arsenal|Real Madrid": "Mié 9", "Arsenal|Sabah": "Mié 27", "Aston Villa|Borussia Dortmund": "Mar 19",
+  "Aston Villa|Fenerbahçe": "Mié 14", "Aston Villa|Paris Saint-Germain": "Mar 8", "Aston Villa|Viking": "Mié 21",
+  "Atlético de Madrid|Bayern de Múnich": "Mar 3", "Atlético de Madrid|Fenerbahçe": "Mié 27", "Atlético de Madrid|Manchester United": "Mar 13",
+  "Atlético de Madrid|Viking": "Mié 25", "Barcelona|Aston Villa": "Mar 3", "Barcelona|Como": "Mié 27",
+  "Barcelona|Feyenoord": "Mié 9", "Barcelona|Manchester City": "Mar 8", "Bayern de Múnich|Arsenal": "Mié 21",
+  "Bayern de Múnich|Bodø/Glimt": "Jue 10", "Bayern de Múnich|Real Betis": "Mié 27", "Bayern de Múnich|Slavia Praga": "Mar 8",
+  "Bodø/Glimt|Atlético de Madrid": "Mar 19", "Bodø/Glimt|Borussia Dortmund": "Mié 14", "Bodø/Glimt|LASK Linz": "Mar 24",
+  "Bodø/Glimt|Lille": "Mar 3", "Borussia Dortmund|AEK Atenas": "Mié 27", "Borussia Dortmund|Inter": "Mié 9",
+  "Borussia Dortmund|Real Betis": "Mié 4", "Borussia Dortmund|Villarreal": "Mar 8", "Club Brugge|Aston Villa": "Mar 8",
+  "Club Brugge|Bodø/Glimt": "Mié 27", "Club Brugge|Lens": "Mié 21", "Club Brugge|Liverpool": "Mié 25",
+  "Como|AEK Atenas": "Mar 24", "Como|Manchester United": "Mié 21", "Como|Paris Saint-Germain": "Mié 20",
+  "Como|RB Leipzig": "Jue 10", "Fenerbahçe|Liverpool": "Mié 4", "Fenerbahçe|Roma": "Jue 10",
+  "Fenerbahçe|Slavia Praga": "Mar 20", "Fenerbahçe|Villarreal": "Mié 20", "Feyenoord|Como": "Mié 14",
+  "Feyenoord|Inter": "Mar 3", "Feyenoord|Porto": "Mar 24", "Feyenoord|RB Leipzig": "Mié 27",
+  "Galatasaray|Aston Villa": "Mar 24", "Galatasaray|Barcelona": "Mar 13", "Galatasaray|Feyenoord": "Mar 19",
+  "Galatasaray|VfB Stuttgart": "Mar 3", "Inter|Club Brugge": "Mar 13", "Inter|Liverpool": "Mar 19",
+  "Inter|Shakhtar Donetsk": "Mié 21", "Inter|VfB Stuttgart": "Mié 25", "LASK Linz|Fenerbahçe": "Mié 9",
+  "LASK Linz|Liverpool": "Mié 14", "LASK Linz|Porto": "Mié 27", "LASK Linz|Slovan Bratislava": "Mar 3",
+  "Lens|Bodø/Glimt": "Mié 9", "Lens|Como": "Mié 4", "Lens|Manchester City": "Mié 20",
+  "Lens|Sporting CP": "Mar 13", "Lille|Bayern de Múnich": "Mié 25", "Lille|Galatasaray": "Mié 21",
+  "Lille|Real Betis": "Mar 8", "Lille|Slovan Bratislava": "Mar 19", "Liverpool|Atlético de Madrid": "Mié 9",
+  "Liverpool|Lens": "Mié 27", "Liverpool|Porto": "Mié 9", "Liverpool|Villarreal": "Mar 20",
+  "Manchester City|AEK Atenas": "Mar 20", "Manchester City|Napoli": "Mar 24", "Manchester City|Paris Saint-Germain": "Mié 14",
+  "Manchester City|Sporting CP": "Mié 27", "Manchester United|Bayern de Múnich": "Mié 20", "Manchester United|RB Leipzig": "Mar 8",
+  "Manchester United|Roma": "Mar 3", "Manchester United|Sabah": "Jue 10", "Napoli|Arsenal": "Mié 9",
+  "Napoli|Bodø/Glimt": "Mar 20", "Napoli|Club Brugge": "Mar 8", "Napoli|Viking": "Mié 27",
+  "PSV Eindhoven|Atlético de Madrid": "Mié 9", "PSV Eindhoven|Club Brugge": "Mié 4", "PSV Eindhoven|Shakhtar Donetsk": "Jue 10",
+  "PSV Eindhoven|VfB Stuttgart": "Mié 27", "Paris Saint-Germain|Barcelona": "Mar 20", "Paris Saint-Germain|Galatasaray": "Mié 27",
+  "Paris Saint-Germain|Roma": "Mié 25", "Paris Saint-Germain|Slovan Bratislava": "Mié 9", "Porto|Manchester City": "Mar 8",
+  "Porto|Napoli": "Mié 4", "Porto|PSV Eindhoven": "Mar 20", "Porto|Slavia Praga": "Mar 19",
+  "RB Leipzig|Lens": "Mar 24", "RB Leipzig|Manchester City": "Mié 4", "RB Leipzig|PSV Eindhoven": "Mar 13",
+  "RB Leipzig|Shakhtar Donetsk": "Mié 20", "Real Betis|Arsenal": "Mié 20", "Real Betis|Como": "Mié 9",
+  "Real Betis|Feyenoord": "Mié 21", "Real Betis|Porto": "Mié 14", "Real Madrid|Inter": "Mar 8",
+  "Real Madrid|LASK Linz": "Mar 19", "Real Madrid|PSV Eindhoven": "Mar 24", "Real Madrid|RB Leipzig": "Mié 21",
+  "Roma|Lille": "Mié 27", "Roma|Real Madrid": "Mié 14", "Roma|Slovan Bratislava": "Mar 20",
+  "Roma|Sporting CP": "Mar 8", "Sabah|Barcelona": "Mié 25", "Sabah|Borussia Dortmund": "Mar 20",
+  "Sabah|Napoli": "Mié 20", "Sabah|Slavia Praga": "Mar 13", "Shakhtar Donetsk|AEK Atenas": "Mié 14",
+  "Shakhtar Donetsk|Fenerbahçe": "Mié 25", "Shakhtar Donetsk|Real Madrid": "Mié 27", "Shakhtar Donetsk|Sporting CP": "Mar 3",
+  "Slavia Praga|Arsenal": "Mié 4", "Slavia Praga|Aston Villa": "Mié 27", "Slavia Praga|Lens": "Jue 10",
+  "Slavia Praga|Villarreal": "Mié 25", "Slovan Bratislava|Inter": "Mié 27", "Slovan Bratislava|Real Betis": "Mar 24",
+  "Slovan Bratislava|Shakhtar Donetsk": "Mié 9", "Slovan Bratislava|VfB Stuttgart": "Mié 14", "Sporting CP|Barcelona": "Mié 20",
+  "Sporting CP|Galatasaray": "Mié 9", "Sporting CP|LASK Linz": "Mié 21", "Sporting CP|Manchester United": "Mié 25",
+  "VfB Stuttgart|Atlético de Madrid": "Mar 20", "VfB Stuttgart|Club Brugge": "Mar 19", "VfB Stuttgart|Lille": "Mié 9",
+  "VfB Stuttgart|Viking": "Mié 9", "Viking|Bayern de Múnich": "Mar 13", "Viking|Feyenoord": "Mar 8",
+  "Viking|PSV Eindhoven": "Mié 20", "Viking|Sabah": "Mié 4", "Villarreal|Manchester United": "Mié 27",
+  "Villarreal|Napoli": "Mar 13", "Villarreal|Paris Saint-Germain": "Mar 3", "Villarreal|Sabah": "Mar 8",
+};
 function sorteoRealFaseLigaUCL() {
   const paisDe = (nombre) => CL_DIRECTOS_FASE_LIGA.find((e) => e.nombre === nombre)?.pais ?? UCL_PAIS_PLAYOFF[nombre];
   const equipoDe = new Map(Object.keys(UCL_POT_REAL).map((nombre) => [nombre, { nombre, pais: paisDe(nombre), coef: coefFaseLiga(nombre) }]));
@@ -1355,6 +1408,7 @@ function sorteoRealFaseLigaUCL() {
     clave: `${local}|${visitante}`,
     jornada: UCL_JORNADA_REAL[`${local}|${visitante}`] - 1,
     hora: UCL_HORA_REAL[`${local}|${visitante}`],
+    dia: UCL_DIA_REAL[`${local}|${visitante}`],
   }));
   const numJornadas = FL_CFG_UCL.bombos * 2;
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UCL_FECHAS_JORNADA };
@@ -1527,6 +1581,59 @@ const UEL_HORA_REAL = {
   "Union Saint-Gilloise|Lech Poznań": "18:45", "Union Saint-Gilloise|Real Sociedad": "18:45", "Viktoria Plzeň|Benfica": "18:45",
   "Viktoria Plzeň|Jagiellonia Białystok": "21:00", "Viktoria Plzeň|Levski Sofia": "21:00", "Viktoria Plzeň|Union Saint-Gilloise": "21:00",
 };
+// Día concreto de cada partido (abreviado: no repite el mes, ya está en
+// UEL_FECHAS_JORNADA). Solo aporta información nueva en la jornada 1
+// (miércoles + jueves); el resto se juegan en un único día (jueves).
+const UEL_DIA_REAL = {
+  "AZ Alkmaar|GNK Dinamo": "Jue 21", "AZ Alkmaar|Hapoel Beer-Sheva": "Jue 15", "AZ Alkmaar|Juventus": "Jue 5",
+  "AZ Alkmaar|Sturm Graz": "Jue 10", "Anderlecht|Lyon": "Mié 16", "Anderlecht|Salzburgo": "Jue 5",
+  "Anderlecht|Sunderland": "Jue 21", "Anderlecht|TSG Hoffenheim": "Jue 10", "Ararat-Armenia|AZ Alkmaar": "Jue 22",
+  "Ararat-Armenia|Celje": "Jue 21", "Ararat-Armenia|NEC Nijmegen": "Jue 10", "Ararat-Armenia|Sparta Praga": "Mié 16",
+  "Bayer Leverkusen|Beşiktaş": "Jue 10", "Bayer Leverkusen|Celje": "Mié 16", "Bayer Leverkusen|Marsella": "Jue 5",
+  "Bayer Leverkusen|Salzburgo": "Jue 21", "Benfica|AZ Alkmaar": "Jue 28", "Benfica|Celtic": "Jue 15",
+  "Benfica|Lech Poznań": "Jue 5", "Benfica|OFI Creta": "Jue 10", "Beşiktaş|Crystal Palace": "Jue 22",
+  "Beşiktaş|Hapoel Beer-Sheva": "Jue 26", "Beşiktaş|Marsella": "Jue 17", "Beşiktaş|Union Saint-Gilloise": "Jue 21",
+  "Bournemouth|Hapoel Beer-Sheva": "Jue 28", "Bournemouth|Milan": "Jue 22", "Bournemouth|Sturm Graz": "Jue 15",
+  "Bournemouth|Viktoria Plzeň": "Jue 10", "Celje|NEC Nijmegen": "Jue 28", "Celje|Olympiakos": "Jue 10",
+  "Celje|Omonoia": "Jue 15", "Celje|Salzburgo": "Jue 22", "Celta de Vigo|Bournemouth": "Jue 26",
+  "Celta de Vigo|Juventus": "Jue 15", "Celta de Vigo|Lillestrøm": "Jue 28", "Celta de Vigo|Union Saint-Gilloise": "Jue 5",
+  "Celtic|Beşiktaş": "Jue 5", "Celtic|Celta de Vigo": "Jue 22", "Celtic|Ferencváros": "Jue 17",
+  "Celtic|Marsella": "Jue 21", "Crystal Palace|Lech Poznań": "Jue 17", "Crystal Palace|Real Sociedad": "Jue 26",
+  "Crystal Palace|Sparta Praga": "Jue 21", "Crystal Palace|TSG Hoffenheim": "Jue 5", "Ferencváros|Celje": "Jue 26",
+  "Ferencváros|Juventus": "Jue 21", "Ferencváros|Torreense": "Jue 22", "Ferencváros|Viktoria Plzeň": "Jue 15",
+  "GNK Dinamo|Anderlecht": "Jue 15", "GNK Dinamo|Bayer Leverkusen": "Jue 26", "GNK Dinamo|NEC Nijmegen": "Jue 22",
+  "GNK Dinamo|Sturm Graz": "Jue 28", "Hapoel Beer-Sheva|Celta de Vigo": "Jue 21", "Hapoel Beer-Sheva|GNK Dinamo": "Mié 16",
+  "Hapoel Beer-Sheva|Juventus": "Jue 10", "Hapoel Beer-Sheva|OFI Creta": "Jue 5", "Jagiellonia Białystok|Anderlecht": "Jue 22",
+  "Jagiellonia Białystok|Ararat-Armenia": "Jue 15", "Jagiellonia Białystok|Crystal Palace": "Jue 10", "Jagiellonia Białystok|Lyon": "Jue 21",
+  "Juventus|NEC Nijmegen": "Jue 17", "Juventus|Omonoia": "Jue 26", "Juventus|Real Sociedad": "Jue 28",
+  "Juventus|Rennes": "Jue 22", "Lech Poznań|Bayer Leverkusen": "Jue 15", "Lech Poznań|Ferencváros": "Jue 10",
+  "Lech Poznań|Sunderland": "Jue 22", "Lech Poznań|Torreense": "Jue 21", "Levski Sofia|Jagiellonia Białystok": "Jue 5",
+  "Levski Sofia|Lillestrøm": "Jue 10", "Levski Sofia|Milan": "Jue 21", "Levski Sofia|Salzburgo": "Jue 17",
+  "Lillestrøm|Bournemouth": "Jue 21", "Lillestrøm|Real Sociedad": "Jue 22", "Lillestrøm|Torreense": "Jue 17",
+  "Lillestrøm|Viktoria Plzeň": "Jue 5", "Lyon|Bayer Leverkusen": "Jue 28", "Lyon|Crystal Palace": "Jue 15",
+  "Lyon|Lillestrøm": "Jue 26", "Lyon|Union Saint-Gilloise": "Jue 10", "Marsella|Anderlecht": "Jue 28",
+  "Marsella|Celta de Vigo": "Jue 10", "Marsella|Levski Sofia": "Jue 26", "Marsella|Olympiakos": "Jue 15",
+  "Milan|Ararat-Armenia": "Jue 28", "Milan|Benfica": "Mié 16", "Milan|Ferencváros": "Jue 5",
+  "Milan|Sunderland": "Jue 10", "NEC Nijmegen|Benfica": "Jue 21", "NEC Nijmegen|Levski Sofia": "Jue 15",
+  "NEC Nijmegen|Omonoia": "Jue 5", "NEC Nijmegen|Rennes": "Jue 26", "OFI Creta|Anderlecht": "Jue 26",
+  "OFI Creta|Bayer Leverkusen": "Jue 22", "OFI Creta|Lech Poznań": "Jue 28", "OFI Creta|TSG Hoffenheim": "Jue 17",
+  "Olympiakos|Jagiellonia Białystok": "Mié 16", "Olympiakos|Milan": "Jue 26", "Olympiakos|Sparta Praga": "Jue 22",
+  "Olympiakos|TSG Hoffenheim": "Jue 21", "Omonoia|Benfica": "Jue 22", "Omonoia|Beşiktaş": "Jue 28",
+  "Omonoia|Celta de Vigo": "Mié 16", "Omonoia|Celtic": "Jue 10", "Real Sociedad|Bournemouth": "Jue 17",
+  "Real Sociedad|Lyon": "Jue 5", "Real Sociedad|Torreense": "Jue 10", "Real Sociedad|Viktoria Plzeň": "Jue 21",
+  "Rennes|GNK Dinamo": "Jue 10", "Rennes|OFI Creta": "Jue 15", "Rennes|Olympiakos": "Jue 5",
+  "Rennes|Omonoia": "Jue 21", "Salzburgo|Ararat-Armenia": "Jue 26", "Salzburgo|Crystal Palace": "Jue 28",
+  "Salzburgo|Milan": "Jue 15", "Salzburgo|Sparta Praga": "Jue 10", "Sparta Praga|AZ Alkmaar": "Jue 26",
+  "Sparta Praga|Bournemouth": "Jue 5", "Sparta Praga|Lillestrøm": "Jue 15", "Sparta Praga|Rennes": "Jue 28",
+  "Sturm Graz|Celje": "Jue 5", "Sturm Graz|Marsella": "Jue 22", "Sturm Graz|OFI Creta": "Jue 21",
+  "Sturm Graz|Rennes": "Mié 16", "Sunderland|AZ Alkmaar": "Mié 16", "Sunderland|GNK Dinamo": "Jue 5",
+  "Sunderland|Jagiellonia Białystok": "Jue 26", "Sunderland|Levski Sofia": "Jue 28", "TSG Hoffenheim|Beşiktaş": "Jue 15",
+  "TSG Hoffenheim|Ferencváros": "Jue 28", "TSG Hoffenheim|Lyon": "Jue 22", "TSG Hoffenheim|Sturm Graz": "Jue 26",
+  "Torreense|Ararat-Armenia": "Jue 5", "Torreense|Celtic": "Jue 26", "Torreense|Olympiakos": "Jue 28",
+  "Torreense|Sunderland": "Jue 15", "Union Saint-Gilloise|Celtic": "Jue 28", "Union Saint-Gilloise|Hapoel Beer-Sheva": "Jue 22",
+  "Union Saint-Gilloise|Lech Poznań": "Jue 26", "Union Saint-Gilloise|Real Sociedad": "Jue 15", "Viktoria Plzeň|Benfica": "Jue 26",
+  "Viktoria Plzeň|Jagiellonia Białystok": "Jue 28", "Viktoria Plzeň|Levski Sofia": "Jue 22", "Viktoria Plzeň|Union Saint-Gilloise": "Jue 17",
+};
 function sorteoRealFaseLigaEL() {
   const equipoDe = new Map(Object.keys(UEL_POT_REAL).map((nombre) => [nombre, { nombre, pais: UEL_PAIS_REAL[nombre], coef: coefFaseLiga(nombre) }]));
   const bombos = [1, 2, 3, 4].map((p) => Object.keys(UEL_POT_REAL).filter((n) => UEL_POT_REAL[n] === p)
@@ -1539,6 +1646,7 @@ function sorteoRealFaseLigaEL() {
     clave: `${local}|${visitante}`,
     jornada: UEL_JORNADA_REAL[`${local}|${visitante}`] - 1,
     hora: UEL_HORA_REAL[`${local}|${visitante}`],
+    dia: UEL_DIA_REAL[`${local}|${visitante}`],
   }));
   const numJornadas = FL_CFG_UEL.bombos * 2;
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UEL_FECHAS_JORNADA };
@@ -1676,6 +1784,47 @@ const UECL_HORA_REAL = {
   "Twente|Kairat Almaty": "21:00", "Twente|Pafos": "21:00", "Twente|Thun": "21:00",
   "Universitatea Craiova|Copenhagen": "21:00", "Universitatea Craiova|Egnatia": "21:00", "Universitatea Craiova|Getafe": "18:45",
 };
+// Día concreto de cada partido (abreviado: no repite el mes, ya está en
+// UECL_FECHAS_JORNADA). Todas las jornadas de Conference League se juegan en
+// un único día (jueves), así que coincide siempre con la fecha de cabecera.
+const UECL_DIA_REAL = {
+  "Aarhus|Braga": "Jue 5", "Aarhus|Egnatia": "Jue 22", "Aarhus|Twente": "Jue 10",
+  "Ajax|Atalanta": "Jue 22", "Ajax|Getafe": "Jue 17", "Ajax|Thun": "Jue 26",
+  "Atalanta|Kairat Almaty": "Jue 5", "Atalanta|Mjällby": "Jue 17", "Atalanta|Pafos": "Jue 15",
+  "Borac|Atalanta": "Jue 26", "Borac|KuPS Kuopio": "Jue 22", "Borac|Riga": "Jue 17",
+  "Braga|Egnatia": "Jue 17", "Braga|Gent": "Jue 22", "Braga|KuPS Kuopio": "Jue 26",
+  "Brann|Aarhus": "Jue 26", "Brann|Braga": "Jue 10", "Brann|Lincoln Red Imps": "Jue 15",
+  "Brighton & Hove Albion|Kauno Žalgiris": "Jue 15", "Brighton & Hove Albion|Mónaco": "Jue 10", "Brighton & Hove Albion|Universitatea Craiova": "Jue 26",
+  "CSKA Sofia|Mónaco": "Jue 15", "CSKA Sofia|Thun": "Jue 17", "CSKA Sofia|Trabzonspor": "Jue 26",
+  "Copenhagen|Braga": "Jue 15", "Copenhagen|Iberia Tbilisi": "Jue 5", "Copenhagen|Lugano": "Jue 10",
+  "Crvena Zvezda|Copenhagen": "Jue 22", "Crvena Zvezda|Inter Escaldes": "Jue 5", "Crvena Zvezda|Trabzonspor": "Jue 17",
+  "Egnatia|Kauno Žalgiris": "Jue 10", "Egnatia|Lincoln Red Imps": "Jue 26", "Egnatia|Midtjylland": "Jue 15",
+  "Friburgo|Jablonec": "Jue 15", "Friburgo|Panathinaikos": "Jue 10", "Friburgo|Twente": "Jue 26",
+  "Gent|Aarhus": "Jue 15", "Gent|Brann": "Jue 17", "Gent|Crvena Zvezda": "Jue 26",
+  "Getafe|Brighton & Hove Albion": "Jue 5", "Getafe|Inter Escaldes": "Jue 10", "Getafe|Lugano": "Jue 22",
+  "Hajduk Split|Ajax": "Jue 15", "Hajduk Split|Nordsjælland": "Jue 10", "Hajduk Split|Sint-Truidense": "Jue 26",
+  "Hearts|Borac": "Jue 10", "Hearts|Mónaco": "Jue 26", "Hearts|Nordsjælland": "Jue 15",
+  "Iberia Tbilisi|Crvena Zvezda": "Jue 10", "Iberia Tbilisi|Getafe": "Jue 26", "Iberia Tbilisi|Mjällby": "Jue 22",
+  "Inter Escaldes|Aarhus": "Jue 17", "Inter Escaldes|Copenhagen": "Jue 26", "Inter Escaldes|Universitatea Craiova": "Jue 22",
+  "Jablonec|Brighton & Hove Albion": "Jue 22", "Jablonec|Iberia Tbilisi": "Jue 17", "Jablonec|Lugano": "Jue 26",
+  "Kairat Almaty|Mjällby": "Jue 26", "Kairat Almaty|Panathinaikos": "Jue 22", "Kairat Almaty|Universitatea Craiova": "Jue 10",
+  "Kauno Žalgiris|Brann": "Jue 22", "Kauno Žalgiris|Friburgo": "Jue 17", "Kauno Žalgiris|Riga": "Jue 26",
+  "KuPS Kuopio|CSKA Sofia": "Jue 10", "KuPS Kuopio|Gent": "Jue 5", "KuPS Kuopio|Trabzonspor": "Jue 15",
+  "Lincoln Red Imps|Hajduk Split": "Jue 5", "Lincoln Red Imps|Midtjylland": "Jue 10", "Lincoln Red Imps|Twente": "Jue 22",
+  "Lugano|Crvena Zvezda": "Jue 15", "Lugano|Kauno Žalgiris": "Jue 5", "Lugano|Sint-Truidense": "Jue 17",
+  "Midtjylland|Ajax": "Jue 5", "Midtjylland|Hajduk Split": "Jue 17", "Midtjylland|Sint-Truidense": "Jue 22",
+  "Mjällby|Borac": "Jue 5", "Mjällby|Inter Escaldes": "Jue 15", "Mjällby|Pafos": "Jue 10",
+  "Mónaco|Friburgo": "Jue 22", "Mónaco|Lincoln Red Imps": "Jue 17", "Mónaco|Nordsjælland": "Jue 5",
+  "Nordsjælland|CSKA Sofia": "Jue 22", "Nordsjælland|KuPS Kuopio": "Jue 17", "Nordsjælland|Panathinaikos": "Jue 26",
+  "Pafos|Hearts": "Jue 17", "Pafos|Midtjylland": "Jue 26", "Pafos|Riga": "Jue 22",
+  "Panathinaikos|Borac": "Jue 15", "Panathinaikos|Brighton & Hove Albion": "Jue 17", "Panathinaikos|CSKA Sofia": "Jue 5",
+  "Riga|Atalanta": "Jue 10", "Riga|Jablonec": "Jue 5", "Riga|Kairat Almaty": "Jue 15",
+  "Sint-Truidense|Ajax": "Jue 10", "Sint-Truidense|Brann": "Jue 5", "Sint-Truidense|Iberia Tbilisi": "Jue 15",
+  "Thun|Gent": "Jue 10", "Thun|Hajduk Split": "Jue 22", "Thun|Hearts": "Jue 5",
+  "Trabzonspor|Friburgo": "Jue 5", "Trabzonspor|Hearts": "Jue 22", "Trabzonspor|Jablonec": "Jue 10",
+  "Twente|Kairat Almaty": "Jue 17", "Twente|Pafos": "Jue 5", "Twente|Thun": "Jue 15",
+  "Universitatea Craiova|Copenhagen": "Jue 17", "Universitatea Craiova|Egnatia": "Jue 5", "Universitatea Craiova|Getafe": "Jue 15",
+};
 function sorteoRealFaseLigaUECL() {
   const equipoDe = new Map(Object.keys(UECL_POT_REAL).map((nombre) => [nombre, { nombre, pais: UECL_PAIS_REAL[nombre], coef: coefFaseLiga(nombre) }]));
   const bombos = [1, 2, 3, 4, 5, 6].map((p) => Object.keys(UECL_POT_REAL).filter((n) => UECL_POT_REAL[n] === p)
@@ -1688,6 +1837,7 @@ function sorteoRealFaseLigaUECL() {
     clave: `${local}|${visitante}`,
     jornada: UECL_JORNADA_REAL[`${local}|${visitante}`] - 1,
     hora: UECL_HORA_REAL[`${local}|${visitante}`],
+    dia: UECL_DIA_REAL[`${local}|${visitante}`],
   }));
   const numJornadas = FL_CFG_UECL.bombos;
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UECL_FECHAS_JORNADA };
@@ -3260,7 +3410,11 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercamb
                           <button onClick={() => liga.reiniciarPartido(m.clave)} title="Reiniciar resultado"
                             style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
                         )}
-                        {m.hora && <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>{m.hora}</span>}
+                        {(m.dia || m.hora) && (
+                          <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+                            {[m.dia, m.hora].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
                       </div>
                       {editando && (
                         <select value="" onChange={(e) => { if (e.target.value) liga.intercambiar(m.clave, e.target.value); }}
