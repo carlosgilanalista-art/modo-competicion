@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 30/08/2026 — cierre de sesión (calendario real de jornadas UCL)
+**Última actualización:** 30/08/2026 — cierre de sesión (sorteo real y calendario de jornadas de las 3 fases de liga UEFA)
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -20,7 +20,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - Datos reales de la fase previa 2026/27 cargados y editables, hasta Ronda 3 completa y sorteo de Playoff.
 - "Restaurar sorteo real" y "Restaurar todos los reales"; resolución directa por penaltis cuando no hay prórroga registrada.
 - Sorteo real de la fase de liga de la Champions League 2026/27 (36 equipos, 144 partidos), celebrado el 27/08/2026, cargado y editable con el mismo patrón "sorteo real" / restauración / edición campo a campo, y las restricciones de federación (Art. 16) validadas también al editar a mano.
-- Calendario real de jornadas de la fase de liga UCL 2026/27 (8 jornadas, fechas oficiales publicadas por la UEFA) cargado y visible junto a cada jornada en el simulador. Europa League y Conference League no lo tienen — sus fases de liga siguen sin sorteo real cargado (ver "En curso").
+- Sorteo real y calendario de jornadas de la fase de liga de las tres competiciones UEFA 2026/27 completos: Champions (36 equipos, 144 partidos, 8 jornadas), Europa League (36, 144, 8 jornadas) y Conference League (36, 108 partidos, 6 jornadas). Las fechas oficiales de cada jornada se muestran junto a su cabecera en el simulador. Corrige una entrada previa de este documento (28/08) que daba por bloqueadas las fases de liga de Europa y Conference League — el bloqueo ya no existía en el código (los 4 caídos de Ronda 3 Ruta Liga de Champions ya se resolvían solos vía `intentarSorteoRealRonda`), solo faltaba cargar el sorteo real de esas dos competiciones.
 - Simulador de selecciones: Nations League 2026/27 y clasificación para la EURO 2028.
 - Simulador AFC Champions League Elite — Capa 1 (solo fase de liga): dos regiones independientes (Oeste/Este, 16 equipos cada una), motor de sorteo por rejilla propio (no es el bombo-contra-bombo de la UEFA), sorteo real del 18/08/2026 precargado con opción de simular y volver a él. Enlazado desde el menú "Clubes". `#/simulador-afc-champions-elite`.
 
@@ -59,6 +59,14 @@ Para Champions League: verificado por script que las 144 parejas del calendario 
 Limitación conocida, aparcada: el intercambio manual de visitantes (edición campo a campo) sigue regenerando el reparto de jornadas con el algoritmo genérico, no con el calendario real — tras un intercambio, la fecha mostrada junto a una jornada deja de corresponder con exactitud a los partidos que contiene. Ver Aparcadero.
 **Herramienta:** Claude Code
 
+**Sesión:** 30/08/2026 (domingo, continuación) — COMPLETADA
+**Tarea:** Desbloquear y cargar el sorteo real y el calendario de jornadas de la fase de liga de Europa League y Conference League, ampliando el alcance reducido de la tarea anterior.
+**Criterio de hecho:** CUMPLIDO, con una corrección de diagnóstico a mitad de sesión. Al comprobar en vivo en el navegador (no solo en la documentación), se descubrió que el "bloqueo" de EL/UECL registrado el 28/08 y repetido en la entrada anterior de hoy ya no era real: los pools de 36 equipos de ambas competiciones estaban completos desde antes (`intentarSorteoRealRonda` ya resolvía en directo los 4 caídos de Ronda 3 Ruta Liga de Champions contra el JSON de datos reales) — lo único que faltaba era cargar el sorteo real (emparejamientos) de esas dos competiciones, igual que ya existía para Champions.
+Se extrajo el calendario de Europa League del PDF adjuntado (pdftotext -layout, 144 partidos en 8 jornadas) y se usó el texto de Conference League ya pegado por Carlos (108 partidos en 6 jornadas). Verificado por script: sin duplicados, 36 equipos con el número exacto de partidos por competición (8 en EL, 6 en UECL), sin choques de equipo por jornada, sin infracciones de federación (ni mismo país ni más de 2 rivales de una federación ajena).
+Los bombos NO se pudieron derivar del coeficiente interno del simulador (`coefFaseLiga`): probar el reparto automático (igual que en el sorteo simulado) dejaba 25/36 equipos de EL y 10/36 de UECL fuera del patrón real de "2 (o 1) rivales por bombo" — varios coeficientes del código están marcados `/* estimado */`, no son el coeficiente oficial que usó la UEFA. Carlos aportó las listas reales de bombos (4×9 en EL, 6×6 en UECL); verificadas contra los 144+108 partidos, encajan al 100% (0 discrepancias en ambas).
+Implementado `sorteoRealFaseLigaEL()` y `sorteoRealFaseLigaUECL()`, mismo patrón que Champions (`UEL_POT_REAL`/`UEL_PARTIDOS_REAL`/`UEL_JORNADA_REAL`/`UEL_FECHAS_JORNADA` y equivalentes UECL), conectados a `useFaseLiga` en `useEuropa`/`useConference`. Probado en navegador (build limpio + Playwright): las 8 jornadas de EL y las 6 de UECL muestran su fecha real, bombos correctos y el indicador "✓ SORTEO REAL" en ambas. Misma limitación aparcada que en Champions: el intercambio manual regenera jornadas con el algoritmo genérico.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
@@ -66,7 +74,7 @@ Limitación conocida, aparcada: el intercambio manual de visitantes (edición ca
 
 ## 4. En curso
 
-- Datos reales UEFA fase previa 2026/27 — Playoff de las tres competiciones completo: Champions League (7/7, fase de liga UCL 36/36), Europa League (12/12) y Conference League (24/24). Fusionado a `main` vía PR #43, PR #44 (Champions, rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta) y PR #46 (EL+UECL, rama `claude/playoff-uefa-resultados-851dma`, resuelta — merge confirmado en `main`, pendiente confirmar deployment de Production en Vercel por el precedente del 27/08, ver Decisiones cerradas). Las fases de liga de Europa League y Conference League siguen bloqueadas: faltan 4 caídos de Ronda 3 Ruta Liga de Champions para la fase de liga UEL, y a su vez la fase de liga UECL depende de que la UEL esté cerrada. Detalle en `docs/clasificados-2026-27.md`.
+- Datos reales UEFA fase previa 2026/27 — Playoff de las tres competiciones completo: Champions League (7/7, fase de liga UCL 36/36), Europa League (12/12) y Conference League (24/24). Fusionado a `main` vía PR #43, PR #44 (Champions, rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta) y PR #46 (EL+UECL, rama `claude/playoff-uefa-resultados-851dma`, resuelta — merge confirmado en `main`, pendiente confirmar deployment de Production en Vercel por el precedente del 27/08, ver Decisiones cerradas). Las fases de liga de Europa League y Conference League ya NO están bloqueadas (corregido el 30/08: el bloqueo que describía esta línea había dejado de existir en el código antes de esa fecha) — sorteo real y calendario de jornadas de las tres cargados, ver §3 sesión 30/08 (continuación). `docs/clasificados-2026-27.md` sigue desactualizado en su diagnóstico de bloqueo, pendiente de revisar.
 
 ## 5. Backlog congelado
 
@@ -118,8 +126,9 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 
 - Script de PowerShell para repartir de golpe los archivos antiguos de la carpeta local
 - Formalizar como skill el ciclo modificar → gate → desplegar en Code
-- El intercambio manual de visitantes en la fase de liga UCL (edición campo a campo) regenera el reparto de jornadas con el algoritmo genérico (`repartirJornadas`), no con el calendario real (`UCL_JORNADA_REAL`) cargado el 30/08. Tras un intercambio, la fecha mostrada junto a una jornada deja de corresponder con exactitud a los partidos que contiene. No bloquea nada mientras no se edite, pero es una inconsistencia latente
-- Calendario real de jornadas de Europa League (PDF de 63 páginas adjuntado el 30/08) y de Conference League (texto pegado el 30/08, 6 jornadas) sin cargar — bloqueado porque esas dos fases de liga no tienen sorteo real cargado en el simulador (falta que llegue primero la fase de liga UEL, que depende de 4 caídos de Ronda 3 Ruta Liga de Champions). Cuando se desbloquee el sorteo real de esas dos competiciones, retomar con los datos ya aportados por Carlos
+- El intercambio manual de visitantes en la fase de liga (edición campo a campo) regenera el reparto de jornadas con el algoritmo genérico (`repartirJornadas`), no con el calendario real (`UCL_JORNADA_REAL`/`UEL_JORNADA_REAL`/`UECL_JORNADA_REAL`, las tres cargadas el 30/08). Tras un intercambio, la fecha mostrada junto a una jornada deja de corresponder con exactitud a los partidos que contiene. Afecta a las tres competiciones UEFA por igual. No bloquea nada mientras no se edite, pero es una inconsistencia latente
+- `docs/clasificados-2026-27.md` quedó desactualizado el 28/08: sigue diciendo que las fases de liga de Europa League y Conference League están bloqueadas, cuando ya no lo estaban desde antes del 30/08. Pendiente corregir ese documento (no se tocó en esta sesión, fuera del alcance declarado)
+- Varios coeficientes UEFA usados en `coefFaseLiga` (marcados `/* estimado */` en el código) no coinciden con los oficiales que usó la UEFA para el sorteo real: al intentar derivar los bombos de Europa League y Conference League ordenando por esos coeficientes, 25/36 y 10/36 equipos respectivamente quedaban mal clasificados. No bloquea nada porque los bombos reales de esas dos competiciones ya están cargados a mano (`UEL_POT_REAL`/`UECL_POT_REAL`), pero cualquier lógica que siga confiando en `coefFaseLiga` para desempates o visualización (p. ej. el orden dentro de cada bombo mostrado en pantalla) puede no reflejar el criterio oficial real
 
 ## 8. Preguntas abiertas
 
