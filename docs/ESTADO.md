@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 31/08/2026 — cierre de sesión (sorteo real, calendario de jornadas, día y hora de las 3 fases de liga UEFA, fusionado a `main`)
+**Última actualización:** 06/09/2026 — cruce Oeste-Este de la ACL Elite (octavos vs. cuartos) confirmado contra el reglamento oficial
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -78,6 +78,11 @@ Implementado `sorteoRealFaseLigaEL()` y `sorteoRealFaseLigaUECL()`, mismo patró
 Fusionado a `main` (squash, commit `dba47b2`, PR #49, rama `claude/calendario-jornadas-uefa-o25mv4`), tras confirmación explícita de Carlos.
 **Herramienta:** Claude Code
 
+**Sesión:** 06/09/2026 (domingo) — COMPLETADA
+**Tarea:** Resolver el cruce Oeste-Este de la ACL Elite (octavos vs. cuartos) contra el PDF de calendario oficial de the-afc.com. Dejar la Capa 2 (eliminatorias) lista para construir, o formalmente descartada/congelada en backlog si no da tiempo antes del 14/09.
+**Criterio de hecho:** CUMPLIDO — dato pasa a 🟢 con fuente citada. Localizada primero la URL exacta del PDF oficial (`assets.the-afc.com/downloads/tournament-regulations/AFC-Champions-League-Elite-2026-27-Competition-Regulations---Feb12upd.pdf`), pero el proxy de red del entorno bloquea ese dominio (y varios más: Wikipedia, Liquipedia, Inside World Football, r.jina.ai) — no se pudo leer el PDF directamente desde la sesión. Carlos aportó el PDF subiéndolo a la conversación; verificado literalmente contra el reglamento oficial (`AFC Champions League Elite 2026/27 - Competition Regulations`, Art. 9.1-9.3, página 22): 9.2 fija los octavos de final como intrarregionales, ida y vuelta (R16-1 a R16-4 Oeste 1º-8º/2º-7º/3º-6º/4º-5º; R16-5 a R16-8 Este igual); 9.3 fija los cuartos de final como primer cruce Oeste-Este, cross-regional, partido único, con la restricción de mantener separados hasta la final a los dos cabezas de serie de cada región (9.3.1-9.3.2). Verificado que esto no afecta a lo publicado: el simulador AFC en producción cubre solo Capa 1 (fase de liga), sin ninguna línea de lógica de octavos/cuartos AFC en el código (`grep` en `src/App.jsx` confirma que todo el bloque `octavos`/`cuartos`/`semis` existente pertenece al bracket UEFA, no al AFC); el artículo publicado (`src/ArticuloAFCChampionsElite.jsx`, líneas 318-331) ya describía correctamente este formato. Valorado con Carlos si había margen para arrancar la Capa 2 antes del 14/09 y descartado conscientemente (ver Decisiones cerradas 06/09). No se ha tocado ninguna rama ni hecho ningún commit — solo lectura y edición de este documento.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
@@ -87,6 +92,7 @@ Fusionado a `main` (squash, commit `dba47b2`, PR #49, rama `claude/calendario-jo
 
 - Datos reales UEFA fase previa 2026/27 — Playoff de las tres competiciones completo: Champions League (7/7, fase de liga UCL 36/36), Europa League (12/12) y Conference League (24/24). Fusionado a `main` vía PR #43, PR #44 (Champions, rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta) y PR #46 (EL+UECL, rama `claude/playoff-uefa-resultados-851dma`, resuelta — merge confirmado en `main`, pendiente confirmar deployment de Production en Vercel por el precedente del 27/08, ver Decisiones cerradas). Las fases de liga de las tres competiciones ya tienen sorteo real y calendario de jornadas completos (ver §3, sesiones 30/08-31/08) — este ítem queda cerrado salvo por la corrección pendiente de `docs/clasificados-2026-27.md` (sigue diciendo que EL/UECL están bloqueadas), que se deja para otra sesión.
 - Plan de difusión por X del calendario de jornadas UEFA entregado a Carlos (31/08): 2 tweets, uno esta semana y otro la víspera de la Jornada 1 (6-7/09). Publicación manual pendiente por parte de Carlos, no se gestiona desde el repo.
+- Capa 2 del simulador AFC Champions League Elite (eliminatorias: octavos y cuartos en adelante): formato ya verificado sin ambigüedad contra el reglamento oficial (ver Decisiones cerradas, 06/09). Sin fecha límite — el deadline del 14/09 es el inicio de la fase de liga y no aplica a esta capa (octavos no se juegan hasta marzo de 2027); el bracket real, además, no puede cargarse hasta que termine la fase de liga y se conozca la clasificación final 1º-8º de cada región. Queda pendiente de sesión futura, sin prisa.
 
 ## 5. Backlog congelado
 
@@ -135,6 +141,8 @@ Fusionado a `main` (squash, commit `dba47b2`, PR #49, rama `claude/calendario-jo
 | 31/08 | Deployment de Production en Vercel para el commit de fusión (`dba47b2`) no verificado todavía — pendiente que Carlos lo confirme en el dashboard o en producción. Si no dispara (precedente del 27/08), el fix conocido es un push adicional a `main` |
 | 31/08 | Plan de difusión por X para el calendario de jornadas entregado a Carlos: 2 momentos (anuncio esta semana + recordatorio víspera de la Jornada 1, 6-7/09), formato corto con captura del simulador en vez de hilo largo, porque el contenido es utilidad de calendario, no un notición. Publicación manual pendiente por Carlos |
 | 31/08 | Intento de borrar la rama remota `claude/calendario-jornadas-uefa-o25mv4` tras su fusión: mismo error HTTP 403 ya documentado el 27/08 y el 28/08 (restricción del proxy git de la sesión). Rama fusionada e íntegra en `main`, pendiente borrarla a mano desde GitHub — no bloquea nada |
+| 06/09 | Cruce Oeste-Este ACL Elite — 🟢 CONFIRMADO. Octavos de final: intrarregionales (Oeste vs Oeste, Este vs Este), ida y vuelta. Cuartos de final: primer cruce Oeste-Este, partido único en sede neutral, sorteo cruzado. Fuente: *AFC Champions League Elite 2026/27 - Competition Regulations*, Art. 9.1-9.3, PDF oficial the-afc.com aportado por Carlos (el proxy de red de la sesión bloqueaba `assets.the-afc.com` y no permitía descargarlo directamente). No afecta a lo publicado: el simulador en producción solo cubre Capa 1 (fase de liga); el artículo publicado ya describía correctamente este formato |
+| 06/09 | Valorado arrancar la Capa 2 (eliminatorias AFC) antes del 14/09 y descartado conscientemente: el deadline del 14/09 es el inicio de la fase de liga, no aplica a los octavos/cuartos (no se juegan hasta marzo/abril de 2027 según el reglamento), y el bracket real no puede cargarse hasta que termine la fase de liga y se conozca la clasificación 1º-8º de cada región. Queda anotada en "En curso" sin fecha límite |
 
 ## 7. Aparcadero
 
