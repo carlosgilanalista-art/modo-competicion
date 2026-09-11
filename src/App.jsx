@@ -1414,6 +1414,34 @@ function sorteoRealFaseLigaUCL() {
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UCL_FECHAS_JORNADA };
 }
 const UCL_SORTEO_REAL = sorteoRealFaseLigaUCL();
+// Resultados reales de la Jornada 1 de la fase de liga UCL 2026/27, jugada el
+// 8-10 de septiembre de 2026 (fuente: UEFA.com, corroborado por ESPN, NBC
+// Sports y prensa deportiva independiente — 🟢 confirmado). Claves = las
+// mismas de UCL_JORNADA_REAL (local|visitante); los 18 partidos son
+// exactamente los que UCL_JORNADA_REAL marca como jornada 1 (verificado por
+// script, 0 discrepancias). Se cargan con el mismo mecanismo de origen por
+// campo (real/editado) que useOrigenResultados usa para las rondas previas,
+// aplicado aquí a nivel de partido de fase de liga en vez de eliminatoria.
+const UCL_RESULTADOS_JORNADA1_REAL = {
+  "AEK Atenas|LASK Linz": { gl: 1, gv: 0 },
+  "Club Brugge|Aston Villa": { gl: 2, gv: 3 },
+  "Borussia Dortmund|Villarreal": { gl: 3, gv: 2 },
+  "Porto|Manchester City": { gl: 0, gv: 2 },
+  "Lille|Real Betis": { gl: 2, gv: 3 },
+  "Real Madrid|Inter": { gl: 2, gv: 1 },
+  "Barcelona|Feyenoord": { gl: 5, gv: 1 },
+  "VfB Stuttgart|Viking": { gl: 3, gv: 1 },
+  "Liverpool|Atlético de Madrid": { gl: 2, gv: 1 },
+  "Paris Saint-Germain|Slovan Bratislava": { gl: 6, gv: 1 },
+  "Sporting CP|Galatasaray": { gl: 3, gv: 1 },
+  "Napoli|Arsenal": { gl: 0, gv: 1 },
+  "Fenerbahçe|Roma": { gl: 1, gv: 1 },
+  "PSV Eindhoven|Shakhtar Donetsk": { gl: 1, gv: 1 },
+  "Como|RB Leipzig": { gl: 4, gv: 1 },
+  "Bayern de Múnich|Bodø/Glimt": { gl: 5, gv: 0 },
+  "Manchester United|Sabah": { gl: 4, gv: 0 },
+  "Slavia Praga|Lens": { gl: 2, gv: 3 },
+};
 
 // Sorteo real (no simulado) de la fase de liga de la Europa League 2026/27.
 // A diferencia de la Champions, el reparto de bombos NO se pudo derivar del
@@ -2020,26 +2048,48 @@ function resolverCuadro(ko, resKO, posiciones) {
 // AFC Elite (sorteo del 18/08/2026) y la Champions League (sorteo de la fase
 // de liga del 27/08/2026) — UEL/UECL todavía no tienen su sorteo real cargado
 // y siguen arrancando vacíos, como siempre.
-function useFaseLiga(poolLiga, cfg, sorteoReal) {
+function useFaseLiga(poolLiga, cfg, sorteoReal, resultadosReales) {
   const [sorteoLiga, setSorteoLiga] = useState(sorteoReal ?? null);
-  const [resLiga, setResLiga] = useState({});
+  const [resLiga, setResLiga] = useState(() => (sorteoReal && resultadosReales ? { ...resultadosReales } : {}));
   const [sorteoKO, setSorteoKO] = useState(null);
-  useEffect(() => { setSorteoLiga(sorteoReal ?? null); setResLiga({}); setSorteoKO(null); }, [poolLiga, sorteoReal]);
-  const sortear = () => { setSorteoLiga(sortearFaseLiga(poolLiga.plazas, cfg)); setResLiga({}); setSorteoKO(null); };
-  const restaurarSorteoReal = () => { if (!sorteoReal) return; setSorteoLiga(sorteoReal); setResLiga({}); setSorteoKO(null); };
+  const oLiga = useOrigenResultados();
+  useEffect(() => {
+    setSorteoLiga(sorteoReal ?? null);
+    setResLiga(sorteoReal && resultadosReales ? { ...resultadosReales } : {});
+    setSorteoKO(null);
+    oLiga.reiniciar();
+    if (sorteoReal && resultadosReales) oLiga.marcarOrigen(Object.fromEntries(Object.keys(resultadosReales).map((clave) => [clave, "real"])));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poolLiga, sorteoReal, resultadosReales]);
+  const sortear = () => { setSorteoLiga(sortearFaseLiga(poolLiga.plazas, cfg)); setResLiga({}); setSorteoKO(null); oLiga.reiniciar(); };
+  const restaurarSorteoReal = () => {
+    if (!sorteoReal) return;
+    setSorteoLiga(sorteoReal);
+    setResLiga(resultadosReales ? { ...resultadosReales } : {});
+    setSorteoKO(null);
+    oLiga.reiniciar();
+    if (resultadosReales) oLiga.marcarOrigen(Object.fromEntries(Object.keys(resultadosReales).map((clave) => [clave, "real"])));
+  };
   const esSorteoReal = sorteoReal ? sorteoLiga === sorteoReal : false;
   const cambiarResultado = (clave, campo, raw) => {
     const v = validar(raw);
     if (v === "INVALIDO") return;
     setResLiga((p) => ({ ...p, [clave]: { ...p[clave], [campo]: v } }));
+    oLiga.marcarEditado(clave);
     setSorteoKO(null);
   };
-  const reiniciarPartido = (clave) => { setResLiga((p) => { const n = { ...p }; delete n[clave]; return n; }); setSorteoKO(null); };
+  const reiniciarPartido = (clave) => { setResLiga((p) => { const n = { ...p }; delete n[clave]; return n; }); oLiga.marcarEditado(clave); setSorteoKO(null); };
+  const restaurarPartido = (clave) => {
+    if (!resultadosReales || !(clave in resultadosReales)) return;
+    setResLiga((p) => ({ ...p, [clave]: { ...resultadosReales[clave] } }));
+    oLiga.restaurar(clave, "real");
+    setSorteoKO(null);
+  };
   const simularJornada = (j) => {
     if (!sorteoLiga || sorteoLiga.error) return;
     setResLiga((p) => {
       const n = { ...p };
-      sorteoLiga.partidos.filter((m) => m.jornada === j).forEach((m) => { n[m.clave] = { gl: rnd5(), gv: rnd5() }; });
+      sorteoLiga.partidos.filter((m) => m.jornada === j && !oLiga.tieneBaseReal(m.clave)).forEach((m) => { n[m.clave] = { gl: rnd5(), gv: rnd5() }; });
       return n;
     });
     setSorteoKO(null);
@@ -2050,6 +2100,7 @@ function useFaseLiga(poolLiga, cfg, sorteoReal) {
     if (!nuevo) return;
     setSorteoLiga(nuevo);
     setResLiga((p) => { const n = { ...p }; delete n[claveA]; delete n[claveB]; return n; });
+    oLiga.invalidar([claveA, claveB]);
     setSorteoKO(null);
   };
   const clasificacion = useMemo(
@@ -2084,7 +2135,10 @@ function useFaseLiga(poolLiga, cfg, sorteoReal) {
       return n;
     });
   };
-  return { sorteoLiga, resLiga, sorteoKO, sortear, cambiarResultado, reiniciarPartido, simularJornada, intercambiar, clasificacion, clasificacionHasta, completa, jugados, sortearKO, resKO, cambiarKO, reiniciarKO, posiciones, cuadro, simularRondaKO, restaurarSorteoReal: sorteoReal ? restaurarSorteoReal : undefined, esSorteoReal };
+  return {
+    sorteoLiga, resLiga, sorteoKO, sortear, cambiarResultado, reiniciarPartido, simularJornada, intercambiar, clasificacion, clasificacionHasta, completa, jugados, sortearKO, resKO, cambiarKO, reiniciarKO, posiciones, cuadro, simularRondaKO, restaurarSorteoReal: sorteoReal ? restaurarSorteoReal : undefined, esSorteoReal,
+    origenLiga: oLiga.origen, bloqueadoPartido: oLiga.esBloqueado, desbloquearPartido: oLiga.desbloquear, restaurarPartido: resultadosReales ? restaurarPartido : undefined,
+  };
 }
 
 // Calendario individual: para cada equipo, sus rivales ordenados por bombo.
@@ -2426,7 +2480,7 @@ function useChampions(datosReales) {
     ];
     return { plazas, error: null };
   }, [clasificados]);
-  const liga = useFaseLiga(poolLiga, FL_CFG_UCL, UCL_SORTEO_REAL);
+  const liga = useFaseLiga(poolLiga, FL_CFG_UCL, UCL_SORTEO_REAL, UCL_RESULTADOS_JORNADA1_REAL);
 
   return {
     coefs, allTeams,
@@ -3394,19 +3448,38 @@ function FaseLigaPanel({ pool, liga, cfg, colores, descripcion, permiteIntercamb
                 {partidos.map((m) => {
                   const r = resLiga[m.clave];
                   const candidatos = editando ? candidatosIntercambio(sorteo, m.clave) : null;
+                  const origenM = liga.origenLiga?.[m.clave];
+                  const bloqueado = liga.bloqueadoPartido?.(m.clave);
                   return (
                     <div key={m.clave} style={{ background: colores.tarjeta, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "6px 10px" }}>
+                      {origenM === "editado" && (
+                        <div style={{ marginBottom: 4 }}>
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.alerta, border: `1px solid ${colores.alerta}`, borderRadius: 999, padding: "2px 8px" }}>✎ Editado (resultado real modificado)</span>
+                        </div>
+                      )}
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                         <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 120, textAlign: "right" }}>
                           {m.local.nombre} <span style={{ color: colores.textoSuave, fontSize: 9 }}>({m.local.pais})</span>
                         </span>
-                        <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => liga.cambiarResultado(m.clave, "gl", e.target.value)} style={inputStyle} />
-                        <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
-                        <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => liga.cambiarResultado(m.clave, "gv", e.target.value)} style={inputStyle} />
+                        {bloqueado ? (
+                          <span style={{ color: colores.acento, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>{r.gl} - {r.gv}</span>
+                        ) : (
+                          <>
+                            <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => liga.cambiarResultado(m.clave, "gl", e.target.value)} style={inputStyle} />
+                            <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
+                            <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => liga.cambiarResultado(m.clave, "gv", e.target.value)} style={inputStyle} />
+                          </>
+                        )}
                         <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 120 }}>
                           {m.visitante.nombre} <span style={{ color: colores.textoSuave, fontSize: 9 }}>({m.visitante.pais})</span>
                         </span>
-                        {r && (r.gl !== undefined || r.gv !== undefined) && (
+                        {bloqueado ? (
+                          <button onClick={() => liga.desbloquearPartido(m.clave)} title="Modificar resultado real"
+                            style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>✎ Modificar</button>
+                        ) : origenM === "editado" && liga.restaurarPartido ? (
+                          <button onClick={() => liga.restaurarPartido(m.clave)} title="Restaurar resultado real"
+                            style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↩ Restaurar real</button>
+                        ) : r && (r.gl !== undefined || r.gv !== undefined) && (
                           <button onClick={() => liga.reiniciarPartido(m.clave)} title="Reiniciar resultado"
                             style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
                         )}
