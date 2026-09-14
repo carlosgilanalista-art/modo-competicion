@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 11/09/2026 — resultados reales de la Jornada 1 de la fase de liga UCL 2026/27 cargados
+**Última actualización:** 14/09/2026 — archivo de verificación de Google Search Console subido a `public/`
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -105,6 +105,11 @@ Probado en navegador (build limpio + Playwright): los 18 partidos de Jornada 1 a
 Fusionado a `main` (squash, commit `3be3d49`, PR #50, rama `claude/load-matchday-1-ucl-2026-a9addh`), tras confirmación explícita de Carlos.
 **Herramienta:** Claude Code
 
+**Sesión:** 14/09/2026 (lunes) — COMPLETADA
+**Tarea:** Subir el archivo de verificación de Google Search Console (`google246961d220a40ba3.html`, adjuntado por Carlos) a `public/`, para que quede servido en `https://modocompeticion.com/google246961d220a40ba3.html` tras el deploy.
+**Criterio de hecho:** CUMPLIDO — archivo creado en `public/google246961d220a40ba3.html` con el contenido exacto `google-site-verification: google246961d220a40ba3.html`, sin modificar. Fusionado a `main` (squash, commit `488f16a`, PR #51, rama `claude/google-search-console-verify-ky9f09`), tras autorización explícita de Carlos en cada paso (commit, push, apertura de PR, fusión). Confirmado por Carlos en producción visitando la URL directamente.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
@@ -166,6 +171,7 @@ Fusionado a `main` (squash, commit `3be3d49`, PR #50, rama `claude/load-matchday
 | 06/09 | Cruce Oeste-Este ACL Elite — 🟢 CONFIRMADO. Octavos de final: intrarregionales (Oeste vs Oeste, Este vs Este), ida y vuelta. Cuartos de final: primer cruce Oeste-Este, partido único en sede neutral, sorteo cruzado. Fuente: *AFC Champions League Elite 2026/27 - Competition Regulations*, Art. 9.1-9.3, PDF oficial the-afc.com aportado por Carlos (el proxy de red de la sesión bloqueaba `assets.the-afc.com` y no permitía descargarlo directamente). No afecta a lo publicado: el simulador en producción solo cubre Capa 1 (fase de liga); el artículo publicado ya describía correctamente este formato |
 | 06/09 | Valorado arrancar la Capa 2 (eliminatorias AFC) antes del 14/09 y descartado conscientemente: el deadline del 14/09 es el inicio de la fase de liga, no aplica a los octavos/cuartos (no se juegan hasta marzo/abril de 2027 según el reglamento), y el bracket real no puede cargarse hasta que termine la fase de liga y se conozca la clasificación 1º-8º de cada región. Queda anotada en "En curso" sin fecha límite |
 | 11/09 | Resultados reales de la Jornada 1 de la fase de liga UCL 2026/27 (18/18 partidos) fusionados a `main` (squash, commit `3be3d49`, PR #50, rama `claude/load-matchday-1-ucl-2026-a9addh`), tras confirmación explícita de Carlos. Se detectó que la fase de liga no tenía mecanismo de "resultado real" a nivel de partido (a diferencia de las rondas previas) — se extendió el patrón existente `useOrigenResultados` (real/editado/restaurar) a `useFaseLiga`, en vez de crear un contrato nuevo. La cascada de invalidación entre confirmado y simulado no necesitó código adicional: la clasificación ya era reactiva sobre `resLiga`. Deployment de Production en Vercel para el commit de fusión (`3be3d49`) no verificado todavía — pendiente que Carlos lo confirme, mismo precedente del 27/08 |
+| 14/09 | Archivo de verificación de Google Search Console (`google246961d220a40ba3.html`) subido a `public/` y fusionado a `main` (squash, commit `488f16a`, PR #51, rama `claude/google-search-console-verify-ky9f09`). Contenido verificado literal (`google-site-verification: google246961d220a40ba3.html`), sin tocar ningún otro fichero. Deployment de Production confirmado por Carlos visitando directamente `https://modocompeticion.com/google246961d220a40ba3.html`, sin repetirse el precedente de webhook del 27/08. Intento de borrar la rama remota tras la fusión: bloqueado por el clasificador de auto mode de la sesión (acción destructiva), no por el HTTP 403 del proxy git documentado en sesiones anteriores — mismo resultado práctico, rama fusionada e íntegra en `main`, pendiente borrarla a mano desde GitHub |
 
 ## 7. Aparcadero
 
