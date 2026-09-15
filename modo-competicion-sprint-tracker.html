@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modo Competición — Sprint Tracker</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --card: #161d2e;
+    --border: #263042;
+    --text: #e7ecf5;
+    --muted: #8b96ab;
+    --accent: #4f8cff;
+    --done: #29c47a;
+    --pending: #384259;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 2rem 1rem 4rem;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; }
+  .sprint {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .sprint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+  }
+  .sprint-title { font-size: 1.05rem; font-weight: 600; }
+  .sprint-progress-label { font-size: 0.85rem; color: var(--muted); }
+  .progress-bar {
+    height: 8px;
+    background: var(--pending);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--done);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .task:first-of-type { border-top: none; }
+  .task input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--done);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .task-body { flex: 1; }
+  .task-day {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .task-desc { font-size: 0.95rem; margin-top: 2px; }
+  .task.completed .task-desc { color: var(--muted); text-decoration: line-through; }
+  .save-indicator {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--done);
+    color: #04150c;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+  .save-indicator.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Modo Competición — Sprint Tracker</h1>
+  <div class="subtitle">Seguimiento de sprints editoriales</div>
+  <div id="sprints"></div>
+</div>
+<div class="save-indicator" id="saveIndicator">✓ Guardado</div>
+
+<script>
+  const STORAGE_KEY = "modo-competicion-sprint-tracker";
+
+  const defaultData = {
+    sprints: [
+      {
+        id: "sprint-1",
+        title: "Sprint 1 — Consolidación editorial",
+        tasks: [
+          {
+            id: "sprint-1-viernes",
+            day: "Viernes",
+            desc: "Research analítica + listar ideas artículos",
+            done: true
+          },
+          {
+            id: "sprint-1-domingo",
+            day: "Domingo",
+            desc: "Artículo explicativo (coeficientes, fase previa o accesos directos)",
+            done: false
+          },
+          {
+            id: "sprint-1-lunes",
+            day: "Lunes",
+            desc: "Artículo secundario + optimización SEO + publicación",
+            done: false
+          }
+        ]
+      }
+    ]
+  };
+
+  function loadData() {
+    const store = window.storage || window.localStorage;
+    const raw = store.getItem(STORAGE_KEY);
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        return structuredClone(defaultData);
+      }
+    }
+    return structuredClone(defaultData);
+  }
+
+  function saveData(data) {
+    const store = window.storage || window.localStorage;
+    store.setItem(STORAGE_KEY, JSON.stringify(data));
+    showSaveIndicator();
+  }
+
+  function showSaveIndicator() {
+    const el = document.getElementById("saveIndicator");
+    el.classList.add("show");
+    clearTimeout(showSaveIndicator._t);
+    showSaveIndicator._t = setTimeout(() => el.classList.remove("show"), 1200);
+  }
+
+  let data = loadData();
+
+  function render() {
+    const container = document.getElementById("sprints");
+    container.innerHTML = "";
+
+    data.sprints.forEach(sprint => {
+      const total = sprint.tasks.length;
+      const completed = sprint.tasks.filter(t => t.done).length;
+      const pct = total ? Math.floor((completed / total) * 100) : 0;
+
+      const sprintEl = document.createElement("div");
+      sprintEl.className = "sprint";
+
+      sprintEl.innerHTML = `
+        <div class="sprint-header">
+          <div class="sprint-title">${sprint.title}</div>
+          <div class="sprint-progress-label">${completed}/${total} completado — ${pct}%</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      `;
+
+      sprint.tasks.forEach(task => {
+        const taskEl = document.createElement("div");
+        taskEl.className = "task" + (task.done ? " completed" : "");
+        taskEl.innerHTML = `
+          <input type="checkbox" ${task.done ? "checked" : ""} data-task-id="${task.id}">
+          <div class="task-body">
+            <div class="task-day">${task.day}</div>
+            <div class="task-desc">${task.desc}</div>
+          </div>
+        `;
+        sprintEl.appendChild(taskEl);
+      });
+
+      container.appendChild(sprintEl);
+    });
+
+    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener("change", e => {
+        const id = e.target.dataset.taskId;
+        for (const sprint of data.sprints) {
+          const task = sprint.tasks.find(t => t.id === id);
+          if (task) {
+            task.done = e.target.checked;
+            break;
+          }
+        }
+        saveData(data);
+        render();
+      });
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>
