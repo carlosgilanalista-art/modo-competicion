@@ -1680,6 +1680,32 @@ function sorteoRealFaseLigaEL() {
   return { bombos, partidos, numJornadas, real: true, fechasJornada: UEL_FECHAS_JORNADA };
 }
 const UEL_SORTEO_REAL = sorteoRealFaseLigaEL();
+// Resultados reales de la Jornada 1 de la fase de liga UEL 2026/27, jugada el
+// 16-17 de septiembre de 2026 (fuente: UEFA.com — 🟢 confirmado). Claves = las
+// mismas de UEL_JORNADA_REAL (local|visitante); los 18 partidos son
+// exactamente los que UEL_JORNADA_REAL marca como jornada 1 (verificado por
+// script, 0 discrepancias). Mismo mecanismo real/editado por partido que
+// UCL_RESULTADOS_JORNADA1_REAL (sesión 11/09).
+const UEL_RESULTADOS_JORNADA1_REAL = {
+  "Omonoia|Celta de Vigo": { gl: 1, gv: 0 },
+  "Ararat-Armenia|Sparta Praga": { gl: 1, gv: 4 },
+  "Olympiakos|Jagiellonia Białystok": { gl: 2, gv: 1 },
+  "Anderlecht|Lyon": { gl: 1, gv: 2 },
+  "Bayer Leverkusen|Celje": { gl: 2, gv: 0 },
+  "Sunderland|AZ Alkmaar": { gl: 1, gv: 0 },
+  "Milan|Benfica": { gl: 0, gv: 2 },
+  "Sturm Graz|Rennes": { gl: 0, gv: 0 },
+  "Hapoel Beer-Sheva|GNK Dinamo": { gl: 0, gv: 0 },
+  "Levski Sofia|Salzburgo": { gl: 0, gv: 1 },
+  "OFI Creta|TSG Hoffenheim": { gl: 2, gv: 0 },
+  "Celtic|Ferencváros": { gl: 1, gv: 3 },
+  "Juventus|NEC Nijmegen": { gl: 5, gv: 0 },
+  "Viktoria Plzeň|Union Saint-Gilloise": { gl: 0, gv: 3 },
+  "Beşiktaş|Marsella": { gl: 4, gv: 1 },
+  "Lillestrøm|Torreense": { gl: 1, gv: 2 },
+  "Crystal Palace|Lech Poznań": { gl: 4, gv: 0 },
+  "Real Sociedad|Bournemouth": { gl: 1, gv: 2 },
+};
 
 // Sorteo real (no simulado) de la fase de liga de la Conference League 2026/27.
 // Mismo motivo que en Europa League: los 6 bombos de 6 (UECL_POT_REAL) y los
@@ -2769,7 +2795,7 @@ function useEuropa(cl, datosReales) {
     }
     return { plazas, error: null };
   }, [clasificados, cl.perdedoresPO, cl.perdedoresR3]);
-  const liga = useFaseLiga(poolLiga, FL_CFG_UEL, UEL_SORTEO_REAL);
+  const liga = useFaseLiga(poolLiga, FL_CFG_UEL, UEL_SORTEO_REAL, UEL_RESULTADOS_JORNADA1_REAL);
 
   return {
     coefs, allTeams,
