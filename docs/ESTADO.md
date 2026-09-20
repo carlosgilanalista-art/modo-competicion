@@ -215,3 +215,4 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - ¿Existe la sección "Normativas"?
 - ¿Producción de AFC Capa 1 el 24/08 o el 25/08?
 - Registro irreverente: sin resolver.
+- ¿En cuál de los dos Projects de Claude.ai (técnico/arquitectura o editorial) se hace la planificación de viernes? `SISTEMA.md` §3 dice que esa sesión decide la tarea única del domingo (técnica) y la del lunes (editorial), pero no especifica en qué Project ocurre la planificación en sí.
