@@ -4025,33 +4025,146 @@ const NL_LIGA_META = {
 };
 const TEMA_NL = { fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C", acento: "#4A90D4", texto: "#F4F1E8", textoSuave: "#8A97A8", alerta: "#E8734A", inputBg: "#0A0E17", inputBorder: "#2A3A54" };
 
-// Calendario real de la fase de liga 2026/27 (fuente: UEFA.com).
-// Grupos de 4 (Ligas A/B/C): UEFA usa una plantilla única "por posición" —
-// referida al bombo, índice 0 = B1 … índice 3 = B4—, idéntica para todos los
-// grupos. Cada par [local, visitante] son índices dentro del grupo (que en
-// NL_GRUPOS ya están ordenados por bombo). Derivada del calendario real del A3.
-const NL_PLANTILLA_G4 = [
-  [[3, 1], [2, 0]], // J1
-  [[3, 2], [0, 1]], // J2
-  [[1, 2], [0, 3]], // J3
-  [[1, 0], [2, 3]], // J4
-  [[3, 0], [2, 1]], // J5
-  [[1, 3], [0, 2]], // J6
-];
-// Los dos grupos de 3 de la Liga D no comparten plantilla entre sí, así que se
-// fijan con su calendario real explícito ([local, visitante] por jornada).
-const NL_CALENDARIO_G3 = {
-  D1: [["Andorra", "Malta"], ["Gibraltar", "Andorra"], ["Malta", "Gibraltar"], ["Malta", "Andorra"], ["Andorra", "Gibraltar"], ["Gibraltar", "Malta"]],
-  D2: [["Liechtenstein", "Lituania"], ["Lituania", "Azerbaiyán"], ["Azerbaiyán", "Liechtenstein"], ["Azerbaiyán", "Lituania"], ["Liechtenstein", "Azerbaiyán"], ["Lituania", "Liechtenstein"]],
+// Calendario real de la fase de liga 2026/27 (fuente: UEFA.com, fixtures
+// actualizados 18/09/2026), cargado partido a partido en las 6 jornadas
+// (24/09-17/11/2026), igual que UCL_JORNADA_REAL/UEL_JORNADA_REAL/
+// UECL_JORNADA_REAL. Sustituye una plantilla genérica por posición de bombo
+// que se aplicaba igual a los 12 grupos de 4 (A/B/C) y que, verificado contra
+// este fixture, no reproducía el emparejamiento real por jornada en ningún
+// grupo comprobado (p. ej. grupo A1: J1 real es Italia-Bélgica/Turquía-Francia,
+// la plantilla daba Turquía-Italia/Bélgica-Francia — emparejamientos distintos,
+// no solo local/visitante invertido). Los dos grupos de 3 de la Liga D sí
+// coincidían ya con el calendario real (cargados el 30/08/2026) y se
+// mantienen igual, solo se les añade hora. Fecha de cada partido en formato
+// abreviado (día + fecha, sin repetir mes/año, ya en NL_FECHAS_JORNADA).
+const NL_CALENDARIO_REAL = {
+  A1: [
+    [{ local: "Italia", visitante: "Bélgica", dia: "Vie 25", hora: "20:45" }, { local: "Turquía", visitante: "Francia", dia: "Vie 25", hora: "20:45" }],
+    [{ local: "Bélgica", visitante: "Francia", dia: "Lun 28", hora: "20:45" }, { local: "Turquía", visitante: "Italia", dia: "Lun 28", hora: "20:45" }],
+    [{ local: "Francia", visitante: "Italia", dia: "Vie 2", hora: "20:45" }, { local: "Bélgica", visitante: "Turquía", dia: "Vie 2", hora: "20:45" }],
+    [{ local: "Francia", visitante: "Bélgica", dia: "Lun 5", hora: "20:45" }, { local: "Italia", visitante: "Turquía", dia: "Lun 5", hora: "20:45" }],
+    [{ local: "Turquía", visitante: "Bélgica", dia: "Jue 12", hora: "18:00" }, { local: "Italia", visitante: "Francia", dia: "Jue 12", hora: "20:45" }],
+    [{ local: "Francia", visitante: "Turquía", dia: "Dom 15", hora: "20:45" }, { local: "Bélgica", visitante: "Italia", dia: "Dom 15", hora: "20:45" }],
+  ],
+  A2: [
+    [{ local: "Países Bajos", visitante: "Alemania", dia: "Jue 24", hora: "20:45" }, { local: "Serbia", visitante: "Grecia", dia: "Jue 24", hora: "20:45" }],
+    [{ local: "Serbia", visitante: "Países Bajos", dia: "Dom 27", hora: "18:00" }, { local: "Alemania", visitante: "Grecia", dia: "Dom 27", hora: "20:45" }],
+    [{ local: "Grecia", visitante: "Países Bajos", dia: "Jue 1", hora: "20:45" }, { local: "Alemania", visitante: "Serbia", dia: "Jue 1", hora: "20:45" }],
+    [{ local: "Países Bajos", visitante: "Serbia", dia: "Dom 4", hora: "20:45" }, { local: "Grecia", visitante: "Alemania", dia: "Dom 4", hora: "20:45" }],
+    [{ local: "Países Bajos", visitante: "Grecia", dia: "Vie 13", hora: "20:45" }, { local: "Serbia", visitante: "Alemania", dia: "Vie 13", hora: "20:45" }],
+    [{ local: "Alemania", visitante: "Países Bajos", dia: "Lun 16", hora: "20:45" }, { local: "Grecia", visitante: "Serbia", dia: "Lun 16", hora: "20:45" }],
+  ],
+  A3: [
+    [{ local: "Inglaterra", visitante: "España", dia: "Sáb 26", hora: "20:45" }, { local: "Chequia", visitante: "Croacia", dia: "Sáb 26", hora: "20:45" }],
+    [{ local: "España", visitante: "Croacia", dia: "Mar 29", hora: "20:45" }, { local: "Chequia", visitante: "Inglaterra", dia: "Mar 29", hora: "20:45" }],
+    [{ local: "Croacia", visitante: "Inglaterra", dia: "Sáb 3", hora: "18:00" }, { local: "España", visitante: "Chequia", dia: "Sáb 3", hora: "20:45" }],
+    [{ local: "Croacia", visitante: "España", dia: "Mar 6", hora: "20:45" }, { local: "Inglaterra", visitante: "Chequia", dia: "Mar 6", hora: "20:45" }],
+    [{ local: "Chequia", visitante: "España", dia: "Jue 12", hora: "20:45" }, { local: "Inglaterra", visitante: "Croacia", dia: "Jue 12", hora: "20:45" }],
+    [{ local: "Croacia", visitante: "Chequia", dia: "Dom 15", hora: "20:45" }, { local: "España", visitante: "Inglaterra", dia: "Dom 15", hora: "20:45" }],
+  ],
+  A4: [
+    [{ local: "Portugal", visitante: "Gales", dia: "Jue 24", hora: "20:45" }, { local: "Noruega", visitante: "Dinamarca", dia: "Jue 24", hora: "20:45" }],
+    [{ local: "Dinamarca", visitante: "Gales", dia: "Dom 27", hora: "18:00" }, { local: "Noruega", visitante: "Portugal", dia: "Dom 27", hora: "20:45" }],
+    [{ local: "Gales", visitante: "Noruega", dia: "Jue 1", hora: "20:45" }, { local: "Dinamarca", visitante: "Portugal", dia: "Jue 1", hora: "20:45" }],
+    [{ local: "Portugal", visitante: "Noruega", dia: "Dom 4", hora: "20:45" }, { local: "Gales", visitante: "Dinamarca", dia: "Dom 4", hora: "20:45" }],
+    [{ local: "Noruega", visitante: "Gales", dia: "Sáb 14", hora: "18:00" }, { local: "Portugal", visitante: "Dinamarca", dia: "Sáb 14", hora: "20:45" }],
+    [{ local: "Dinamarca", visitante: "Noruega", dia: "Mar 17", hora: "20:45" }, { local: "Gales", visitante: "Portugal", dia: "Mar 17", hora: "20:45" }],
+  ],
+  B1: [
+    [{ local: "Eslovenia", visitante: "Escocia", dia: "Sáb 26", hora: "15:00" }, { local: "Macedonia del Norte", visitante: "Suiza", dia: "Sáb 26", hora: "20:45" }],
+    [{ local: "Eslovenia", visitante: "Macedonia del Norte", dia: "Mar 29", hora: "20:45" }, { local: "Escocia", visitante: "Suiza", dia: "Mar 29", hora: "20:45" }],
+    [{ local: "Suiza", visitante: "Eslovenia", dia: "Sáb 3", hora: "20:45" }, { local: "Macedonia del Norte", visitante: "Escocia", dia: "Sáb 3", hora: "20:45" }],
+    [{ local: "Suiza", visitante: "Macedonia del Norte", dia: "Mar 6", hora: "20:45" }, { local: "Escocia", visitante: "Eslovenia", dia: "Mar 6", hora: "20:45" }],
+    [{ local: "Escocia", visitante: "Macedonia del Norte", dia: "Vie 13", hora: "20:45" }, { local: "Eslovenia", visitante: "Suiza", dia: "Vie 13", hora: "20:45" }],
+    [{ local: "Suiza", visitante: "Escocia", dia: "Lun 16", hora: "20:45" }, { local: "Macedonia del Norte", visitante: "Eslovenia", dia: "Lun 16", hora: "20:45" }],
+  ],
+  B2: [
+    [{ local: "Georgia", visitante: "Irlanda del Norte", dia: "Vie 25", hora: "18:00" }, { local: "Hungría", visitante: "Ucrania", dia: "Vie 25", hora: "20:45" }],
+    [{ local: "Georgia", visitante: "Ucrania", dia: "Lun 28", hora: "18:00" }, { local: "Irlanda del Norte", visitante: "Hungría", dia: "Lun 28", hora: "20:45" }],
+    [{ local: "Ucrania", visitante: "Irlanda del Norte", dia: "Vie 2", hora: "20:45" }, { local: "Hungría", visitante: "Georgia", dia: "Vie 2", hora: "20:45" }],
+    [{ local: "Ucrania", visitante: "Hungría", dia: "Lun 5", hora: "20:45" }, { local: "Irlanda del Norte", visitante: "Georgia", dia: "Lun 5", hora: "20:45" }],
+    [{ local: "Georgia", visitante: "Hungría", dia: "Sáb 14", hora: "18:00" }, { local: "Irlanda del Norte", visitante: "Ucrania", dia: "Sáb 14", hora: "20:45" }],
+    [{ local: "Ucrania", visitante: "Georgia", dia: "Mar 17", hora: "20:45" }, { local: "Hungría", visitante: "Irlanda del Norte", dia: "Mar 17", hora: "20:45" }],
+  ],
+  B3: [
+    [{ local: "Austria", visitante: "Israel", dia: "Jue 24", hora: "20:45" }, { local: "Kosovo", visitante: "República de Irlanda", dia: "Jue 24", hora: "20:45" }],
+    [{ local: "Austria", visitante: "Kosovo", dia: "Dom 27", hora: "18:00" }, { local: "Israel", visitante: "República de Irlanda", dia: "Dom 27", hora: "20:45" }],
+    [{ local: "Israel", visitante: "Kosovo", dia: "Jue 1", hora: "20:45" }, { local: "República de Irlanda", visitante: "Austria", dia: "Jue 1", hora: "20:45" }],
+    [{ local: "Kosovo", visitante: "Austria", dia: "Dom 4", hora: "18:00" }, { local: "República de Irlanda", visitante: "Israel", dia: "Dom 4", hora: "20:45" }],
+    [{ local: "Kosovo", visitante: "Israel", dia: "Sáb 14", hora: "15:00" }, { local: "Austria", visitante: "República de Irlanda", dia: "Sáb 14", hora: "20:45" }],
+    [{ local: "Israel", visitante: "Austria", dia: "Mar 17", hora: "20:45" }, { local: "República de Irlanda", visitante: "Kosovo", dia: "Mar 17", hora: "20:45" }],
+  ],
+  B4: [
+    [{ local: "Polonia", visitante: "Bosnia y Herzegovina", dia: "Vie 25", hora: "20:45" }, { local: "Suecia", visitante: "Rumanía", dia: "Vie 25", hora: "20:45" }],
+    [{ local: "Rumanía", visitante: "Bosnia y Herzegovina", dia: "Lun 28", hora: "20:45" }, { local: "Suecia", visitante: "Polonia", dia: "Lun 28", hora: "20:45" }],
+    [{ local: "Polonia", visitante: "Rumanía", dia: "Vie 2", hora: "20:45" }, { local: "Bosnia y Herzegovina", visitante: "Suecia", dia: "Vie 2", hora: "20:45" }],
+    [{ local: "Rumanía", visitante: "Suecia", dia: "Lun 5", hora: "20:45" }, { local: "Bosnia y Herzegovina", visitante: "Polonia", dia: "Lun 5", hora: "20:45" }],
+    [{ local: "Suecia", visitante: "Bosnia y Herzegovina", dia: "Sáb 14", hora: "20:45" }, { local: "Rumanía", visitante: "Polonia", dia: "Sáb 14", hora: "20:45" }],
+    [{ local: "Bosnia y Herzegovina", visitante: "Rumanía", dia: "Mar 17", hora: "20:45" }, { local: "Polonia", visitante: "Suecia", dia: "Mar 17", hora: "20:45" }],
+  ],
+  C1: [
+    [{ local: "San Marino", visitante: "Finlandia", dia: "Sáb 26", hora: "18:00" }, { local: "Albania", visitante: "Bielorrusia", dia: "Sáb 26", hora: "20:45" }],
+    [{ local: "Finlandia", visitante: "Bielorrusia", dia: "Mar 29", hora: "18:00" }, { local: "San Marino", visitante: "Albania", dia: "Mar 29", hora: "20:45" }],
+    [{ local: "Finlandia", visitante: "Albania", dia: "Sáb 3", hora: "15:00" }, { local: "Bielorrusia", visitante: "San Marino", dia: "Sáb 3", hora: "18:00" }],
+    [{ local: "Albania", visitante: "San Marino", dia: "Mar 6", hora: "20:45" }, { local: "Bielorrusia", visitante: "Finlandia", dia: "Mar 6", hora: "20:45" }],
+    [{ local: "Albania", visitante: "Finlandia", dia: "Jue 12", hora: "20:45" }, { local: "San Marino", visitante: "Bielorrusia", dia: "Jue 12", hora: "20:45" }],
+    [{ local: "Finlandia", visitante: "San Marino", dia: "Dom 15", hora: "18:00" }, { local: "Bielorrusia", visitante: "Albania", dia: "Dom 15", hora: "18:00" }],
+  ],
+  C2: [
+    [{ local: "Armenia", visitante: "Letonia", dia: "Vie 25", hora: "18:00" }, { local: "Montenegro", visitante: "Chipre", dia: "Vie 25", hora: "20:45" }],
+    [{ local: "Armenia", visitante: "Montenegro", dia: "Lun 28", hora: "18:00" }, { local: "Letonia", visitante: "Chipre", dia: "Lun 28", hora: "18:00" }],
+    [{ local: "Letonia", visitante: "Montenegro", dia: "Vie 2", hora: "18:00" }, { local: "Chipre", visitante: "Armenia", dia: "Vie 2", hora: "18:00" }],
+    [{ local: "Chipre", visitante: "Letonia", dia: "Lun 5", hora: "18:00" }, { local: "Montenegro", visitante: "Armenia", dia: "Lun 5", hora: "20:45" }],
+    [{ local: "Armenia", visitante: "Chipre", dia: "Jue 12", hora: "18:00" }, { local: "Montenegro", visitante: "Letonia", dia: "Jue 12", hora: "20:45" }],
+    [{ local: "Letonia", visitante: "Armenia", dia: "Dom 15", hora: "15:00" }, { local: "Chipre", visitante: "Montenegro", dia: "Dom 15", hora: "15:00" }],
+  ],
+  C3: [
+    [{ local: "Islas Feroe", visitante: "Kazajistán", dia: "Sáb 26", hora: "18:00" }, { local: "Eslovaquia", visitante: "Moldavia", dia: "Sáb 26", hora: "20:45" }],
+    [{ local: "Moldavia", visitante: "Islas Feroe", dia: "Mar 29", hora: "18:00" }, { local: "Eslovaquia", visitante: "Kazajistán", dia: "Mar 29", hora: "20:45" }],
+    [{ local: "Kazajistán", visitante: "Moldavia", dia: "Vie 2", hora: "16:00" }, { local: "Islas Feroe", visitante: "Eslovaquia", dia: "Vie 2", hora: "20:45" }],
+    [{ local: "Kazajistán", visitante: "Islas Feroe", dia: "Mar 6", hora: "16:00" }, { local: "Moldavia", visitante: "Eslovaquia", dia: "Mar 6", hora: "20:45" }],
+    [{ local: "Moldavia", visitante: "Kazajistán", dia: "Vie 13", hora: "18:00" }, { local: "Eslovaquia", visitante: "Islas Feroe", dia: "Vie 13", hora: "20:45" }],
+    [{ local: "Islas Feroe", visitante: "Moldavia", dia: "Lun 16", hora: "16:00" }, { local: "Kazajistán", visitante: "Eslovaquia", dia: "Lun 16", hora: "16:00" }],
+  ],
+  C4: [
+    [{ local: "Islandia", visitante: "Estonia", dia: "Sáb 26", hora: "18:00" }, { local: "Bulgaria", visitante: "Luxemburgo", dia: "Sáb 26", hora: "18:00" }],
+    [{ local: "Bulgaria", visitante: "Estonia", dia: "Mar 29", hora: "20:45" }, { local: "Luxemburgo", visitante: "Islandia", dia: "Mar 29", hora: "20:45" }],
+    [{ local: "Islandia", visitante: "Bulgaria", dia: "Sáb 3", hora: "18:00" }, { local: "Estonia", visitante: "Luxemburgo", dia: "Sáb 3", hora: "18:00" }],
+    [{ local: "Luxemburgo", visitante: "Bulgaria", dia: "Mar 6", hora: "20:45" }, { local: "Estonia", visitante: "Islandia", dia: "Mar 6", hora: "20:45" }],
+    [{ local: "Luxemburgo", visitante: "Estonia", dia: "Vie 13", hora: "20:45" }, { local: "Bulgaria", visitante: "Islandia", dia: "Vie 13", hora: "20:45" }],
+    [{ local: "Islandia", visitante: "Luxemburgo", dia: "Lun 16", hora: "18:00" }, { local: "Estonia", visitante: "Bulgaria", dia: "Lun 16", hora: "18:00" }],
+  ],
+  D1: [
+    [{ local: "Andorra", visitante: "Malta", dia: "Jue 24", hora: "18:00" }],
+    [{ local: "Gibraltar", visitante: "Andorra", dia: "Dom 27", hora: "18:00" }],
+    [{ local: "Malta", visitante: "Gibraltar", dia: "Jue 1", hora: "20:45" }],
+    [{ local: "Malta", visitante: "Andorra", dia: "Dom 4", hora: "18:00" }],
+    [{ local: "Andorra", visitante: "Gibraltar", dia: "Vie 13", hora: "20:45" }],
+    [{ local: "Gibraltar", visitante: "Malta", dia: "Lun 16", hora: "20:45" }],
+  ],
+  D2: [
+    [{ local: "Liechtenstein", visitante: "Lituania", dia: "Jue 24", hora: "20:45" }],
+    [{ local: "Lituania", visitante: "Azerbaiyán", dia: "Dom 27", hora: "15:00" }],
+    [{ local: "Azerbaiyán", visitante: "Liechtenstein", dia: "Jue 1", hora: "18:00" }],
+    [{ local: "Azerbaiyán", visitante: "Lituania", dia: "Dom 4", hora: "15:00" }],
+    [{ local: "Liechtenstein", visitante: "Azerbaiyán", dia: "Vie 13", hora: "20:45" }],
+    [{ local: "Lituania", visitante: "Liechtenstein", dia: "Lun 16", hora: "18:00" }],
+  ],
 };
-function nlFixturesGrupo(gid, nombres) {
+// Ventanas de fecha de cada jornada (idénticas para los 14 grupos: todas las
+// selecciones juegan en las mismas ventanas FIFA). Fuente: UEFA.com.
+const NL_FECHAS_JORNADA = [
+  "Jueves 24 – sábado 26 de septiembre de 2026",
+  "Domingo 27 – martes 29 de septiembre de 2026",
+  "Jueves 1 – sábado 3 de octubre de 2026",
+  "Domingo 4 – martes 6 de octubre de 2026",
+  "Jueves 12 – sábado 14 de noviembre de 2026",
+  "Domingo 15 – martes 17 de noviembre de 2026",
+];
+function nlFixturesGrupo(gid) {
   const partidos = [];
-  const add = (jornada, local, visitante) => partidos.push({ jornada, local, visitante, clave: `${gid}|${local}|${visitante}` });
-  if (nombres.length === 4) {
-    NL_PLANTILLA_G4.forEach((ronda, r) => ronda.forEach(([l, v]) => add(r + 1, nombres[l], nombres[v])));
-  } else {
-    NL_CALENDARIO_G3[gid].forEach(([local, visitante], r) => add(r + 1, local, visitante));
-  }
+  NL_CALENDARIO_REAL[gid].forEach((ronda, r) => ronda.forEach(({ local, visitante, dia, hora }) =>
+    partidos.push({ jornada: r + 1, local, visitante, dia, hora, clave: `${gid}|${local}|${visitante}` })));
   return partidos;
 }
 
@@ -4171,7 +4284,7 @@ function useNationsLeague() {
     for (const liga of ["A", "B", "C", "D"]) {
       for (const [gid, nombres] of Object.entries(NL_GRUPOS[liga])) {
         const equipos = nombres.map((nombre) => ({ nombre, rank: NL_RANK.get(nombre), bombo: nlBomboDe(nombre) }));
-        out.push({ liga, id: gid, equipos, partidos: nlFixturesGrupo(gid, nombres) });
+        out.push({ liga, id: gid, equipos, partidos: nlFixturesGrupo(gid) });
       }
     }
     return out;
@@ -4461,6 +4574,9 @@ function NLGrupoCard({ grupo, nl, colores }) {
         <div key={j} style={{ marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 10, letterSpacing: 1 }}>J{j + 1}</span>
+            {NL_FECHAS_JORNADA[j] && (
+              <span style={{ color: colores.textoSuave, fontSize: 10 }}>{NL_FECHAS_JORNADA[j]}</span>
+            )}
             <button onClick={() => nl.rellenarJornadaGrupo(grupo, j + 1)}
               style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer", padding: 0 }}>🎲</button>
           </div>
@@ -4474,6 +4590,11 @@ function NLGrupoCard({ grupo, nl, colores }) {
                   <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
                   <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => nl.cambiar(m.clave, "gv", e.target.value)} style={inputStyle} />
                   <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}>{m.visitante}</span>
+                  {(m.dia || m.hora) && (
+                    <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+                      {[m.dia, m.hora].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
                   {r && (r.gl !== undefined || r.gv !== undefined) && (
                     <button onClick={() => nl.reiniciar(m.clave)} title="Reiniciar resultado"
                       style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
@@ -5036,7 +5157,7 @@ function eqSimularFaseLigaNL() {
   for (const liga of ["A", "B", "C", "D"]) {
     for (const [gid, nombres] of Object.entries(NL_GRUPOS[liga])) {
       const equipos = nombres.map((nombre) => ({ nombre, rank: NL_RANK.get(nombre) }));
-      const partidos = nlFixturesGrupo(gid, nombres);
+      const partidos = nlFixturesGrupo(gid);
       partidos.forEach((m) => { resultados[m.clave] = { gl: rnd5(), gv: rnd5() }; });
       grupos.push({ liga, id: gid, equipos, partidos });
     }
@@ -5166,10 +5287,10 @@ function eqObtenerSorteo(rankingProvisional) {
 
 // ---- Etapa 4: fase de grupos de clasificación ----
 // Calendario ida y vuelta genérico (método del círculo), válido para grupos
-// de 4 o de 5 — no reutiliza las plantillas fijas de la Nations League
-// (NL_PLANTILLA_G4/NL_CALENDARIO_G3) porque esas son específicas de sus
-// calendarios reales publicados; aquí no hay calendario real jornada a
-// jornada publicado, solo las ventanas de fechas (EQ_CALENDARIO, informativo).
+// de 4 o de 5 — no reutiliza el calendario real de la Nations League
+// (NL_CALENDARIO_REAL) porque ese es específico de sus partidos ya publicados;
+// aquí no hay calendario real jornada a jornada publicado, solo las ventanas
+// de fechas (EQ_CALENDARIO, informativo).
 function eqCalendarioGrupo(gid, nombres) {
   const impar = nombres.length % 2 !== 0;
   const lista = impar ? [...nombres, null] : [...nombres];

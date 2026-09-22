@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 20/09/2026 — revisión editorial: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
+**Última actualización:** 22/09/2026 — calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -119,6 +119,18 @@ Fusionado a `main` (squash, commit `3be3d49`, PR #50, rama `claude/load-matchday
 Fusionado a `main` (squash, commit `23ad156`, PR #53, rama `claude/europa-league-jornada-1-load-ehys7k`), tras autorización explícita de Carlos en cada paso (commit, push, apertura de PR, fusión). Deployment de Production en Vercel no verificado todavía — pendiente que Carlos lo confirme, mismo precedente del 27/08.
 **Herramienta:** Claude Code
 
+**Sesión:** 22/09/2026 (martes) — COMPLETADA
+**Tarea:** Actualizar el calendario del simulador de Nations League (selecciones) con las fechas y horarios oficiales de UEFA para las 6 jornadas de la fase de liga 2026/27 (fuente: fixtures de UEFA.com, actualizados 18/09/2026).
+**Criterio de hecho:** CUMPLIDO en código, con corrección de alcance a mitad de sesión tras dos discrepancias detectadas antes de escribir nada (señaladas y confirmadas por Carlos, `CONVENCIONES.md` §4): (1) el total real no eran los 72 partidos de la tarea original, sino **156** (12 grupos de 4 × 12 partidos + 2 grupos de 3 × 6 partidos, cuadra con `NL_GRUPOS` ya cargado); (2) el reparto de jornadas ya cargado (`NL_PLANTILLA_G4`, una plantilla genérica por posición de bombo aplicada igual a los 12 grupos de 4) **no coincidía con el calendario oficial** — verificado con los grupos A1 y A2 antes de tocar código: la jornada 1 real no compartía ni siquiera los mismos emparejamientos que la plantilla, no solo el local/visitante invertido. Carlos confirmó ampliar el alcance a corregir el reparto de jornadas, no solo añadir fecha/hora.
+Sustituida la plantilla + `NL_CALENDARIO_G3` (Liga D) por `NL_CALENDARIO_REAL`: los 156 partidos reales cargados grupo a grupo con día y hora, mismo patrón que `UCL_JORNADA_REAL`/`UEL_JORNADA_REAL`/`UECL_JORNADA_REAL`. Añadido `NL_FECHAS_JORNADA` (rango de fechas por jornada) y mostrados fecha/hora en `NLGrupoCard`, mismo patrón visual que las tres fases de liga de clubes. Los grupos D1/D2 ya tenían el calendario real correcto desde el 30/08 (verificado, sin cambios salvo la hora).
+Verificado por script independiente (reconstrucción del fixture pegado por Carlos en un fichero aparte, traducido a los nombres en español ya usados en `NL_GRUPOS`, comparado clave a clave contra lo cargado): 156/156 partidos, 0 discrepancias en ambos sentidos en grupo, jornada, local, visitante, día y hora. Cada uno de los 54 equipos juega el número correcto de partidos por grupo y cada pareja aparece exactamente 2 veces. `npx vite build` limpio (dos veces). Probado en navegador con Playwright: 14 tarjetas de grupo, 84 cabeceras de jornada, fecha/hora visibles, "Simular todo"/"Simular grupo" funcionan sin romper la visualización; captura de Grupo A1 verificada visualmente. Los 2 errores de consola detectados son Google Analytics bloqueado por el proxy de red del entorno (ya documentado en sesiones anteriores), no relacionados con el cambio.
+No se toca el contrato de resultados: los partidos siguen identificándose por clave estable (`grupo|local|visitante`), y el estado de resultados de Nations League no tiene persistencia (`useState` en memoria, sin `localStorage`/`window.storage`), así que no hay ninguna simulación guardada que este cambio pueda afectar — confirmado antes de escribir código, respondiendo a la pregunta de diagnóstico planteada al arrancar la sesión.
+Commits `364eaff` (código), `a37ed7a` y `5c375f3` (documentación) en rama `claude/ecstatic-edison-utrrkl`. PR #55 abierto (`claude/ecstatic-edison-utrrkl` → `main`), CI en verde (Vercel Preview Comments, único check, éxito), `mergeable_state: clean`, 0 hilos de revisión pendientes — sesión suscrita a la actividad del PR. Sin ninguna aprobación humana registrada (`get_reviews` vacío en el momento de fusionar), Carlos autorizó explícitamente fusionar de todos modos ("Sí, fusiona ya"), saltando la condición previa de esperar aprobación.
+Fusionado a `main` (squash, commit `1c9e0a3`, PR #55), gate declarado antes de fusionar (rama, conteos exactos verificados, veredicto APTO) según `CONVENCIONES.md` §3. Confirmado por evento de GitHub (`pull_request.closed`, outcome `merged`) segundos después.
+**Deployment de Production en Vercel no verificado desde la sesión** — sin API de Vercel disponible entre las herramientas y con `modocompeticion.com` bloqueado por el proxy de red del entorno (mismo bloqueo que ya afecta a otros dominios en sesiones anteriores), no hay forma de comprobarlo desde aquí. Mismo precedente del 27/08: pendiente que Carlos lo confirme en el dashboard de Vercel o visitando el sitio; si no se disparó, el fix conocido es un push adicional a `main`.
+Rama `claude/ecstatic-edison-utrrkl` fusionada e íntegra en `main`, pendiente de borrar (no se ha intentado el borrado esta sesión; en sesiones anteriores el borrado remoto fallaba por un bloqueo HTTP 403 del proxy git). Nada fue al Aparcadero en esta sesión.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
@@ -133,6 +145,7 @@ Fusionado a `main` (squash, commit `23ad156`, PR #53, rama `claude/europa-league
 - Borradores sin publicación confirmada (no listar como publicados): explicador de multipropiedad (12/08), artículo del sorteo UCL (27/08), artículo CAF (06/09, a refrescar con la 1ª previa).
 - Cargas de J1: Champions (prompt 11/09) y Europa (prompt 18/09), ejecución por confirmar. Corregir en el prompt de Europa: Sturm Graz–Rennes y Hapoel–Dinamo Zagreb son del 16/09.
 - Sprint Relanzamiento: medición pendiente; objetivo numérico no consta.
+- Calendario real de la fase de liga de Nations League 2026/27 (ver §3, sesión 22/09): fusionado a `main` (PR #55, commit `1c9e0a3`). Pendiente que Carlos confirme el deployment de Production en Vercel (sin API de Vercel ni acceso a `modocompeticion.com` desde la sesión para verificarlo) y, si no se disparó solo, el push adicional de siempre (precedente 27/08).
 
 ## 5. Backlog congelado
 
