@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 22/09/2026 — calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos
+**Última actualización:** 22/09/2026 — calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -27,12 +27,15 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 
 **Artículos publicados**
 
-- Fases Previas UEFA (1 y 2)
-- Fase de liga y eliminatorias UEFA
-- Nations League 2026/27
-- Clasificación para la EURO 2028
-- AFC Champions League Elite 2026/27 — explicación
+_(Revisión editorial 20/09: estado de confirmación por artículo, contra el chat del Project editorial.)_
+
+- Fases Previas UEFA (1 y 2) — confirmado en chat 12/07
+- Fase de liga y eliminatorias UEFA — confirmado en chat 16/07
+- Nations League 2026/27 — por confirmar: sin chat que lo verifique
+- Clasificación para la EURO 2028 — confirmado en chat 08/08
+- AFC Champions League Elite 2026/27 — explicación — por confirmar fecha
 - Procedimiento del sorteo de la fase de liga UCL 2026/27 (`#/procedimiento-sorteo-ucl`), enlazado junto al botón de sorteo en el simulador de Champions
+- Difusión en X: ningún hilo con publicación confirmada desde el 09/08 (por confirmar). Último confirmado: lanzamiento, 09/07
 
 ## 2. Deadlines duros
 
@@ -138,6 +141,10 @@ Rama `claude/ecstatic-edison-utrrkl` fusionada e íntegra en `main`, pendiente d
 - Datos reales UEFA fase previa 2026/27 — Playoff de las tres competiciones completo: Champions League (7/7, fase de liga UCL 36/36), Europa League (12/12) y Conference League (24/24). Fusionado a `main` vía PR #43, PR #44 (Champions, rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta) y PR #46 (EL+UECL, rama `claude/playoff-uefa-resultados-851dma`, resuelta — merge confirmado en `main`, pendiente confirmar deployment de Production en Vercel por el precedente del 27/08, ver Decisiones cerradas). Las fases de liga de las tres competiciones ya tienen sorteo real y calendario de jornadas completos (ver §3, sesiones 30/08-31/08) — este ítem queda cerrado salvo por la corrección pendiente de `docs/clasificados-2026-27.md` (sigue diciendo que EL/UECL están bloqueadas), que se deja para otra sesión.
 - Plan de difusión por X del calendario de jornadas UEFA entregado a Carlos (31/08): 2 tweets, uno esta semana y otro la víspera de la Jornada 1 (6-7/09). Publicación manual pendiente por parte de Carlos, no se gestiona desde el repo.
 - Capa 2 del simulador AFC Champions League Elite (eliminatorias: octavos y cuartos en adelante): formato ya verificado sin ambigüedad contra el reglamento oficial (ver Decisiones cerradas, 06/09). Sin fecha límite — el deadline del 14/09 es el inicio de la fase de liga y no aplica a esta capa (octavos no se juegan hasta marzo de 2027); el bracket real, además, no puede cargarse hasta que termine la fase de liga y se conozca la clasificación final 1º-8º de cada región. Queda pendiente de sesión futura, sin prisa.
+- Difusión AFC: hilo redactado el 24/08; a 06/09 seguía "pendiente de publicación manual" (por confirmar si salió). Antes de publicar: comprobar #ACLElite.
+- Borradores sin publicación confirmada (no listar como publicados): explicador de multipropiedad (12/08), artículo del sorteo UCL (27/08), artículo CAF (06/09, a refrescar con la 1ª previa).
+- Cargas de J1: Champions (prompt 11/09) y Europa (prompt 18/09), ejecución por confirmar. Corregir en el prompt de Europa: Sturm Graz–Rennes y Hapoel–Dinamo Zagreb son del 16/09.
+- Sprint Relanzamiento: medición pendiente; objetivo numérico no consta.
 - Calendario real de la fase de liga de Nations League 2026/27 (ver §3, sesión 22/09): fusionado a `main` (PR #55, commit `1c9e0a3`). Pendiente que Carlos confirme el deployment de Production en Vercel (sin API de Vercel ni acceso a `modocompeticion.com` desde la sesión para verificarlo) y, si no se disparó solo, el push adicional de siempre (precedente 27/08).
 
 ## 5. Backlog congelado
@@ -206,9 +213,19 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - Varios coeficientes UEFA usados en `coefFaseLiga` (marcados `/* estimado */` en el código) no coinciden con los oficiales que usó la UEFA para el sorteo real: al intentar derivar los bombos de Europa League y Conference League ordenando por esos coeficientes, 25/36 y 10/36 equipos respectivamente quedaban mal clasificados. No bloquea nada porque los bombos reales de esas dos competiciones ya están cargados a mano (`UEL_POT_REAL`/`UECL_POT_REAL`), pero cualquier lógica que siga confiando en `coefFaseLiga` para desempates o visualización (p. ej. el orden dentro de cada bombo mostrado en pantalla) puede no reflejar el criterio oficial real
 - Resultados reales de la Jornada 1 UEL (sesión 18/09) no se probaron en navegador con Playwright antes de fusionar, a diferencia de la sesión de UCL Jornada 1 (11/09) que sí lo hizo. Solo se verificó por build limpio y por script (claves/jornada/día). No detectado ningún problema, pero es una brecha de proceso frente al patrón habitual — si se repite, homogeneizar
 - Conference League sigue sin resultados reales de su Jornada 1 cargados (jugada también a mediados de septiembre de 2026) — pendiente de sesión futura si Carlos quiere completar las tres competiciones UEFA
+- Regla "no redactar prompts para Code en el Project editorial": cumplida 21/08, 24/08 y 27/08; incumplida 11/09 y 18/09. Decidir si se mantiene.
+- Modo resultados reales para Nations League: no existe.
+- Convención UTM en enlaces de difusión (por confirmar).
 
 ## 8. Preguntas abiertas
 
 - El registro irreverente de Modo Competición sigue sin calibrar con ejemplos propios reales. La voz de objetivoanalista.com es técnica y didáctica, no es esa. Bloquea afinar el tono de los artículos nuevos.
 - Search Console: 0 keywords confirmadas a fecha de la última revisión (09/08). Sin señal orgánica todavía; pendiente de volver a mirar en el cierre del Sprint (24/08).
 - `ARQUITECTURA.md` §2 describe flags `origen_ida`/`origen_vuelta` a nivel de campo. El código real (`useOrigenResultados`, `src/App.jsx`) usa en su lugar un único campo `origen` por eliminatoria con tres estados (`real`, `editado`, `real-incompleto`). Señalado el 17/08 y dejado sin corregir a petición explícita — pendiente decidir si se actualiza el documento o el código.
+- ¿Qué borradores de X se publicaron y cuándo? (inventario del lunes 21/09)
+- ¿Está cargado el calendario de jornadas de las 3 competiciones? ¿Y J1 de Champions y Europa?
+- ¿Se celebró la sesión de arquitectura CAF del 06/09 en el Project técnico?
+- ¿Existe la sección "Normativas"?
+- ¿Producción de AFC Capa 1 el 24/08 o el 25/08?
+- Registro irreverente: sin resolver.
+- ¿En cuál de los dos Projects de Claude.ai (técnico/arquitectura o editorial) se hace la planificación de viernes? `SISTEMA.md` §3 dice que esa sesión decide la tarea única del domingo (técnica) y la del lunes (editorial), pero no especifica en qué Project ocurre la planificación en sí.
