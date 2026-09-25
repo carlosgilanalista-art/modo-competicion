@@ -4168,6 +4168,32 @@ function nlFixturesGrupo(gid) {
   return partidos;
 }
 
+// Resultados reales de la Jornada 1 (24-25/09/2026, fuente: UEFA.com), cargados
+// con el mismo patrón real/editado/restaurar que UCL_RESULTADOS_JORNADA1_REAL /
+// UEL_RESULTADOS_JORNADA1_REAL (useOrigenResultados, ver useNationsLeague más
+// abajo) — la Nations League no tenía hasta ahora ningún mecanismo de
+// resultado real, solo el useState plano de simulación manual. 16/16
+// partidos de la jornada; Montenegro-Chipre (Grupo C2) se cargó aparte,
+// confirmado por Carlos el 25/09 tras quedar pendiente en la carga inicial.
+const NL_RESULTADOS_JORNADA1_REAL = {
+  "A1|Italia|Bélgica": { gl: 0, gv: 2 },
+  "A1|Turquía|Francia": { gl: 0, gv: 1 },
+  "A2|Países Bajos|Alemania": { gl: 1, gv: 1 },
+  "A2|Serbia|Grecia": { gl: 1, gv: 2 },
+  "A4|Portugal|Gales": { gl: 1, gv: 0 },
+  "A4|Noruega|Dinamarca": { gl: 3, gv: 2 },
+  "B2|Georgia|Irlanda del Norte": { gl: 0, gv: 1 },
+  "B2|Hungría|Ucrania": { gl: 0, gv: 1 },
+  "B3|Austria|Israel": { gl: 3, gv: 1 },
+  "B3|Kosovo|República de Irlanda": { gl: 1, gv: 0 },
+  "B4|Polonia|Bosnia y Herzegovina": { gl: 0, gv: 0 },
+  "B4|Suecia|Rumanía": { gl: 2, gv: 1 },
+  "C2|Armenia|Letonia": { gl: 2, gv: 0 },
+  "C2|Montenegro|Chipre": { gl: 2, gv: 1 },
+  "D1|Andorra|Malta": { gl: 1, gv: 2 },
+  "D2|Liechtenstein|Lituania": { gl: 0, gv: 2 },
+};
+
 // ---- Clasificación de grupo (reglamento UEFA Nations League) ----
 // A diferencia de la fase liga de clubes, el PRIMER criterio de desempate es el
 // enfrentamiento directo (H2H): entre equipos empatados a puntos se aplican, solo
@@ -4278,7 +4304,16 @@ function nlResolverGanador(tie, resultado) {
 // LÓGICA — NATIONS LEAGUE (independiente: no encadena con clubes)
 // ============================================================
 function useNationsLeague() {
-  const [res, setRes] = useState({}); // { [clavePartido]: { gl, gv } }
+  // Mismo patrón real/editado/restaurar que useFaseLiga (Champions/Europa
+  // League, ver useOrigenResultados) en vez de uno nuevo: la Jornada 1 real
+  // se precarga una sola vez (los 14 grupos son estables, sin sorteo que
+  // pueda cambiarlos) y useOrigenResultados sigue el origen partido a partido.
+  const [res, setRes] = useState(() => ({ ...NL_RESULTADOS_JORNADA1_REAL })); // { [clavePartido]: { gl, gv } }
+  const oNL = useOrigenResultados();
+  useEffect(() => {
+    oNL.marcarOrigen(Object.fromEntries(Object.keys(NL_RESULTADOS_JORNADA1_REAL).map((clave) => [clave, "real"])));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const grupos = useMemo(() => {
     const out = [];
     for (const liga of ["A", "B", "C", "D"]) {
@@ -4290,13 +4325,34 @@ function useNationsLeague() {
     return out;
   }, []);
   const numJornadas = useMemo(() => grupos.reduce((max, g) => Math.max(max, ...g.partidos.map((m) => m.jornada)), 0), [grupos]);
-  const cambiar = (clave, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setRes((p) => ({ ...p, [clave]: { ...p[clave], [campo]: v } })); };
-  const reiniciar = (clave) => setRes((p) => { const n = { ...p }; delete n[clave]; return n; });
-  const rellenarPartidos = (partidos) => setRes((p) => { const n = { ...p }; partidos.forEach((m) => { n[m.clave] = { gl: rnd5(), gv: rnd5() }; }); return n; });
+  const cambiar = (clave, campo, raw) => {
+    const v = validar(raw);
+    if (v === "INVALIDO") return;
+    setRes((p) => ({ ...p, [clave]: { ...p[clave], [campo]: v } }));
+    oNL.marcarEditado(clave);
+  };
+  const reiniciar = (clave) => { setRes((p) => { const n = { ...p }; delete n[clave]; return n; }); oNL.marcarEditado(clave); };
+  const restaurarPartido = (clave) => {
+    if (!(clave in NL_RESULTADOS_JORNADA1_REAL)) return;
+    setRes((p) => ({ ...p, [clave]: { ...NL_RESULTADOS_JORNADA1_REAL[clave] } }));
+    oNL.restaurar(clave, "real");
+  };
+  const rellenarPartidos = (partidos) => setRes((p) => {
+    const n = { ...p };
+    partidos.filter((m) => !oNL.tieneBaseReal(m.clave)).forEach((m) => { n[m.clave] = { gl: rnd5(), gv: rnd5() }; });
+    return n;
+  });
   const rellenarGrupo = (g) => rellenarPartidos(g.partidos);
   const rellenarJornadaGrupo = (g, j) => rellenarPartidos(g.partidos.filter((m) => m.jornada === j));
   const rellenarTodo = () => rellenarPartidos(grupos.flatMap((g) => g.partidos));
-  const reiniciarTodo = () => setRes({});
+  // "Reiniciar todo" vuelve a la base real de Jornada 1, no a un tablero vacío
+  // (igual que restaurarSorteoReal en useFaseLiga) — si no, un resultado real
+  // "editado" se borraría sin recuperar su origen ni su marcador.
+  const reiniciarTodo = () => {
+    setRes({ ...NL_RESULTADOS_JORNADA1_REAL });
+    oNL.reiniciar();
+    oNL.marcarOrigen(Object.fromEntries(Object.keys(NL_RESULTADOS_JORNADA1_REAL).map((clave) => [clave, "real"])));
+  };
 
   const grupoCompleto = (g) => g.partidos.every((m) => { const r = res[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; });
   const clasificaciones = useMemo(() => {
@@ -4500,6 +4556,7 @@ function useNationsLeague() {
 
   return {
     grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, reiniciarTodo, clasificaciones, movimientos,
+    origenNL: oNL.origen, bloqueadoPartido: oNL.esBloqueado, desbloquearPartido: oNL.desbloquear, restaurarPartido,
     playoffPools, sorteoAB, tiesAB, resAB, sortearAB, confirmarAB, cambiarAB, reiniciarAB, rellenarAB,
     sorteoBC, tiesBC, resBC, sortearBC, confirmarBC, cambiarBC, reiniciarBC, rellenarBC,
     finalFourPool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta,
@@ -4583,22 +4640,41 @@ function NLGrupoCard({ grupo, nl, colores }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {partidos.map((m) => {
               const r = nl.res[m.clave];
+              const origenM = nl.origenNL?.[m.clave];
+              const bloqueado = nl.bloqueadoPartido?.(m.clave);
               return (
-                <div key={m.clave} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, textAlign: "right", minWidth: 90 }}>{m.local}</span>
-                  <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => nl.cambiar(m.clave, "gl", e.target.value)} style={inputStyle} />
-                  <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
-                  <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => nl.cambiar(m.clave, "gv", e.target.value)} style={inputStyle} />
-                  <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}>{m.visitante}</span>
-                  {(m.dia || m.hora) && (
-                    <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
-                      {[m.dia, m.hora].filter(Boolean).join(" · ")}
-                    </span>
+                <div key={m.clave} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {origenM === "editado" && (
+                    <span style={{ alignSelf: "flex-start", fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: 1, color: colores.alerta, border: `1px solid ${colores.alerta}`, borderRadius: 999, padding: "1px 6px" }}>✎ Editado (resultado real modificado)</span>
                   )}
-                  {r && (r.gl !== undefined || r.gv !== undefined) && (
-                    <button onClick={() => nl.reiniciar(m.clave)} title="Reiniciar resultado"
-                      style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ color: colores.texto, fontSize: 12, flex: 1, textAlign: "right", minWidth: 90 }}>{m.local}</span>
+                    {bloqueado ? (
+                      <span style={{ color: meta.color, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>{r.gl} - {r.gv}</span>
+                    ) : (
+                      <>
+                        <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => nl.cambiar(m.clave, "gl", e.target.value)} style={inputStyle} />
+                        <span style={{ color: colores.textoSuave, fontSize: 11 }}>-</span>
+                        <input type="number" min="0" value={r?.gv ?? ""} onChange={(e) => nl.cambiar(m.clave, "gv", e.target.value)} style={inputStyle} />
+                      </>
+                    )}
+                    <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}>{m.visitante}</span>
+                    {(m.dia || m.hora) && (
+                      <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+                        {[m.dia, m.hora].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                    {bloqueado ? (
+                      <button onClick={() => nl.desbloquearPartido(m.clave)} title="Modificar resultado real"
+                        style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "1px 6px", fontSize: 10, cursor: "pointer" }}>✎ Modificar</button>
+                    ) : origenM === "editado" ? (
+                      <button onClick={() => nl.restaurarPartido(m.clave)} title="Restaurar resultado real"
+                        style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "1px 6px", fontSize: 10, cursor: "pointer" }}>↩ Restaurar real</button>
+                    ) : r && (r.gl !== undefined || r.gv !== undefined) && (
+                      <button onClick={() => nl.reiniciar(m.clave)} title="Reiniciar resultado"
+                        style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer" }}>↺</button>
+                    )}
+                  </div>
                 </div>
               );
             })}
