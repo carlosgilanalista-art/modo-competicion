@@ -4172,9 +4172,9 @@ function nlFixturesGrupo(gid) {
 // con el mismo patrón real/editado/restaurar que UCL_RESULTADOS_JORNADA1_REAL /
 // UEL_RESULTADOS_JORNADA1_REAL (useOrigenResultados, ver useNationsLeague más
 // abajo) — la Nations League no tenía hasta ahora ningún mecanismo de
-// resultado real, solo el useState plano de simulación manual. 15/16 partidos
-// de la jornada: Montenegro-Chipre (Grupo C2) queda fuera por no estar
-// confirmado como definitivo.
+// resultado real, solo el useState plano de simulación manual. 16/16
+// partidos de la jornada; Montenegro-Chipre (Grupo C2) se cargó aparte,
+// confirmado por Carlos el 25/09 tras quedar pendiente en la carga inicial.
 const NL_RESULTADOS_JORNADA1_REAL = {
   "A1|Italia|Bélgica": { gl: 0, gv: 2 },
   "A1|Turquía|Francia": { gl: 0, gv: 1 },
@@ -4189,6 +4189,7 @@ const NL_RESULTADOS_JORNADA1_REAL = {
   "B4|Polonia|Bosnia y Herzegovina": { gl: 0, gv: 0 },
   "B4|Suecia|Rumanía": { gl: 2, gv: 1 },
   "C2|Armenia|Letonia": { gl: 2, gv: 0 },
+  "C2|Montenegro|Chipre": { gl: 2, gv: 1 },
   "D1|Andorra|Malta": { gl: 1, gv: 2 },
   "D2|Liechtenstein|Lituania": { gl: 0, gv: 2 },
 };
