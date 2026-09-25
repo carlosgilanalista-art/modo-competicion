@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 22/09/2026 — calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
+**Última actualización:** 25/09/2026 — resultados reales de la Jornada 1 (24-25/09/2026) de la fase de liga de Nations League 2026/27 cargados en el árbol de trabajo, rama `claude/datos-nations-league-j1-24-25-sep-ocglv5`, gate APTO, sin commit ni push todavía (pendiente autorización de Carlos). Incluye también: 22/09, calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -131,6 +131,16 @@ Fusionado a `main` (squash, commit `1c9e0a3`, PR #55), gate declarado antes de f
 Rama `claude/ecstatic-edison-utrrkl` fusionada e íntegra en `main`, pendiente de borrar (no se ha intentado el borrado esta sesión; en sesiones anteriores el borrado remoto fallaba por un bloqueo HTTP 403 del proxy git). Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
+**Sesión:** 25/09/2026 (viernes) — COMPLETADA (en árbol de trabajo, sin commit)
+**Tarea:** Cargar en el simulador de selecciones (Nations League 2026/27, fase de liga, Jornada 1) los resultados reales del 24 y 25 de septiembre de 2026.
+**Criterio de hecho:** CUMPLIDO en código, gate APTO, sin fusionar. Antes de tocar nada se verificaron los 32 nombres de equipo y los 16 emparejamientos de la tarea contra `NL_GRUPOS`/`NL_CALENDARIO_REAL`: coinciden al 100% (0 discrepancias), incluida la comprobación de que cada partido corresponde a la Jornada 1 real ya cargada el 22/09, no a otra jornada.
+Al arrancar se detectó un bloqueo real: a diferencia de Champions/Europa League, `useNationsLeague()` no tenía ningún mecanismo de "resultado real" — `res` era un `useState` plano sin campo `origen`, confirmando lo ya anotado en el Aparcadero ("Modo resultados reales para Nations League: no existe"). Se paró y se preguntó a Carlos en vez de inventar un mecanismo nuevo por cuenta propia (instrucción explícita de la tarea); Carlos confirmó extender el mismo patrón (opción 1).
+Añadido `NL_RESULTADOS_JORNADA1_REAL` (15 partidos, mismo formato de clave `grupo|local|visitante` que `nlFixturesGrupo`) y extendido `useNationsLeague()` con una instancia de `useOrigenResultados()` (el mismo hook que ya usan Champions/Europa League vía `useFaseLiga`, sin contrato nuevo): precarga en el `useState` inicial, `cambiar`/`reiniciar` marcan "editado", nueva función `restaurarPartido` vuelve al marcador real, `rellenarPartidos` (simular) ya no sobrescribe partidos con base real, y `reiniciarTodo` restaura la base real en vez de vaciar el tablero entero. UI de `NLGrupoCard` actualizada con el mismo patrón visual que `FaseLigaPanel`: marcador bloqueado de solo lectura, badge "✎ Editado (resultado real modificado)", botón "✎ Modificar" y "↩ Restaurar real".
+Montenegro 2-1 Chipre (Grupo C2) queda **fuera** de esta carga por instrucción explícita de Carlos (no confirmado como definitivo) — ese partido sigue editable a mano, sin bloqueo ni badge.
+Verificado por script (no solo visual): 15/15 resultados cargados, por grupo A1 2 · A2 2 · A4 2 · B2 2 · B3 2 · B4 2 · C2 1 · D1 1 · D2 1 (cuadra exacto con el gate), 0 discrepancias entre las claves cargadas y las claves de Jornada 1 de `NL_CALENDARIO_REAL`. `git diff` confirma que solo se tocó `NL_RESULTADOS_JORNADA1_REAL`, `useNationsLeague()` y `NLGrupoCard` — ningún otro dato de calendario, sorteo, jornada u otra competición alterado. `npx vite build` limpio. Probado en navegador con Playwright: 15 partidos bloqueados con marcador de solo lectura; ciclo completo Modificar → editar → Restaurar real verificado end-to-end (vuelve exactamente al marcador y puntos originales); clasificaciones de A1, A2 y C2 verificadas visualmente contra los resultados cargados (puntos y diferencia de gol cuadran); Montenegro-Chipre confirmado editable sin bloqueo. 2 errores de consola (Google Analytics bloqueado por el proxy de red del entorno), ya documentados en sesiones anteriores, no relacionados con el cambio.
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `claude/datos-nations-league-j1-24-25-sep-ocglv5`, solo editada en el árbol de trabajo — sin commit ni push, a la espera de que Carlos lo pida explícitamente. Queda pendiente de decidir si se fusiona ahora (15/16) o se espera a que Carlos confirme Montenegro-Chipre para cargar los 16 de una vez.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
@@ -146,6 +156,7 @@ Rama `claude/ecstatic-edison-utrrkl` fusionada e íntegra en `main`, pendiente d
 - Cargas de J1: Champions (prompt 11/09) y Europa (prompt 18/09), ejecución por confirmar. Corregir en el prompt de Europa: Sturm Graz–Rennes y Hapoel–Dinamo Zagreb son del 16/09.
 - Sprint Relanzamiento: medición pendiente; objetivo numérico no consta.
 - Calendario real de la fase de liga de Nations League 2026/27 (ver §3, sesión 22/09): fusionado a `main` (PR #55, commit `1c9e0a3`). Pendiente que Carlos confirme el deployment de Production en Vercel (sin API de Vercel ni acceso a `modocompeticion.com` desde la sesión para verificarlo) y, si no se disparó solo, el push adicional de siempre (precedente 27/08).
+- Resultados reales de la Jornada 1 de Nations League (ver §3, sesión 25/09): 15/16 partidos cargados y gate APTO en la rama `claude/datos-nations-league-j1-24-25-sep-ocglv5`, sin commit ni push todavía. Pendiente de que Carlos autorice publicar (commit/push/PR/fusión) y de que confirme el resultado de Montenegro-Chipre (Grupo C2) para cargar el 16º partido.
 
 ## 5. Backlog congelado
 
@@ -214,7 +225,7 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - Resultados reales de la Jornada 1 UEL (sesión 18/09) no se probaron en navegador con Playwright antes de fusionar, a diferencia de la sesión de UCL Jornada 1 (11/09) que sí lo hizo. Solo se verificó por build limpio y por script (claves/jornada/día). No detectado ningún problema, pero es una brecha de proceso frente al patrón habitual — si se repite, homogeneizar
 - Conference League sigue sin resultados reales de su Jornada 1 cargados (jugada también a mediados de septiembre de 2026) — pendiente de sesión futura si Carlos quiere completar las tres competiciones UEFA
 - Regla "no redactar prompts para Code en el Project editorial": cumplida 21/08, 24/08 y 27/08; incumplida 11/09 y 18/09. Decidir si se mantiene.
-- Modo resultados reales para Nations League: no existe.
+- ~~Modo resultados reales para Nations League: no existe.~~ Resuelto en sesión del 25/09: `useNationsLeague()` extendido con `useOrigenResultados()`, mismo patrón que Champions/Europa League. Pendiente de fusionar (ver §3).
 - Convención UTM en enlaces de difusión (por confirmar).
 
 ## 8. Preguntas abiertas
