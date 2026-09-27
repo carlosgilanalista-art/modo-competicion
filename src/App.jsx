@@ -4665,7 +4665,7 @@ function NLGrupoCard({ grupo, nl, colores }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ color: colores.texto, fontSize: 12, flex: 1, textAlign: "right", minWidth: 90 }}>{m.local}</span>
                     {bloqueado ? (
-                      <span style={{ color: meta.color, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>{r.gl} - {r.gv}</span>
+                      <span style={{ color: meta.color, fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>{r.gl} - {r.gv}</span>
                     ) : (
                       <>
                         <input type="number" min="0" value={r?.gl ?? ""} onChange={(e) => nl.cambiar(m.clave, "gl", e.target.value)} style={inputStyle} />
