@@ -4036,7 +4036,7 @@ const TEMA_NL = { fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C", acento
 // no solo local/visitante invertido). Los dos grupos de 3 de la Liga D sí
 // coincidían ya con el calendario real (cargados el 30/08/2026) y se
 // mantienen igual, solo se les añade hora. Fecha de cada partido en formato
-// abreviado (día + fecha, sin repetir mes/año, ya en NL_FECHAS_JORNADA).
+// abreviado (día + fecha, sin repetir mes/año); se expande en `nlFechaPartido`.
 const NL_CALENDARIO_REAL = {
   A1: [
     [{ local: "Italia", visitante: "Bélgica", dia: "Vie 25", hora: "20:45" }, { local: "Turquía", visitante: "Francia", dia: "Vie 25", hora: "20:45" }],
@@ -4151,21 +4151,23 @@ const NL_CALENDARIO_REAL = {
     [{ local: "Lituania", visitante: "Liechtenstein", dia: "Lun 16", hora: "18:00" }],
   ],
 };
-// Ventanas de fecha de cada jornada (idénticas para los 14 grupos: todas las
-// selecciones juegan en las mismas ventanas FIFA). Fuente: UEFA.com.
-const NL_FECHAS_JORNADA = [
-  "Jueves 24 – sábado 26 de septiembre de 2026",
-  "Domingo 27 – martes 29 de septiembre de 2026",
-  "Jueves 1 – sábado 3 de octubre de 2026",
-  "Domingo 4 – martes 6 de octubre de 2026",
-  "Jueves 12 – sábado 14 de noviembre de 2026",
-  "Domingo 15 – martes 17 de noviembre de 2026",
-];
 function nlFixturesGrupo(gid) {
   const partidos = [];
   NL_CALENDARIO_REAL[gid].forEach((ronda, r) => ronda.forEach(({ local, visitante, dia, hora }) =>
     partidos.push({ jornada: r + 1, local, visitante, dia, hora, clave: `${gid}|${local}|${visitante}` })));
   return partidos;
+}
+// Día completo por partido en vez del rango genérico de NL_FECHAS_JORNADA: una
+// jornada puede repartirse en más de un día (p. ej. J1 va de jueves a sábado),
+// así que el rango no dice qué día juega cada partido en concreto. `m.dia` ya
+// trae el formato abreviado ("Vie 25"); se expande solo el nombre del día.
+const NL_DIA_ABREV_A_COMPLETO = { Lun: "lunes", Mar: "martes", Mié: "miércoles", Jue: "jueves", Vie: "viernes", Sáb: "sábado", Dom: "domingo" };
+function nlFechaPartido(jornada, m) {
+  if (!m.dia && !m.hora) return `J${jornada}`;
+  const [abrev, numero] = (m.dia || "").split(" ");
+  const diaCompleto = NL_DIA_ABREV_A_COMPLETO[abrev];
+  const fecha = diaCompleto ? `${diaCompleto} ${numero}` : m.dia;
+  return [`J${jornada}`, [fecha, m.hora && `${m.hora}h`].filter(Boolean).join(" - ")].filter(Boolean).join(" ");
 }
 
 // Resultados reales de la Jornada 1 (24-26/09/2026, fuente: UEFA.com), cargados
@@ -4646,12 +4648,8 @@ function NLGrupoCard({ grupo, nl, colores }) {
       {jornadas.map((partidos, j) => (
         <div key={j} style={{ marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", color: colores.textoSuave, fontSize: 10, letterSpacing: 1 }}>J{j + 1}</span>
-            {NL_FECHAS_JORNADA[j] && (
-              <span style={{ color: colores.textoSuave, fontSize: 10 }}>{NL_FECHAS_JORNADA[j]}</span>
-            )}
-            <button onClick={() => nl.rellenarJornadaGrupo(grupo, j + 1)}
-              style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer", padding: 0 }}>🎲</button>
+            <button onClick={() => nl.rellenarJornadaGrupo(grupo, j + 1)} title={`Simular Jornada ${j + 1}`}
+              style={{ background: "none", border: "none", color: colores.textoSuave, fontSize: 11, cursor: "pointer", padding: 0 }}>🎲 J{j + 1}</button>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {partidos.map((m) => {
@@ -4660,6 +4658,7 @@ function NLGrupoCard({ grupo, nl, colores }) {
               const bloqueado = nl.bloqueadoPartido?.(m.clave);
               return (
                 <div key={m.clave} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>{nlFechaPartido(j + 1, m)}</span>
                   {origenM === "editado" && (
                     <span style={{ alignSelf: "flex-start", fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: 1, color: colores.alerta, border: `1px solid ${colores.alerta}`, borderRadius: 999, padding: "1px 6px" }}>✎ Editado (resultado real modificado)</span>
                   )}
@@ -4675,11 +4674,6 @@ function NLGrupoCard({ grupo, nl, colores }) {
                       </>
                     )}
                     <span style={{ color: colores.texto, fontSize: 12, flex: 1, minWidth: 90 }}>{m.visitante}</span>
-                    {(m.dia || m.hora) && (
-                      <span style={{ color: colores.textoSuave, fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
-                        {[m.dia, m.hora].filter(Boolean).join(" · ")}
-                      </span>
-                    )}
                     {bloqueado ? (
                       <button onClick={() => nl.desbloquearPartido(m.clave)} title="Modificar resultado real"
                         style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "1px 6px", fontSize: 10, cursor: "pointer" }}>✎ Modificar</button>
