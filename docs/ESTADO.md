@@ -9,7 +9,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 **Plataforma**
 
 - modocompeticion.com — React/Vite, desplegado en Vercel desde `main` (repo `carlosgilanalista-art/modo-competicion`). Dominio en IONOS.
-- Google Analytics 4 (`G-J93TNQ8R8M`) y Search Console activos y vinculados.
+- Google Analytics 4 (`G-J93TNQ8R8M`) y Search Console activos y vinculados. Propiedad re-verificada el 27/09/2026: `public/google246961d220a40ba3.html` confirmado en producción (ver §3).
 - Menú de Clubes agrupado por confederación (UEFA / AFC), en `main` desde el 09/08 (PR #14).
 - Sistema de documentación en `docs/` (ESTADO.md, ARQUITECTURA.md, MARCA.md, CONVENCIONES.md, SISTEMA.md), en `main` desde el 22/08.
 
@@ -184,10 +184,10 @@ Producción confirmada directamente por Carlos visitando la URL (esta sesión no
 Rama `search-console-verificacion` borrada en local desde esta sesión; el borrado remoto vía `git push --delete` falló con el mismo HTTP 403 ya documentado (27/08 y siguientes), pero Carlos la borró directamente desde GitHub — confirmado por `git fetch --prune` (`[deleted] origin/search-console-verificacion`). Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
-**Sesión siguiente:** (por definir)
-**Tarea:** (por definir)
-**Criterio de hecho:**
-**Herramienta:** Claude Code
+**Sesión siguiente:** 28/09/2026 (lunes)
+**Tarea:** Escribir o marcar 2-3 párrafos propios en el registro irreverente y guardarlos en la Skill `estilo-modo-competicion`.
+**Criterio de hecho:** 2-3 párrafos guardados con una línea sobre el tono.
+**Herramienta:** Claude.ai, Project editorial
 
 ## 4. En curso
 
@@ -270,11 +270,12 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - ~~Modo resultados reales para Nations League: no existe.~~ Resuelto en sesión del 25/09: `useNationsLeague()` extendido con `useOrigenResultados()`, mismo patrón que Champions/Europa League. Fusionado a `main` (ver §3).
 - Convención UTM en enlaces de difusión (por confirmar).
 - Nombre del equipo "Kazajistán" (así en todo el código: `NL_RANKING`, `NL_GRUPOS`, `NL_CALENDARIO_REAL`, banderas) no coincide con la web de UEFA.com en español, que escribe "Kazajstán" (sin la segunda "i") — confirmado con captura de pantalla el 26/09. No bloquea nada porque el resultado de Islas Feroe-Kazajistán ya está cargado con el nombre existente en el código, pero queda pendiente decidir si se renombra el equipo en todo el dataset de Nations League para que coincida con la fuente oficial.
+- Copa Intercontinental de la FIFA: explicación + simulador (anotado 27/09), sin evaluar.
+- Corrección de `ARQUITECTURA.md` §2: candidata a tarea única del 04/10.
 
 ## 8. Preguntas abiertas
 
 - El registro irreverente de Modo Competición sigue sin calibrar con ejemplos propios reales. La voz de objetivoanalista.com es técnica y didáctica, no es esa. Bloquea afinar el tono de los artículos nuevos.
-- Search Console: 0 keywords confirmadas a fecha de la última revisión (09/08). Sin señal orgánica todavía; pendiente de volver a mirar en el cierre del Sprint (24/08).
 - `ARQUITECTURA.md` §2 describe flags `origen_ida`/`origen_vuelta` a nivel de campo. El código real (`useOrigenResultados`, `src/App.jsx`) usa en su lugar un único campo `origen` por eliminatoria con tres estados (`real`, `editado`, `real-incompleto`). Señalado el 17/08 y dejado sin corregir a petición explícita — pendiente decidir si se actualiza el documento o el código.
 - ¿Qué borradores de X se publicaron y cuándo? (inventario del lunes 21/09)
 - ¿Está cargado el calendario de jornadas de las 3 competiciones? ¿Y J1 de Champions y Europa?
