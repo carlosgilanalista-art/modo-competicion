@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 26/09/2026 — Jornada 1 de la fase de liga de Nations League 2026/27 **completa** (26/26 partidos, las 14 grupos), fusionada a `main` en dos PR: PR #56 (16/16, 24-25/09, commit `94afed1`) y PR #57 (10 partidos restantes del 26/09, commit `8e85d10`, rama `datos-nations-league-j1-26-sep`). CI en verde en ambos antes de fusionar; deployment de Production del PR #57 pendiente de confirmar por Carlos (el del PR #56 sí se confirmó). Incluye también: 22/09, calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
+**Última actualización:** 27/09/2026 — la fecha de cada partido del simulador de Nations League pasa a mostrarse en su propia línea ("J1 viernes 25 - 20:45h") en vez del rango genérico de la jornada, a petición de Carlos tras ver el simulador en producción; fusionado a `main` (PR #58, commit `697b394`). Incluye también: 25-26/09, Jornada 1 de la fase de liga de Nations League 2026/27 **completa** (26/26 partidos, las 14 grupos), fusionada a `main` en dos PR: PR #56 (16/16, 24-25/09, commit `94afed1`) y PR #57 (10 partidos restantes del 26/09, commit `8e85d10`, rama `datos-nations-league-j1-26-sep`). CI en verde en ambos antes de fusionar; deployment de Production del PR #57 y del PR #58 pendiente de confirmar por Carlos (el del PR #56 sí se confirmó). Incluye también: 22/09, calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -151,6 +151,14 @@ Los 9 partidos restantes (sin ambigüedad de nombre) se añadieron directamente 
 Rama `datos-nations-league-j1-26-sep` fusionada e íntegra en `main`, no se ha intentado borrarla esta sesión (mismo bloqueo HTTP 403 esperado).
 **Herramienta:** Claude Code
 
+**Sesión:** 27/09/2026 (domingo) — COMPLETADA
+**Tarea:** Cambio visual pedido por Carlos tras ver el simulador de Nations League en producción: mostrar la fecha de cada partido en su propia línea, en vez del rango de fechas genérico de toda la jornada (p. ej. "J1 Jueves 24 – sábado 26 de septiembre de 2026" → "J1 viernes 25 - 20:45h" para Italia-Bélgica).
+**Criterio de hecho:** CUMPLIDO. Añadida `nlFechaPartido(jornada, m)`, que expande el día abreviado ya cargado en `NL_CALENDARIO_REAL` ("Vie 25") a su nombre completo en minúscula ("viernes 25") vía un mapa de abreviatura→nombre completo, y compone la línea "J{n} {día} - {hora}h". Sustituida la cabecera de jornada (que combinaba "J{n}" + el rango genérico `NL_FECHAS_JORNADA[j]`) por esta línea por partido, colocada justo encima de cada marcador; el icono de simular jornada pasa de "🎲" a "🎲 J{n}" para no perder esa referencia. Eliminada `NL_FECHAS_JORNADA`, que quedó sin ningún uso tras el cambio (verificado por grep: 0 referencias en código, solo en comentarios).
+Solo se tocó `NLGrupoCard` y el helper nuevo — ningún dato de calendario, resultado ni clasificación alterado. `npx vite build` limpio. Probado en navegador con Playwright: línea de fecha correcta en A1, A2, A3 (grupos de 4, dos partidos por jornada en la misma línea de fecha o en días distintos según el grupo) y D1/D2 (grupos de 3, un partido por jornada); verificado que el badge "✎ Editado (resultado real modificado)" no se solapa con la nueva línea de fecha al desbloquear y editar un partido real.
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `ui-fecha-partido-nations-league`, PR #58 abierto y fusionado a `main` (squash, commit `697b394`), CI en verde (Vercel Preview) antes de fusionar, tras autorización explícita de Carlos en cada paso (commit, push, PR, fusión). Deployment de Production en Vercel no verificado todavía — pendiente que Carlos lo confirme.
+Rama `ui-fecha-partido-nations-league` fusionada e íntegra en `main`, no se ha intentado borrarla esta sesión (mismo bloqueo HTTP 403 esperado en sesiones anteriores). Nada fue al Aparcadero en esta sesión.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
@@ -167,6 +175,7 @@ Rama `datos-nations-league-j1-26-sep` fusionada e íntegra en `main`, no se ha i
 - Sprint Relanzamiento: medición pendiente; objetivo numérico no consta.
 - Calendario real de la fase de liga de Nations League 2026/27 (ver §3, sesión 22/09): fusionado a `main` (PR #55, commit `1c9e0a3`). Pendiente que Carlos confirme el deployment de Production en Vercel (sin API de Vercel ni acceso a `modocompeticion.com` desde la sesión para verificarlo) y, si no se disparó solo, el push adicional de siempre (precedente 27/08).
 - Resultados reales de la Jornada 1 de Nations League (ver §3, sesiones 25/09 y 26/09): **completa, 26/26 partidos**, fusionado a `main` en dos PR (#56 commit `94afed1`, deployment confirmado; #57 commit `8e85d10`, deployment pendiente de confirmar por Carlos).
+- Cambio visual de fecha por partido en Nations League (ver §3, sesión 27/09): fusionado a `main` (PR #58, commit `697b394`), deployment pendiente de confirmar por Carlos.
 
 ## 5. Backlog congelado
 
