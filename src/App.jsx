@@ -4168,28 +4168,44 @@ function nlFixturesGrupo(gid) {
   return partidos;
 }
 
-// Resultados reales de la Jornada 1 (24-25/09/2026, fuente: UEFA.com), cargados
+// Resultados reales de la Jornada 1 (24-26/09/2026, fuente: UEFA.com), cargados
 // con el mismo patrón real/editado/restaurar que UCL_RESULTADOS_JORNADA1_REAL /
 // UEL_RESULTADOS_JORNADA1_REAL (useOrigenResultados, ver useNationsLeague más
 // abajo) — la Nations League no tenía hasta ahora ningún mecanismo de
-// resultado real, solo el useState plano de simulación manual. 16/16
-// partidos de la jornada; Montenegro-Chipre (Grupo C2) se cargó aparte,
-// confirmado por Carlos el 25/09 tras quedar pendiente en la carga inicial.
+// resultado real, solo el useState plano de simulación manual. Cargado en dos
+// tandas: 24-25/09 (16 partidos, Montenegro-Chipre confirmado el 25/09 tras
+// quedar pendiente en la carga inicial) y 26/09 (10 partidos de B1/C1/C3/C4/A3).
+// Islas Feroe-Kazajistán (C3): la web de UEFA.com escribe "Kazajstán" (sin la
+// segunda "i"), distinto del nombre ya usado en todo el resto del código
+// (NL_RANKING, NL_GRUPOS, banderas). Se mantiene aquí "Kazajistán" para que la
+// clave coincida con el resto del dataset del equipo (bombo, resto de
+// jornadas) — renombrar el equipo en todo el código es una decisión de
+// alcance mayor, pendiente para Carlos, no un efecto colateral de esta carga.
 const NL_RESULTADOS_JORNADA1_REAL = {
   "A1|Italia|Bélgica": { gl: 0, gv: 2 },
   "A1|Turquía|Francia": { gl: 0, gv: 1 },
   "A2|Países Bajos|Alemania": { gl: 1, gv: 1 },
   "A2|Serbia|Grecia": { gl: 1, gv: 2 },
+  "A3|Inglaterra|España": { gl: 2, gv: 3 },
+  "A3|Chequia|Croacia": { gl: 1, gv: 2 },
   "A4|Portugal|Gales": { gl: 1, gv: 0 },
   "A4|Noruega|Dinamarca": { gl: 3, gv: 2 },
+  "B1|Eslovenia|Escocia": { gl: 0, gv: 0 },
+  "B1|Macedonia del Norte|Suiza": { gl: 0, gv: 3 },
   "B2|Georgia|Irlanda del Norte": { gl: 0, gv: 1 },
   "B2|Hungría|Ucrania": { gl: 0, gv: 1 },
   "B3|Austria|Israel": { gl: 3, gv: 1 },
   "B3|Kosovo|República de Irlanda": { gl: 1, gv: 0 },
   "B4|Polonia|Bosnia y Herzegovina": { gl: 0, gv: 0 },
   "B4|Suecia|Rumanía": { gl: 2, gv: 1 },
+  "C1|San Marino|Finlandia": { gl: 0, gv: 7 },
+  "C1|Albania|Bielorrusia": { gl: 2, gv: 0 },
   "C2|Armenia|Letonia": { gl: 2, gv: 0 },
   "C2|Montenegro|Chipre": { gl: 2, gv: 1 },
+  "C3|Eslovaquia|Moldavia": { gl: 2, gv: 0 },
+  "C3|Islas Feroe|Kazajistán": { gl: 1, gv: 1 },
+  "C4|Islandia|Estonia": { gl: 1, gv: 1 },
+  "C4|Bulgaria|Luxemburgo": { gl: 1, gv: 2 },
   "D1|Andorra|Malta": { gl: 1, gv: 2 },
   "D2|Liechtenstein|Lituania": { gl: 0, gv: 2 },
 };
