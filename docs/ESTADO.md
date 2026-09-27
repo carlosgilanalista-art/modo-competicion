@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 27/09/2026 — la fecha de cada partido del simulador de Nations League pasa a mostrarse en su propia línea ("J1 viernes 25 - 20:45h") en vez del rango genérico de la jornada, a petición de Carlos tras ver el simulador en producción; fusionado a `main` (PR #58, commit `697b394`). Incluye también: 25-26/09, Jornada 1 de la fase de liga de Nations League 2026/27 **completa** (26/26 partidos, las 14 grupos), fusionada a `main` en dos PR: PR #56 (16/16, 24-25/09, commit `94afed1`) y PR #57 (10 partidos restantes del 26/09, commit `8e85d10`, rama `datos-nations-league-j1-26-sep`). CI en verde en ambos antes de fusionar; deployment de Production del PR #57 y del PR #58 pendiente de confirmar por Carlos (el del PR #56 sí se confirmó). Incluye también: 22/09, calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
+**Última actualización:** 27/09/2026 — corregido el marcador de un partido confirmado de Nations League (se partía en dos líneas por falta de espacio en las tarjetas de 3 columnas); fusionado a `main` (PR #59, commit `4f35d4f`). Incluye también, en la misma sesión: la fecha de cada partido pasa a mostrarse en su propia línea ("J1 viernes 25 - 20:45h") en vez del rango genérico de la jornada, a petición de Carlos tras ver el simulador en producción; fusionado a `main` (PR #58, commit `697b394`). Incluye también: 25-26/09, Jornada 1 de la fase de liga de Nations League 2026/27 **completa** (26/26 partidos, las 14 grupos), fusionada a `main` en dos PR: PR #56 (16/16, 24-25/09, commit `94afed1`) y PR #57 (10 partidos restantes del 26/09, commit `8e85d10`, rama `datos-nations-league-j1-26-sep`). CI en verde en ambos antes de fusionar; deployment de Production de los PR #57, #58 y #59 pendiente de confirmar por Carlos (el del PR #56 sí se confirmó). Incluye también: 22/09, calendario real (jornadas, fecha y hora) de la fase de liga de Nations League 2026/27 cargado y fusionado a `main` (PR #55, commit `1c9e0a3`); deployment de Production en Vercel pendiente de confirmar por Carlos. Incluye también la revisión editorial del 20/09: estado de confirmación de "Artículos publicados" y difusión en X, más pendientes de la sesión de arquitectura CAF y de las cargas de J1 UCL/UEL
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -159,6 +159,14 @@ Solo se tocó `NLGrupoCard` y el helper nuevo — ningún dato de calendario, re
 Rama `ui-fecha-partido-nations-league` fusionada e íntegra en `main`, no se ha intentado borrarla esta sesión (mismo bloqueo HTTP 403 esperado en sesiones anteriores). Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
+**Sesión:** 27/09/2026 (domingo, continuación) — COMPLETADA
+**Tarea:** Corregir un defecto visual detectado por Carlos al ver el PR #58 en producción: el marcador de un partido confirmado (p. ej. "Italia 0 - 2 Bélgica") se mostraba partido en dos líneas ("0" y "2" apilados) en vez de en línea junto a los nombres, como sí ocurre en Champions/Europa League.
+**Criterio de hecho:** CUMPLIDO. Causa identificada: el `span` del marcador bloqueado en `NLGrupoCard` no tenía `whiteSpace: "nowrap"`, y las tarjetas de Nations League son más estrechas (3 columnas por Liga) que las de Champions/Europa League (grid `minmax(330px, 1fr)`), así que el texto se envolvía al quedarse sin espacio en el layout de fila estrecha. Fix de una línea: añadidos `whiteSpace: "nowrap"` y `flexShrink: 0` a ese `span`.
+`npx vite build` limpio. Probado en navegador con Playwright: marcador en una sola línea en A1, A2 y A3; verificado también que el ciclo Modificar → editar → Restaurar real sigue funcionando y el marcador vuelve a mostrarse correctamente en una línea tras restaurar.
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `fix-marcador-nl-linea`, PR #59 abierto y fusionado a `main` (squash, commit `4f35d4f`), CI en verde (Vercel Preview) antes de fusionar, tras autorización explícita de Carlos en cada paso (commit, push, PR, fusión). Deployment de Production en Vercel no verificado todavía — pendiente que Carlos lo confirme.
+Rama `fix-marcador-nl-linea` fusionada e íntegra en `main`, no se ha intentado borrarla esta sesión (mismo bloqueo HTTP 403 esperado). Nada fue al Aparcadero en esta sesión.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
@@ -176,6 +184,7 @@ Rama `ui-fecha-partido-nations-league` fusionada e íntegra en `main`, no se ha 
 - Calendario real de la fase de liga de Nations League 2026/27 (ver §3, sesión 22/09): fusionado a `main` (PR #55, commit `1c9e0a3`). Pendiente que Carlos confirme el deployment de Production en Vercel (sin API de Vercel ni acceso a `modocompeticion.com` desde la sesión para verificarlo) y, si no se disparó solo, el push adicional de siempre (precedente 27/08).
 - Resultados reales de la Jornada 1 de Nations League (ver §3, sesiones 25/09 y 26/09): **completa, 26/26 partidos**, fusionado a `main` en dos PR (#56 commit `94afed1`, deployment confirmado; #57 commit `8e85d10`, deployment pendiente de confirmar por Carlos).
 - Cambio visual de fecha por partido en Nations League (ver §3, sesión 27/09): fusionado a `main` (PR #58, commit `697b394`), deployment pendiente de confirmar por Carlos.
+- Fix del marcador de Nations League partido en dos líneas (ver §3, sesión 27/09): fusionado a `main` (PR #59, commit `4f35d4f`), deployment pendiente de confirmar por Carlos.
 
 ## 5. Backlog congelado
 
