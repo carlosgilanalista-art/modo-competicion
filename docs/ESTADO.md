@@ -176,6 +176,13 @@ Antes del borrado en bloque se verificó el estado real de las ~60 ramas listand
 **Veredicto:** APTO — limpieza de ramas completada salvo la excepción explícita de la #11, que queda anotada abajo en "En curso". No fue necesario ningún gate de `CONVENCIONES.md` §3 (no hay cambio de código ni datos, es limpieza de ramas del repositorio).
 **Herramienta:** Claude Code
 
+**Sesión:** 27/09/2026 (domingo, re-verificación) — COMPLETADA
+**Tarea:** Re-verificar la propiedad de Search Console: confirmar que `https://modocompeticion.com/google246961d220a40ba3.html` devuelve en producción exactamente el texto `google-site-verification: google246961d220a40ba3.html`.
+**Criterio de hecho:** CUMPLIDO. El fichero `public/google246961d220a40ba3.html` ya existía en `main` desde la sesión del 14/09 (PR #51, commit `488f16a`) — no hizo falta crearlo ni modificarlo: verificado que ocupa 53 bytes, contenido exacto sin salto de línea final. Revisado que no hay `vercel.json` ni ningún otro fichero de rewrites (`_redirects`, Netlify) en el repo, y que `vite.config.js` no altera el tratamiento por defecto de `public/`, así que nada puede interceptar la ruta. `npx vite build` limpio; `dist/google246961d220a40ba3.html` verificado con `diff` como idéntico byte a byte al de `public/`. `git status` confirma que ningún fichero se modificó en la rama.
+Producción confirmada directamente por Carlos visitando la URL (esta sesión no pudo comprobarlo por sí misma: `curl` y `WebFetch` a `modocompeticion.com` devuelven `EGRESS_BLOCKED`/403 del proxy de red del entorno, mismo bloqueo ya documentado en sesiones anteriores).
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `search-console-verificacion` — ningún fichero de código o datos modificado (el de verificación ya era correcto en `main`); único commit de la rama es esta actualización de `ESTADO.md`, empujada tras autorización explícita de Carlos. Rama pendiente de fusionar o borrar cuando Carlos lo indique.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** (por definir)
 **Tarea:** (por definir)
 **Criterio de hecho:**
