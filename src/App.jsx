@@ -4211,6 +4211,24 @@ const NL_RESULTADOS_JORNADA1_REAL = {
   "D1|Andorra|Malta": { gl: 1, gv: 2 },
   "D2|Liechtenstein|Lituania": { gl: 0, gv: 2 },
 };
+// Resultados reales de la Jornada 2 (27/09/2026, fuente: UEFA.com), mismo
+// patrón que NL_RESULTADOS_JORNADA1_REAL. 8/8 partidos de la jornada
+// verificados contra NL_CALENDARIO_REAL antes de cargar (grupos A2, A4, B3,
+// D1, D2).
+const NL_RESULTADOS_JORNADA2_REAL = {
+  "A2|Serbia|Países Bajos": { gl: 1, gv: 2 },
+  "A2|Alemania|Grecia": { gl: 0, gv: 1 },
+  "A4|Dinamarca|Gales": { gl: 2, gv: 0 },
+  "A4|Noruega|Portugal": { gl: 1, gv: 2 },
+  "B3|Austria|Kosovo": { gl: 3, gv: 1 },
+  "B3|Israel|República de Irlanda": { gl: 0, gv: 3 },
+  "D1|Gibraltar|Andorra": { gl: 0, gv: 0 },
+  "D2|Lituania|Azerbaiyán": { gl: 1, gv: 1 },
+};
+// Combinado de todas las jornadas reales cargadas hasta ahora — useNationsLeague
+// solo necesita un mapa plano clave→resultado, igual que UCL/UEL con su única
+// jornada; aquí se fusionan porque Nations League ya tiene más de una.
+const NL_RESULTADOS_REAL = { ...NL_RESULTADOS_JORNADA1_REAL, ...NL_RESULTADOS_JORNADA2_REAL };
 
 // ---- Clasificación de grupo (reglamento UEFA Nations League) ----
 // A diferencia de la fase liga de clubes, el PRIMER criterio de desempate es el
@@ -4323,13 +4341,13 @@ function nlResolverGanador(tie, resultado) {
 // ============================================================
 function useNationsLeague() {
   // Mismo patrón real/editado/restaurar que useFaseLiga (Champions/Europa
-  // League, ver useOrigenResultados) en vez de uno nuevo: la Jornada 1 real
-  // se precarga una sola vez (los 14 grupos son estables, sin sorteo que
+  // League, ver useOrigenResultados) en vez de uno nuevo: las jornadas reales
+  // se precargan una sola vez (los 14 grupos son estables, sin sorteo que
   // pueda cambiarlos) y useOrigenResultados sigue el origen partido a partido.
-  const [res, setRes] = useState(() => ({ ...NL_RESULTADOS_JORNADA1_REAL })); // { [clavePartido]: { gl, gv } }
+  const [res, setRes] = useState(() => ({ ...NL_RESULTADOS_REAL })); // { [clavePartido]: { gl, gv } }
   const oNL = useOrigenResultados();
   useEffect(() => {
-    oNL.marcarOrigen(Object.fromEntries(Object.keys(NL_RESULTADOS_JORNADA1_REAL).map((clave) => [clave, "real"])));
+    oNL.marcarOrigen(Object.fromEntries(Object.keys(NL_RESULTADOS_REAL).map((clave) => [clave, "real"])));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const grupos = useMemo(() => {
@@ -4351,8 +4369,8 @@ function useNationsLeague() {
   };
   const reiniciar = (clave) => { setRes((p) => { const n = { ...p }; delete n[clave]; return n; }); oNL.marcarEditado(clave); };
   const restaurarPartido = (clave) => {
-    if (!(clave in NL_RESULTADOS_JORNADA1_REAL)) return;
-    setRes((p) => ({ ...p, [clave]: { ...NL_RESULTADOS_JORNADA1_REAL[clave] } }));
+    if (!(clave in NL_RESULTADOS_REAL)) return;
+    setRes((p) => ({ ...p, [clave]: { ...NL_RESULTADOS_REAL[clave] } }));
     oNL.restaurar(clave, "real");
   };
   const rellenarPartidos = (partidos) => setRes((p) => {
@@ -4363,13 +4381,13 @@ function useNationsLeague() {
   const rellenarGrupo = (g) => rellenarPartidos(g.partidos);
   const rellenarJornadaGrupo = (g, j) => rellenarPartidos(g.partidos.filter((m) => m.jornada === j));
   const rellenarTodo = () => rellenarPartidos(grupos.flatMap((g) => g.partidos));
-  // "Reiniciar todo" vuelve a la base real de Jornada 1, no a un tablero vacío
+  // "Reiniciar todo" vuelve a la base real cargada, no a un tablero vacío
   // (igual que restaurarSorteoReal en useFaseLiga) — si no, un resultado real
   // "editado" se borraría sin recuperar su origen ni su marcador.
   const reiniciarTodo = () => {
-    setRes({ ...NL_RESULTADOS_JORNADA1_REAL });
+    setRes({ ...NL_RESULTADOS_REAL });
     oNL.reiniciar();
-    oNL.marcarOrigen(Object.fromEntries(Object.keys(NL_RESULTADOS_JORNADA1_REAL).map((clave) => [clave, "real"])));
+    oNL.marcarOrigen(Object.fromEntries(Object.keys(NL_RESULTADOS_REAL).map((clave) => [clave, "real"])));
   };
 
   const grupoCompleto = (g) => g.partidos.every((m) => { const r = res[m.clave]; return r && r.gl !== undefined && r.gv !== undefined; });
