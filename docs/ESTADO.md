@@ -35,6 +35,7 @@ _(Revisión editorial 20/09: estado de confirmación por artículo, contra el ch
 - Clasificación para la EURO 2028 — confirmado en chat 08/08
 - AFC Champions League Elite 2026/27 — explicación — por confirmar fecha
 - Procedimiento del sorteo de la fase de liga UCL 2026/27 (`#/procedimiento-sorteo-ucl`), enlazado junto al botón de sorteo en el simulador de Champions
+- Copa Intercontinental de la FIFA 2026: cuadro, equipos y lo que falta por decidirse (`#/copa-intercontinental`, 01/10/2026), enlazado desde el menú "Clubes → FIFA". Artículo vivo: `src/ArticuloCopaIntercontinental.jsx` (datos en `ESTADO_PARTIDOS`, `CUADRO`, `EQUIPOS`, a actualizar tras cada partido). Sin simulador, no lo menciona ni lo enlaza
 - Difusión en X: ningún hilo con publicación confirmada desde el 09/08 (por confirmar). Último confirmado: lanzamiento, 09/07
 
 ## 2. Deadlines duros
@@ -232,7 +233,6 @@ Cambio de alcance consciente (01/10, 17:05). Se cae la tarea del domingo 04/10 (
 | Simulador CAF Champions League | 09/08/2026 | Después del 14/09 |
 | Revisión del logo para redes sociales | 09/08/2026 | Post-relanzamiento |
 | Copa Intercontinental 2026, Fase 2: diseño y simulador. Bloqueado por: fechas y sede de los 3 últimos partidos (FIFA no las ha publicado) y regla de prórroga/penaltis sin verificar. Decidir en la planificación del 02/10 | 01/10/2026 | Planificación del 02/10 |
-| Artículo explicativo de la Copa Intercontinental: se hace en el Project editorial | 01/10/2026 | — |
 
 ## 6. Decisiones cerradas
 
