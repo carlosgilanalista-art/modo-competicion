@@ -31,20 +31,22 @@ funcionamiento del sistema en sí, no el estado ni la arquitectura del producto.
 
 ## 3. Ritmo de sesiones y cortes horarios
 
-Tres sesiones fijas semanales: **viernes** (planificación), **domingo**
-(ejecución técnica — después de TAI, que es intocable), **lunes** (cierre
-editorial). Los cortes de abajo son relativos al inicio de la sesión, no a
-horas de reloj fijas.
+Tres sesiones fijas semanales: **jueves** y **domingo** (ejecución técnica; el
+domingo, después de TAI, que es intocable) y **viernes** (planificación y
+repaso, incluido el cierre editorial). El lunes deja de ser sesión fija. Los
+cortes de abajo son relativos al inicio de la sesión, no a horas de reloj
+fijas.
 
 **El domingo es la sesión frágil** — viene después de dos horas de TAI. No se
 planifica trabajo que requiera decidir, solo ejecutar algo ya decidido el
-viernes. Si el viernes no dejó una tarea única escrita, el domingo no se abre
-Code: se dedica a escribirla.
+viernes. El viernes se fijan dos tareas únicas: la del domingo y la del jueves.
+Si el viernes no dejó una tarea única escrita para la sesión, no se abre Code:
+se dedica a escribirla.
 
 **TAI no se toca.** Si un domingo hay conflicto, lo que cede es Modo
 Competición, nunca al revés.
 
-### Sesión de 2 h (domingo)
+### Sesión de 2 h (jueves y domingo)
 
 | Minuto | Qué |
 |---|---|
@@ -61,7 +63,7 @@ Competición, nunca al revés.
 | Minuto | Qué |
 |---|---|
 | 0–10 | Leer `ESTADO.md`. Revisar el Aparcadero de la semana |
-| 10–40 | Decidir: tarea única del domingo, tarea única del lunes, qué se congela |
+| 10–40 | Decidir: tarea única del domingo, tarea única del jueves, qué se congela |
 | 40–55 | Escribirlo en `ESTADO.md` (secciones 3 y 5). Vaciar Aparcadero |
 | 55–60 | Margen |
 
@@ -99,7 +101,7 @@ Lo que hace que funcione es el coste declarado: "¿qué se cae a cambio?"
 convierte una ampliación gratuita en un intercambio, y casi siempre el
 intercambio no compensa.
 
-### Gate semanal (lunes, en el cierre)
+### Gate semanal (viernes, en el cierre)
 
 Una sola pregunta:
 
@@ -163,7 +165,7 @@ descarga, una captura o un `.ics`, va a local.
 
 ```
 Futbol\Claude\Modo Competicion\
-├── 00-entrada\              Descargas de Claude sin clasificar. Se vacía cada lunes al cerrar
+├── 00-entrada\              Descargas de Claude sin clasificar. Se vacía cada viernes
 ├── 01-referencia\           Plantillas y prompts reutilizables (NO documentos de sistema)
 ├── 02-competiciones\        Investigación y datos verificados, por competición
 │   ├── uefa-2026-27\
