@@ -202,6 +202,14 @@ Verificado por script: 26/26 resultados de Jornada 2 cargados, por grupo A1 2 ·
 Rama `datos-nations-league-j2-28-29-sep` fusionada e íntegra en `main`. Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
+**Sesión:** 01/10/2026 (jueves, continuación) — COMPLETADA
+**Tarea:** Actualizar el ritmo de sesiones: jueves y domingo = ejecución técnica; viernes = planificación y repaso; el lunes deja de ser sesión fija.
+**Criterio de hecho:** CUMPLIDO. `SISTEMA.md` §3 reescrita (la tabla de 2 h pasa a jueves y domingo, la de 1 h sigue siendo la del viernes, que fija dos tareas únicas: domingo y jueves; el domingo se mantiene como sesión frágil post-TAI), gate semanal del lunes al viernes en §4 y `00-entrada` se vacía cada viernes en §6.3. Fila del 01/10 añadida en §6 Decisiones cerradas. `CONVENCIONES.md` no menciona ningún día de la semana, así que no necesitó cambios.
+Verificación posterior contra `main` (blobs idénticos entre `main` y la rama, `git diff` vacío) y detección de dos referencias a "lunes" que habían quedado sin actualizar en este documento (§3 "Sesión siguiente" y la pregunta abierta de §8 sobre la planificación del viernes), corregidas en un segundo PR. La tarea del registro irreverente de §3 sigue sin hacerse: queda "por fijar el viernes 02/10".
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO** en ambos PR (solo documentación, sin cambios de código ni datos). PR #63, rama `ccr-ebe2dd0a-ummddn`, 2 ficheros (+13/−10), fusionado a `main` (squash, commit `c0edbc2`). PR #64, rama `docs-estado-ritmo-sesiones`, 1 fichero (+2/−2), fusionado a `main` (squash, commit `9c80784`). Ambos tras autorización explícita de Carlos en cada paso (commit, push, PR, fusión).
+Ramas `ccr-ebe2dd0a-ummddn` y `docs-estado-ritmo-sesiones` fusionadas e íntegras en `main`. El borrado remoto de la primera falló con HTTP 403 (`git push --delete`); la segunda no se intentó. Pendiente borrarlas a mano desde GitHub, no bloquea nada. Nada fue al Aparcadero en esta sesión.
+**Herramienta:** Claude Code
+
 **Sesión siguiente:** por fijar el viernes 02/10 (el lunes 28/09 ya no es sesión fija y esta tarea no llegó a hacerse)
 **Tarea:** Escribir o marcar 2-3 párrafos propios en el registro irreverente y guardarlos en la Skill `estilo-modo-competicion`.
 **Criterio de hecho:** 2-3 párrafos guardados con una línea sobre el tono.
