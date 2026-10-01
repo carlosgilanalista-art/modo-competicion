@@ -210,13 +210,11 @@ Verificación posterior contra `main` (blobs idénticos entre `main` y la rama, 
 Ramas `ccr-ebe2dd0a-ummddn` y `docs-estado-ritmo-sesiones` fusionadas e íntegras en `main`. El borrado remoto de la primera falló con HTTP 403 (`git push --delete`); la segunda no se intentó. Pendiente borrarlas a mano desde GitHub, no bloquea nada. Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
-**Sesión siguiente:** por fijar el viernes 02/10 (el lunes 28/09 ya no es sesión fija y esta tarea no llegó a hacerse)
-**Tarea:** Escribir o marcar 2-3 párrafos propios en el registro irreverente y guardarlos en la Skill `estilo-modo-competicion`.
-**Criterio de hecho:** 2-3 párrafos guardados con una línea sobre el tono.
-**Herramienta:** Claude.ai, Project editorial
+Cambio de alcance consciente (01/10, 17:05). Se cae la tarea del domingo 04/10 (aún sin fijar). Entra la Fase 1 de la Copa Intercontinental FIFA 2026: investigación y verificación del formato. Estado: completada el 01/10.
 
 ## 4. En curso
 
+- Ramas pendientes de borrar a mano en GitHub (hasta que se borren): `ccr-ebe2dd0a-ummddn`, `docs-estado-ritmo-sesiones`, `docs-estado-cierre-01-10`.
 - PR #11 / rama `claude/sprint1-completed-tasks-gm49a8`: abierta, sin fusionar, con trabajo real y único (dashboard de sprints editoriales `modo-competicion-sprint-tracker.html`, julio 2026, sin referencias posteriores en este documento). Carlos decidió dejarla sin tocar por ahora (ver §3, sesión 27/09) — pendiente decidir si se cierra sin fusionar o se rescata algo de su contenido.
 - Datos reales UEFA fase previa 2026/27 — Playoff de las tres competiciones completo: Champions League (7/7, fase de liga UCL 36/36), Europa League (12/12) y Conference League (24/24). Fusionado a `main` vía PR #43, PR #44 (Champions, rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta) y PR #46 (EL+UECL, rama `claude/playoff-uefa-resultados-851dma`, resuelta — merge confirmado en `main`, pendiente confirmar deployment de Production en Vercel por el precedente del 27/08, ver Decisiones cerradas). Las fases de liga de las tres competiciones ya tienen sorteo real y calendario de jornadas completos (ver §3, sesiones 30/08-31/08) — este ítem queda cerrado salvo por la corrección pendiente de `docs/clasificados-2026-27.md` (sigue diciendo que EL/UECL están bloqueadas), que se deja para otra sesión.
 - Plan de difusión por X del calendario de jornadas UEFA entregado a Carlos (31/08): 2 tweets, uno esta semana y otro la víspera de la Jornada 1 (6-7/09). Publicación manual pendiente por parte de Carlos, no se gestiona desde el repo.
@@ -233,6 +231,8 @@ Ramas `ccr-ebe2dd0a-ummddn` y `docs-estado-ritmo-sesiones` fusionadas e íntegra
 | Validación UEFA: publicar los 3 artefactos (Champions, Europa, Conference) y simulación completa de todas las rondas previas verificando la cadena de guardado/recarga | 09/08/2026 | Octubre 2026 |
 | Simulador CAF Champions League | 09/08/2026 | Después del 14/09 |
 | Revisión del logo para redes sociales | 09/08/2026 | Post-relanzamiento |
+| Copa Intercontinental 2026, Fase 2: diseño y simulador. Bloqueado por: fechas y sede de los 3 últimos partidos (FIFA no las ha publicado) y regla de prórroga/penaltis sin verificar. Decidir en la planificación del 02/10 | 01/10/2026 | Planificación del 02/10 |
+| Artículo explicativo de la Copa Intercontinental: se hace en el Project editorial | 01/10/2026 | — |
 
 ## 6. Decisiones cerradas
 
@@ -280,6 +280,7 @@ Ramas `ccr-ebe2dd0a-ummddn` y `docs-estado-ritmo-sesiones` fusionadas e íntegra
 | 18/09 | Intento de borrar la rama remota `claude/europa-league-jornada-1-load-ehys7k` tras su fusión: mismo error HTTP 403 del proxy git ya documentado el 27/08, 28/08 y 31/08 (`git push --delete`); el set de herramientas de GitHub MCP disponible en esta sesión tampoco incluye borrado de ramas. Rama fusionada e íntegra en `main`, pendiente borrarla a mano desde GitHub — no bloquea nada |
 | 27/09 | **Causa raíz encontrada del bloqueo de borrado de ramas** que se venía repitiendo desde el 27/08 como "HTTP 403 del proxy git de la sesión": no era el proxy, sino una regla de protección/ruleset del propio repositorio en GitHub que bloqueaba el borrado de ramas — confirmado porque el borrado también fallaba ("Branch could not be deleted") al intentarlo Carlos directamente desde la interfaz web de GitHub, fuera de esta sesión. Carlos ajustó esa regla y pudo borrar en bloque las ramas fusionadas, incluida toda la deuda `claude/*` histórica (antes congelada hasta el 14/09). Quedan sin borrar, a propósito: `claude/sprint1-completed-tasks-gm49a8` (PR #11, abierta, con trabajo sin fusionar — ver "En curso") |
 | 01/10 | Cambio de ritmo de sesiones: ejecución técnica jueves y domingo, planificación y repaso el viernes. El lunes deja de ser sesión fija; el cierre editorial y el gate semanal pasan del lunes al viernes. Actualizado en `SISTEMA.md` §3, §4 y §6.3 |
+| 01/10 | Cambio de alcance consciente: la Copa Intercontinental (artículo + simulador) entra en el plan; la tarea del domingo 04/10 cae a cambio. Hoy solo se ejecuta la Fase 1 (investigación de formato). El diseño y el código van en otra sesión |
 
 ## 7. Aparcadero
 
@@ -302,6 +303,7 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 
 ## 8. Preguntas abiertas
 
+- Copa Intercontinental: sede y fechas de los 3 últimos partidos sin publicar; regla de prórroga/penaltis sin verificar; rival CONMEBOL por determinar hasta el 28/11.
 - El registro irreverente de Modo Competición sigue sin calibrar con ejemplos propios reales. La voz de objetivoanalista.com es técnica y didáctica, no es esa. Bloquea afinar el tono de los artículos nuevos.
 - `ARQUITECTURA.md` §2 describe flags `origen_ida`/`origen_vuelta` a nivel de campo. El código real (`useOrigenResultados`, `src/App.jsx`) usa en su lugar un único campo `origen` por eliminatoria con tres estados (`real`, `editado`, `real-incompleto`). Señalado el 17/08 y dejado sin corregir a petición explícita — pendiente decidir si se actualiza el documento o el código.
 - ¿Qué borradores de X se publicaron y cuándo? (inventario del lunes 21/09)
