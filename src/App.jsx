@@ -4211,17 +4211,35 @@ const NL_RESULTADOS_JORNADA1_REAL = {
   "D1|Andorra|Malta": { gl: 1, gv: 2 },
   "D2|Liechtenstein|Lituania": { gl: 0, gv: 2 },
 };
-// Resultados reales de la Jornada 2 (27/09/2026, fuente: UEFA.com), mismo
-// patrón que NL_RESULTADOS_JORNADA1_REAL. 8/8 partidos de la jornada
-// verificados contra NL_CALENDARIO_REAL antes de cargar (grupos A2, A4, B3,
-// D1, D2).
+// Resultados reales de la Jornada 2 (27-29/09/2026, fuente: UEFA.com), mismo
+// patrón que NL_RESULTADOS_JORNADA1_REAL. Cargada en dos tandas: 27/09 (8
+// partidos de A2/A4/B3/D1/D2) y 28-29/09 (18 partidos restantes de
+// A1/A3/B1/B2/B4/C1/C2/C3/C4), completando los 26/26 de la jornada.
 const NL_RESULTADOS_JORNADA2_REAL = {
+  "A1|Bélgica|Francia": { gl: 0, gv: 1 },
+  "A1|Turquía|Italia": { gl: 1, gv: 4 },
   "A2|Serbia|Países Bajos": { gl: 1, gv: 2 },
   "A2|Alemania|Grecia": { gl: 0, gv: 1 },
+  "A3|Chequia|Inglaterra": { gl: 0, gv: 2 },
+  "A3|España|Croacia": { gl: 4, gv: 1 },
   "A4|Dinamarca|Gales": { gl: 2, gv: 0 },
   "A4|Noruega|Portugal": { gl: 1, gv: 2 },
+  "B1|Escocia|Suiza": { gl: 0, gv: 3 },
+  "B1|Eslovenia|Macedonia del Norte": { gl: 2, gv: 0 },
+  "B2|Georgia|Ucrania": { gl: 0, gv: 0 },
+  "B2|Irlanda del Norte|Hungría": { gl: 0, gv: 0 },
   "B3|Austria|Kosovo": { gl: 3, gv: 1 },
   "B3|Israel|República de Irlanda": { gl: 0, gv: 3 },
+  "B4|Rumanía|Bosnia y Herzegovina": { gl: 2, gv: 4 },
+  "B4|Suecia|Polonia": { gl: 3, gv: 1 },
+  "C1|Finlandia|Bielorrusia": { gl: 0, gv: 0 },
+  "C1|San Marino|Albania": { gl: 0, gv: 3 },
+  "C2|Armenia|Montenegro": { gl: 2, gv: 3 },
+  "C2|Letonia|Chipre": { gl: 0, gv: 0 },
+  "C3|Moldavia|Islas Feroe": { gl: 1, gv: 1 },
+  "C3|Eslovaquia|Kazajistán": { gl: 2, gv: 1 },
+  "C4|Bulgaria|Estonia": { gl: 0, gv: 0 },
+  "C4|Luxemburgo|Islandia": { gl: 0, gv: 3 },
   "D1|Gibraltar|Andorra": { gl: 0, gv: 0 },
   "D2|Lituania|Azerbaiyán": { gl: 1, gv: 1 },
 };
