@@ -202,7 +202,7 @@ Verificado por script: 26/26 resultados de Jornada 2 cargados, por grupo A1 2 ·
 Rama `datos-nations-league-j2-28-29-sep` fusionada e íntegra en `main`. Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
-**Sesión siguiente:** 28/09/2026 (lunes)
+**Sesión siguiente:** por fijar el viernes 02/10 (el lunes 28/09 ya no es sesión fija y esta tarea no llegó a hacerse)
 **Tarea:** Escribir o marcar 2-3 párrafos propios en el registro irreverente y guardarlos en la Skill `estilo-modo-competicion`.
 **Criterio de hecho:** 2-3 párrafos guardados con una línea sobre el tono.
 **Herramienta:** Claude.ai, Project editorial
@@ -302,4 +302,4 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - ¿Existe la sección "Normativas"?
 - ¿Producción de AFC Capa 1 el 24/08 o el 25/08?
 - Registro irreverente: sin resolver.
-- ¿En cuál de los dos Projects de Claude.ai (técnico/arquitectura o editorial) se hace la planificación de viernes? `SISTEMA.md` §3 dice que esa sesión decide la tarea única del domingo (técnica) y la del lunes (editorial), pero no especifica en qué Project ocurre la planificación en sí.
+- ¿En cuál de los dos Projects de Claude.ai (técnico/arquitectura o editorial) se hace la planificación de viernes? `SISTEMA.md` §3 dice que esa sesión decide la tarea única del domingo y la del jueves (ambas de ejecución técnica), pero no especifica en qué Project ocurre la planificación en sí.
