@@ -6,6 +6,7 @@ import ArticuloNationsLeague from "./ArticuloNationsLeague.jsx";
 import ArticuloEuro2028 from "./ArticuloEuro2028.jsx";
 import ArticuloAFCChampionsElite from "./ArticuloAFCChampionsElite.jsx";
 import ArticuloProcedimientoSorteoUCL from "./ArticuloProcedimientoSorteoUCL.jsx";
+import ArticuloCopaIntercontinental from "./ArticuloCopaIntercontinental.jsx";
 import ResultadosReales from "./ResultadosReales.jsx";
 import useDocumentMeta from "./useDocumentMeta.js";
 import { useResultadosReales, precargarRonda, ganadorRealR1, perdedorRealR1, sorteoRealParaPool } from "./datosReales.js";
@@ -6330,7 +6331,7 @@ export default function App() {
   // empieza por "#/simulador", así que el orden de las ramas es lo que las separa.
   // Mismo cuidado con el simulador de la ACL Elite: la rama de
   // "#/simulador-afc-champions-elite" va ANTES que la de "#/simulador".
-  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/procedimiento-sorteo-ucl") ? "procedimiento-sorteo-ucl" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
+  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/procedimiento-sorteo-ucl") ? "procedimiento-sorteo-ucl" : hash.startsWith("#/copa-intercontinental") ? "copa-intercontinental" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -6372,6 +6373,7 @@ export default function App() {
       {vista === "euro2028" && <ArticuloEuro2028 />}
       {vista === "afc-champions-elite" && <ArticuloAFCChampionsElite />}
       {vista === "procedimiento-sorteo-ucl" && <ArticuloProcedimientoSorteoUCL />}
+      {vista === "copa-intercontinental" && <ArticuloCopaIntercontinental />}
       {vista === "resultados" && <ResultadosReales />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
