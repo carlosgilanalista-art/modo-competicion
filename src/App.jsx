@@ -6378,14 +6378,23 @@ function resolverPartidoCopa() {
 // resultado (real o simulado), estado y ganador (id | null).
 function calcularCopa(simulados, seleccionConmebol) {
   const out = {};
+  // base[pid]: ganador del partido real tal como está confirmado (sin ediciones aguas arriba).
+  const base = {};
   const ref = (r) => r.tipo === "equipo" ? r.id : r.tipo === "ganador" ? out[r.partido].ganador : plazaConmebolId(seleccionConmebol);
+  const refBase = (r) => r.tipo === "equipo" ? r.id : r.tipo === "ganador" ? base[r.partido] || null : null;
   PARTIDOS.forEach((p) => {
     const a = ref(p.a), b = ref(p.b);
+    const baseA = refBase(p.a), baseB = refBase(p.b);
+    const f0 = p.real && baseA && baseB ? estadoResultadoCopa(p.real) : null;
+    base[p.id] = f0 && f0.ganador ? (f0.ganador === "A" ? baseA : baseB) : null;
     const participantes = a && b ? [a, b] : null;
+    // Un partido real editado o simulado se guarda en `simulados` (origen "editado"); sin entrada, vale el dato real.
     const sim = simulados[p.id];
     let estado, resultado = null;
-    if (p.real) { estado = "real"; resultado = p.real; }
-    else if (sim) {
+    if (p.real && !sim) {
+      resultado = p.real;
+      estado = !participantes ? "esperando" : participantes[0] === baseA && participantes[1] === baseB ? "real" : "invalido";
+    } else if (sim) {
       resultado = sim;
       const mismos = participantes && sim.participantes[0] === a && sim.participantes[1] === b;
       estado = !mismos ? "invalido" : estadoResultadoCopa(sim).fase === "resuelto" ? "simulado" : "simulable";
@@ -6397,26 +6406,27 @@ function calcularCopa(simulados, seleccionConmebol) {
 }
 
 const ESTADO_COPA_DISTINTIVO = { real: "REAL", simulado: "SIMULADO", simulable: "PENDIENTE", esperando: "PENDIENTE", invalido: "OBSOLETO" };
+function distintivoCopa(partido, estado) { return estado === "simulado" && partido.real ? "EDITADO" : ESTADO_COPA_DISTINTIVO[estado]; }
 
-function PartidoUnicoCard({ partido, calc, colores, onSimular, onEditar, onQuitar }) {
+function PartidoUnicoCard({ partido, calc, colores, tieneEdicion, onSimular, onEditar, onQuitar, onRestaurar }) {
   const { estado, participantes, resultado } = calc;
   const nombreRef = (r, i) => calc.lados[i] ? textoEquipoCopa(equipoCopa(calc.lados[i])) : `Ganador ${r.partido}`;
   const est = estadoResultadoCopa(resultado);
+  const distintivo = distintivoCopa(partido, estado);
   const color = estado === "real" ? colores.acento : estado === "invalido" ? colores.alerta : colores.textoSuave;
-  const editable = estado === "simulable" || estado === "simulado";
+  const editable = estado === "simulable" || estado === "simulado" || estado === "real";
   const inputStyle = { width: 38, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
   const campo = (k) => (
     <input type="number" min="0" data-campo={k} value={resultado?.[k] ?? ""} style={inputStyle}
       onChange={(e) => { const v = validar(e.target.value); if (v !== "INVALIDO") onEditar(partido.id, k, v); }} />
   );
   const penIgual = est && resultado?.penA !== undefined && resultado?.penB !== undefined && Number(resultado.penA) === Number(resultado.penB);
-  const marcador = resultado && resultado.gA !== undefined && resultado.gB !== undefined ? `${resultado.gA} - ${resultado.gB}` : null;
   return (
     <div data-estado={estado} style={{ background: colores.tarjeta, border: `1px solid ${estado === "invalido" ? colores.alerta : colores.acento}`, borderRadius: 8, padding: "12px 16px", marginBottom: 10 }}>
       <div style={{ color: colores.texto, fontSize: 14, marginBottom: 4 }}>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "2px 6px", marginRight: 8 }}>{partido.id}</span>
         <strong>{partido.nombre}</strong>
-        <span data-origen={ESTADO_COPA_DISTINTIVO[estado]} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color, border: `1px solid ${color}`, borderRadius: 4, padding: "2px 6px", marginLeft: 8 }}>{ESTADO_COPA_DISTINTIVO[estado]}</span>
+        <span data-origen={distintivo} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color, border: `1px solid ${color}`, borderRadius: 4, padding: "2px 6px", marginLeft: 8 }}>{distintivo}</span>
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 8 }}>
         {partido.fecha ? fmtFechaCopa(partido.fecha) : "Por confirmar"} · {partido.sede || "Por confirmar"}{partido.sedeNeutral ? " · sede neutral" : ""}
@@ -6425,7 +6435,7 @@ function PartidoUnicoCard({ partido, calc, colores, onSimular, onEditar, onQuita
         {nombreRef(partido.a, 0)} <span style={{ color: colores.textoSuave }}>vs</span> {nombreRef(partido.b, 1)}
       </div>
       {estado === "esperando" && <div style={{ color: colores.alerta, fontSize: 12, fontStyle: "italic", marginTop: 6 }}>Esperando el ganador de un partido previo</div>}
-      {estado === "invalido" && <div style={{ color: colores.alerta, fontSize: 12, marginTop: 6 }}>Resultado obsoleto: vuelve a simular</div>}
+      {estado === "invalido" && <div style={{ color: colores.alerta, fontSize: 12, marginTop: 6 }}>{partido.real ? "Resultado real obsoleto: vuelve a simular o restaura el partido anterior" : "Resultado obsoleto: vuelve a simular"}</div>}
       {(editable || (estado === "invalido" && participantes)) && (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
           {editable && (
@@ -6446,17 +6456,11 @@ function PartidoUnicoCard({ partido, calc, colores, onSimular, onEditar, onQuita
             </>
           )}
           <BotonAleatorio onClick={() => onSimular(partido.id)} label="Simular" colores={colores} />
-          {editable && resultado && <button onClick={() => onQuitar(partido.id)} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
+          {tieneEdicion && partido.real && <button onClick={() => onRestaurar(partido.id)} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↩ Restaurar real</button>}
+          {editable && resultado && !partido.real && <button onClick={() => onQuitar(partido.id)} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
         </div>
       )}
       {penIgual && <div style={{ color: colores.alerta, fontSize: 11, marginTop: 4 }}>Los penaltis no pueden terminar en empate</div>}
-      {marcador && estado === "real" && (
-        <div data-marcador style={{ marginTop: 8, color: colores.acento, fontFamily: "'JetBrains Mono', monospace", fontSize: 16 }}>
-          {marcador}
-          {est.empate && resultado.etA !== undefined && <span style={{ color: colores.textoSuave, fontSize: 12 }}> · prórroga {resultado.etA} - {resultado.etB}</span>}
-          {est.etTied && resultado.penA !== undefined && <span style={{ color: colores.textoSuave, fontSize: 12 }}> · penaltis {resultado.penA} - {resultado.penB}</span>}
-        </div>
-      )}
     </div>
   );
 }
@@ -6473,14 +6477,15 @@ function SimuladorCopaIntercontinentalPage() {
   const opciones = [PLAZA_CONMEBOL.generico, ...PLAZA_CONMEBOL.candidatos];
   const simular = (pid) => {
     const parts = calc[pid].participantes;
-    if (!parts || calc[pid].estado === "real") return;
+    if (!parts) return;
     setSimulados((prev) => ({ ...prev, [pid]: { ...resolverPartidoCopa(), participantes: parts } }));
   };
   const editar = (pid, k, v) => {
     const cur = calc[pid];
-    if (!cur.participantes || (cur.estado !== "simulable" && cur.estado !== "simulado")) return;
+    if (!cur.participantes || !["simulable", "simulado", "real"].includes(cur.estado)) return;
     setSimulados((prev) => {
-      const r = { ...(prev[pid] || {}), participantes: cur.participantes };
+      const real = PARTIDOS.find((x) => x.id === pid).real;
+      const r = { ...(prev[pid] || (cur.estado === "real" ? real : {})), participantes: cur.participantes };
       if (v === undefined) delete r[k]; else r[k] = v;
       const g = r.gA !== undefined && r.gB !== undefined && Number(r.gA) !== Number(r.gB);
       if (g || r.gA === undefined || r.gB === undefined) { delete r.etA; delete r.etB; delete r.penA; delete r.penB; }
@@ -6488,13 +6493,19 @@ function SimuladorCopaIntercontinentalPage() {
       return { ...prev, [pid]: r };
     });
   };
+  // Volver al estado confirmado: se descarta la edición y reaparece el dato real.
+  const restaurar = (pid) => setSimulados((prev) => { const n = { ...prev }; delete n[pid]; return n; });
+  const restaurarReales = () => setSimulados((prev) => { const n = { ...prev }; PARTIDOS.filter((p) => p.real).forEach((p) => delete n[p.id]); return n; });
+  const hayEdicionReal = PARTIDOS.some((p) => p.real && simulados[p.id]);
   const quitar = (pid) => setSimulados((prev) => { const n = { ...prev }; delete n[pid]; return n; });
-  // P3 → P4 → P5 en orden; sobrescribe los obsoletos y nunca toca P1 ni P2.
+  // P3 → P4 → P5 en orden; sobrescribe los obsoletos. P1 y P2 (reales) solo se vuelven a simular si
+  // una edición aguas arriba los dejó obsoletos; si no, no se tocan.
   const simularTodo = () => {
     const n = {};
-    ["P3", "P4", "P5"].forEach((pid) => {
-      const parts = calcularCopa(n, seleccionConmebol)[pid].participantes;
-      if (parts) n[pid] = { ...resolverPartidoCopa(), participantes: parts };
+    ["P1", "P2"].forEach((pid) => { if (simulados[pid]) n[pid] = simulados[pid]; });
+    ["P1", "P2", "P3", "P4", "P5"].forEach((pid) => {
+      const c = calcularCopa(n, seleccionConmebol)[pid];
+      if (c.participantes && (!PARTIDOS.find((x) => x.id === pid).real || c.estado === "invalido")) n[pid] = { ...resolverPartidoCopa(), participantes: c.participantes };
     });
     setSimulados(n);
   };
@@ -6509,7 +6520,7 @@ function SimuladorCopaIntercontinentalPage() {
         </div>
         <h1 style={{ fontFamily: "'Oswald', sans-serif", color: c.texto, fontSize: 28, margin: "8px 0 6px" }}>Copa Intercontinental FIFA 2026</h1>
         <p style={{ color: c.textoSuave, fontSize: 13, lineHeight: 1.6, maxWidth: 700, marginBottom: 16 }}>
-          Cinco partidos únicos. Los dos primeros ya se han jugado y quedan bloqueados; el Derbi de las Américas, la Copa Challenger y la Final se pueden simular.
+          Cinco partidos únicos. Los dos primeros ya se han jugado: sus resultados se pueden editar para ver la repercusión en los partidos siguientes, y se puede volver al resultado confirmado. El Derbi de las Américas, la Copa Challenger y la Final se pueden simular.
         </p>
         {PLAZA_CONMEBOL.estado !== "campeon" && (
           <div style={{ marginBottom: 16 }}>
@@ -6522,9 +6533,10 @@ function SimuladorCopaIntercontinentalPage() {
         )}
         <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           <BotonAleatorio onClick={simularTodo} label="Simular todo lo pendiente" colores={c} />
+          <button onClick={restaurarReales} disabled={!hayEdicionReal} style={{ background: "none", color: hayEdicionReal ? c.textoSuave : "#555", border: `1px solid ${hayEdicionReal ? c.inputBorder : "#3A3A3A"}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: hayEdicionReal ? "pointer" : "not-allowed" }}>↩ Restaurar los reales</button>
           <button onClick={limpiar} style={{ background: "none", color: c.textoSuave, border: `1px solid ${c.inputBorder}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>↩ Limpiar simulación</button>
         </div>
-        {PARTIDOS.map((p) => <PartidoUnicoCard key={p.id} partido={p} calc={calc[p.id]} colores={c} onSimular={simular} onEditar={editar} onQuitar={quitar} />)}
+        {PARTIDOS.map((p) => <PartidoUnicoCard key={p.id} partido={p} calc={calc[p.id]} colores={c} tieneEdicion={!!simulados[p.id]} onSimular={simular} onEditar={editar} onQuitar={quitar} onRestaurar={restaurar} />)}
         {campeon && (
           <div data-campeon style={{ marginTop: 10, background: c.inputBg, border: `1px solid ${c.acento}`, borderRadius: 8, padding: "10px 14px", color: c.acento, fontSize: 16, fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>
             🏆 CAMPEÓN: {textoEquipoCopa(campeon)}
