@@ -9,6 +9,7 @@ import ArticuloProcedimientoSorteoUCL from "./ArticuloProcedimientoSorteoUCL.jsx
 import ArticuloCopaIntercontinental from "./ArticuloCopaIntercontinental.jsx";
 import ResultadosReales from "./ResultadosReales.jsx";
 import useDocumentMeta from "./useDocumentMeta.js";
+import { REGLA_DESEMPATE, EQUIPOS, PLAZA_CONMEBOL, PARTIDOS } from "./data/copaIntercontinental2026.js";
 import { useResultadosReales, precargarRonda, ganadorRealR1, perdedorRealR1, sorteoRealParaPool } from "./datosReales.js";
 
 // ============================================================
@@ -6337,6 +6338,208 @@ function SimuladorAFCPage({ afc, region, setRegion }) {
 }
 
 // ============================================================
+// SIMULADOR COPA INTERCONTINENTAL FIFA 2026 (núcleo T1)
+// ============================================================
+// Datos en src/data/copaIntercontinental2026.js (módulo puro). Sin persistencia:
+// solo estado en memoria. El origen de cada partido se deriva de los datos
+// (real ≠ null → "real" y bloqueado); no se usa useOrigenResultados.
+const TEMA_COPA = TEMA_NL;
+
+function equipoCopa(id) {
+  if (id === PLAZA_CONMEBOL.generico.id) return { id, nombre: PLAZA_CONMEBOL.generico.nombre, pais: null };
+  return EQUIPOS.find((e) => e.id === id) || PLAZA_CONMEBOL.candidatos.find((e) => e.id === id) || null;
+}
+function textoEquipoCopa(e) { return e.pais ? `${e.nombre} (${e.pais})` : e.nombre; }
+function fmtFechaCopa(f) { const [y, m, d] = f.split("-"); return `${d}/${m}/${y}`; }
+
+// Id de la plaza CONMEBOL que juega el cruce: el campeón si ya se conoce; si no, la selección.
+function plazaConmebolId(seleccion) {
+  if (PLAZA_CONMEBOL.estado === "campeon" && PLAZA_CONMEBOL.campeon) return PLAZA_CONMEBOL.campeon;
+  const ok = seleccion === PLAZA_CONMEBOL.generico.id || PLAZA_CONMEBOL.candidatos.some((c) => c.id === seleccion);
+  return ok ? seleccion : PLAZA_CONMEBOL.generico.id;
+}
+
+// Con la regla sin prórroga, un empate en 90' va directo a penaltis.
+function estadoResultadoCopa(r) {
+  if (!REGLA_DESEMPATE.prorroga && r && r.gA !== undefined && r.gB !== undefined && Number(r.gA) === Number(r.gB)) {
+    return estadoPartidoUnico({ ...r, etA: 0, etB: 0 });
+  }
+  return estadoPartidoUnico(r);
+}
+// Envoltorio del motor aleatorio: lee REGLA_DESEMPATE.
+function resolverPartidoCopa() {
+  if (REGLA_DESEMPATE.prorroga) return generarFinalAleatoria();
+  const r = { gA: rnd5(), gB: rnd5() };
+  if (r.gA === r.gB) { r.penA = rnd5(); r.penB = r.penA === 5 ? r.penA - 1 : r.penA + 1; }
+  return r;
+}
+
+// Funciones derivadas (puras). Devuelve, por partido: participantes ([idA, idB] | null),
+// resultado (real o simulado), estado y ganador (id | null).
+function calcularCopa(simulados, seleccionConmebol) {
+  const out = {};
+  const ref = (r) => r.tipo === "equipo" ? r.id : r.tipo === "ganador" ? out[r.partido].ganador : plazaConmebolId(seleccionConmebol);
+  PARTIDOS.forEach((p) => {
+    const a = ref(p.a), b = ref(p.b);
+    const participantes = a && b ? [a, b] : null;
+    const sim = simulados[p.id];
+    let estado, resultado = null;
+    if (p.real) { estado = "real"; resultado = p.real; }
+    else if (sim) {
+      resultado = sim;
+      const mismos = participantes && sim.participantes[0] === a && sim.participantes[1] === b;
+      estado = !mismos ? "invalido" : estadoResultadoCopa(sim).fase === "resuelto" ? "simulado" : "simulable";
+    } else estado = participantes ? "simulable" : "esperando";
+    const fase = estado === "real" || estado === "simulado" ? estadoResultadoCopa(resultado) : null;
+    out[p.id] = { lados: [a, b], participantes, resultado, estado, ganador: fase && fase.ganador ? (fase.ganador === "A" ? a : b) : null };
+  });
+  return out;
+}
+
+const ESTADO_COPA_DISTINTIVO = { real: "REAL", simulado: "SIMULADO", simulable: "PENDIENTE", esperando: "PENDIENTE", invalido: "OBSOLETO" };
+
+function PartidoUnicoCard({ partido, calc, colores, onSimular, onEditar, onQuitar }) {
+  const { estado, participantes, resultado } = calc;
+  const nombreRef = (r, i) => calc.lados[i] ? textoEquipoCopa(equipoCopa(calc.lados[i])) : `Ganador ${r.partido}`;
+  const est = estadoResultadoCopa(resultado);
+  const color = estado === "real" ? colores.acento : estado === "invalido" ? colores.alerta : colores.textoSuave;
+  const editable = estado === "simulable" || estado === "simulado";
+  const inputStyle = { width: 38, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
+  const campo = (k) => (
+    <input type="number" min="0" data-campo={k} value={resultado?.[k] ?? ""} style={inputStyle}
+      onChange={(e) => { const v = validar(e.target.value); if (v !== "INVALIDO") onEditar(partido.id, k, v); }} />
+  );
+  const penIgual = est && resultado?.penA !== undefined && resultado?.penB !== undefined && Number(resultado.penA) === Number(resultado.penB);
+  const marcador = resultado && resultado.gA !== undefined && resultado.gB !== undefined ? `${resultado.gA} - ${resultado.gB}` : null;
+  return (
+    <div data-estado={estado} style={{ background: colores.tarjeta, border: `1px solid ${estado === "invalido" ? colores.alerta : colores.acento}`, borderRadius: 8, padding: "12px 16px", marginBottom: 10 }}>
+      <div style={{ color: colores.texto, fontSize: 14, marginBottom: 4 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "2px 6px", marginRight: 8 }}>{partido.id}</span>
+        <strong>{partido.nombre}</strong>
+        <span data-origen={ESTADO_COPA_DISTINTIVO[estado]} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color, border: `1px solid ${color}`, borderRadius: 4, padding: "2px 6px", marginLeft: 8 }}>{ESTADO_COPA_DISTINTIVO[estado]}</span>
+      </div>
+      <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 8 }}>
+        {partido.fecha ? fmtFechaCopa(partido.fecha) : "Por confirmar"} · {partido.sede || "Por confirmar"}{partido.sedeNeutral ? " · sede neutral" : ""}
+      </div>
+      <div style={{ color: colores.texto, fontSize: 14 }}>
+        {nombreRef(partido.a, 0)} <span style={{ color: colores.textoSuave }}>vs</span> {nombreRef(partido.b, 1)}
+      </div>
+      {estado === "esperando" && <div style={{ color: colores.alerta, fontSize: 12, fontStyle: "italic", marginTop: 6 }}>Esperando el ganador de un partido previo</div>}
+      {estado === "invalido" && <div style={{ color: colores.alerta, fontSize: 12, marginTop: 6 }}>Resultado obsoleto: vuelve a simular</div>}
+      {(editable || (estado === "invalido" && participantes)) && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+          {editable && (
+            <>
+              {campo("gA")}<span style={{ color: colores.textoSuave }}>-</span>{campo("gB")}
+              {est.empate && REGLA_DESEMPATE.prorroga && (
+                <>
+                  <span style={{ color: colores.alerta, fontSize: 11 }}>(prórroga)</span>
+                  {campo("etA")}<span style={{ color: colores.textoSuave }}>-</span>{campo("etB")}
+                </>
+              )}
+              {est.etTied && (
+                <>
+                  <span style={{ color: colores.alerta, fontSize: 11 }}>(pen.)</span>
+                  {campo("penA")}<span style={{ color: colores.textoSuave }}>-</span>{campo("penB")}
+                </>
+              )}
+            </>
+          )}
+          <BotonAleatorio onClick={() => onSimular(partido.id)} label="Simular" colores={colores} />
+          {editable && resultado && <button onClick={() => onQuitar(partido.id)} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
+        </div>
+      )}
+      {penIgual && <div style={{ color: colores.alerta, fontSize: 11, marginTop: 4 }}>Los penaltis no pueden terminar en empate</div>}
+      {marcador && estado === "real" && (
+        <div data-marcador style={{ marginTop: 8, color: colores.acento, fontFamily: "'JetBrains Mono', monospace", fontSize: 16 }}>
+          {marcador}
+          {est.empate && resultado.etA !== undefined && <span style={{ color: colores.textoSuave, fontSize: 12 }}> · prórroga {resultado.etA} - {resultado.etB}</span>}
+          {est.etTied && resultado.penA !== undefined && <span style={{ color: colores.textoSuave, fontSize: 12 }}> · penaltis {resultado.penA} - {resultado.penB}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SimuladorCopaIntercontinentalPage() {
+  const c = TEMA_COPA;
+  const [simulados, setSimulados] = useState({});
+  const [seleccionConmebol, setSeleccionConmebol] = useState(PLAZA_CONMEBOL.generico.id);
+  useDocumentMeta({
+    title: "Simulador Copa Intercontinental FIFA 2026 · Modo Competición",
+    description: "Simula la Copa Intercontinental FIFA 2026: los dos primeros partidos ya son reales; el Derbi de las Américas, la Copa Challenger y la Final, simulables.",
+  });
+  const calc = useMemo(() => calcularCopa(simulados, seleccionConmebol), [simulados, seleccionConmebol]);
+  const opciones = [PLAZA_CONMEBOL.generico, ...PLAZA_CONMEBOL.candidatos];
+  const simular = (pid) => {
+    const parts = calc[pid].participantes;
+    if (!parts || calc[pid].estado === "real") return;
+    setSimulados((prev) => ({ ...prev, [pid]: { ...resolverPartidoCopa(), participantes: parts } }));
+  };
+  const editar = (pid, k, v) => {
+    const cur = calc[pid];
+    if (!cur.participantes || (cur.estado !== "simulable" && cur.estado !== "simulado")) return;
+    setSimulados((prev) => {
+      const r = { ...(prev[pid] || {}), participantes: cur.participantes };
+      if (v === undefined) delete r[k]; else r[k] = v;
+      const g = r.gA !== undefined && r.gB !== undefined && Number(r.gA) !== Number(r.gB);
+      if (g || r.gA === undefined || r.gB === undefined) { delete r.etA; delete r.etB; delete r.penA; delete r.penB; }
+      else if (r.etA !== undefined && r.etB !== undefined && Number(r.gA) + Number(r.etA) !== Number(r.gB) + Number(r.etB)) { delete r.penA; delete r.penB; }
+      return { ...prev, [pid]: r };
+    });
+  };
+  const quitar = (pid) => setSimulados((prev) => { const n = { ...prev }; delete n[pid]; return n; });
+  // P3 → P4 → P5 en orden; sobrescribe los obsoletos y nunca toca P1 ni P2.
+  const simularTodo = () => {
+    const n = {};
+    ["P3", "P4", "P5"].forEach((pid) => {
+      const parts = calcularCopa(n, seleccionConmebol)[pid].participantes;
+      if (parts) n[pid] = { ...resolverPartidoCopa(), participantes: parts };
+    });
+    setSimulados(n);
+  };
+  const limpiar = () => { setSimulados({}); setSeleccionConmebol(PLAZA_CONMEBOL.generico.id); };
+  const campeon = calc.P5.estado === "simulado" ? equipoCopa(calc.P5.ganador) : null;
+  return (
+    <div style={{ minHeight: "100vh", background: c.fondo, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 20px 60px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: c.textoSuave, fontSize: 11, letterSpacing: 3 }}>SIMULADOR COPA INTERCONTINENTAL FIFA 2026</div>
+          <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
+        </div>
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", color: c.texto, fontSize: 28, margin: "8px 0 6px" }}>Copa Intercontinental FIFA 2026</h1>
+        <p style={{ color: c.textoSuave, fontSize: 13, lineHeight: 1.6, maxWidth: 700, marginBottom: 16 }}>
+          Cinco partidos únicos. Los dos primeros ya se han jugado y quedan bloqueados; el Derbi de las Américas, la Copa Challenger y la Final se pueden simular.
+        </p>
+        {PLAZA_CONMEBOL.estado !== "campeon" && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ color: c.textoSuave, fontSize: 12, marginRight: 8 }}>Plaza CONMEBOL:</label>
+            <select data-selector-conmebol value={seleccionConmebol} onChange={(e) => setSeleccionConmebol(e.target.value)}
+              style={{ background: c.inputBg, color: c.texto, border: `1px solid ${c.inputBorder}`, borderRadius: 4, padding: "4px 8px", fontSize: 12 }}>
+              {opciones.map((o) => <option key={o.id} value={o.id}>{o.pais ? `${o.nombre} (${o.pais})` : o.nombre}</option>)}
+            </select>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+          <BotonAleatorio onClick={simularTodo} label="Simular todo lo pendiente" colores={c} />
+          <button onClick={limpiar} style={{ background: "none", color: c.textoSuave, border: `1px solid ${c.inputBorder}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>↩ Limpiar simulación</button>
+        </div>
+        {PARTIDOS.map((p) => <PartidoUnicoCard key={p.id} partido={p} calc={calc[p.id]} colores={c} onSimular={simular} onEditar={editar} onQuitar={quitar} />)}
+        {campeon && (
+          <div data-campeon style={{ marginTop: 10, background: c.inputBg, border: `1px solid ${c.acento}`, borderRadius: 8, padding: "10px 14px", color: c.acento, fontSize: 16, fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>
+            🏆 CAMPEÓN: {textoEquipoCopa(campeon)}
+          </div>
+        )}
+        <footer style={{ borderTop: `1px solid ${c.borde}`, paddingTop: 16, marginTop: 16, color: c.textoSuave, fontSize: 11, lineHeight: 1.6 }}>
+          Modo Competición · El motor de partido es el mismo aleatorio uniforme que el resto de simuladores del sitio.
+          Regla de empate (prórroga y penaltis) sin verificar contra el reglamento FIFA; fuente: {REGLA_DESEMPATE.fuente}.
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
 function useHashRoute() {
@@ -6365,7 +6568,7 @@ export default function App() {
   // empieza por "#/simulador", así que el orden de las ramas es lo que las separa.
   // Mismo cuidado con el simulador de la ACL Elite: la rama de
   // "#/simulador-afc-champions-elite" va ANTES que la de "#/simulador".
-  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/procedimiento-sorteo-ucl") ? "procedimiento-sorteo-ucl" : hash.startsWith("#/copa-intercontinental") ? "copa-intercontinental" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
+  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-copa-intercontinental") ? "simulador-copa" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/procedimiento-sorteo-ucl") ? "procedimiento-sorteo-ucl" : hash.startsWith("#/copa-intercontinental") ? "copa-intercontinental" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -6411,6 +6614,7 @@ export default function App() {
       {vista === "resultados" && <ResultadosReales />}
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
+      {vista === "simulador-copa" && <SimuladorCopaIntercontinentalPage />}
       {vista === "simulador-afc" && <SimuladorAFCPage afc={afc} region={regionAFC} setRegion={setRegionAFC} />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
