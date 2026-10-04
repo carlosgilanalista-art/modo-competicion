@@ -1,6 +1,6 @@
 # ESTADO — Modo Competición
 
-**Última actualización:** 04/10/2026 — Jornada 3 de la fase de liga de Nations League 2026/27 **completa** (26/26 partidos, las 14 grupos), cargada el 1-3/10/2026 y fusionada a `main` (PR #68, commit `1a1853f`); deployment de Production confirmado por Carlos. Nations League acumula ya 3 jornadas reales (78 resultados) sobre `NL_RESULTADOS_REAL`. Para el histórico completo de sesiones anteriores (Jornadas 1-2 de NL, limpieza de ramas, fixes visuales, ritmo de sesiones, Copa Intercontinental, etc.), ver §3 más abajo.
+**Última actualización:** 04/10/2026 (cierre de la 2ª sesión) — Simulador de la Copa Intercontinental FIFA 2026 (T1) en producción, ruta `#/simulador-copa-intercontinental`, enlazado desde el menú y la landing (PRs #73-#78; ver §3). Antes:  Jornada 3 de la fase de liga de Nations League 2026/27 **completa** (26/26 partidos, las 14 grupos), cargada el 1-3/10/2026 y fusionada a `main` (PR #68, commit `1a1853f`); deployment de Production confirmado por Carlos. Nations League acumula ya 3 jornadas reales (78 resultados) sobre `NL_RESULTADOS_REAL`. Para el histórico completo de sesiones anteriores (Jornadas 1-2 de NL, limpieza de ramas, fixes visuales, ritmo de sesiones, Copa Intercontinental, etc.), ver §3 más abajo.
 
 Este documento es la única fuente de verdad del estado del proyecto. Si una copia en un Project lo contradice, gana esta. Se actualiza al cierre de cada sesión de Code y los viernes al planificar.
 
@@ -227,6 +227,14 @@ Rama `datos-nations-league-j3-1-3-oct` fusionada e íntegra en `main`. Nada fue 
 **Tarea:** Inventario de solo lectura del simulador AFC para preparar el diseño del simulador de la Copa Intercontinental FIFA 2026. Cambio de alcance consciente: desplaza la tarea que figuraba aquí (corrección de `ARQUITECTURA.md` §2, candidata a 04/10, ver §7).
 **Criterio de hecho:** CUMPLIDO — 10 puntos del inventario contestados con ruta y línea o "NO ENCONTRADO"; `git status` limpio y `git diff --stat` vacío al cierre del inventario; sin commit, push ni cambio de rama durante el inventario.
 **Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `claude/zealous-edison-yhyyrr`.
+**Herramienta:** Claude Code
+
+**Sesión:** 04/10/2026 (domingo, 2ª sesión) — COMPLETADA
+**Tarea:** T1 Copa Intercontinental FIFA 2026: núcleo del simulador (diseño cerrado el 04/10 en el Project técnico).
+**Criterio de hecho:** CUMPLIDO, con dos ampliaciones pedidas por Carlos durante la sesión. Fase A (módulo de datos, ruta, vista estática) y Fase B (simulación, edición manual, invalidación derivada, "Simular todo", "Limpiar") verificadas en navegador con Playwright contra el gate del prompt: 5 tarjetas; "Simular todo" ×5 siempre 3 simulados, 0 inválidos, 1 campeón; invalidación P3 → 2, P4 → 1, P5 → 0, selector CONMEBOL con candidato de prueba → 3 y de vuelta → 0 (candidato retirado antes del commit); 1-1 manual abre prórroga y penaltis; con `prorroga: false` un 1-1 va directo a penaltis (revertido); build sin errores.
+Ampliaciones posteriores (no estaban en el prompt original): (1) enlace desde el menú Clubes → FIFA ("Simulador" y "Explicación") y desde las dos tarjetas de la landing; (2) los resultados reales P1 y P2 ya no están bloqueados para siempre: se muestran como "✓ Confirmado" con "Modificar", se pueden editar con repercusión en fases posteriores (obsoletos, nunca borrados) y se vuelve al confirmado con "Restaurar resultado real" / "Restaurar los reales". Esto sustituye las casillas del gate "real sin controles" y "P1/P2 sin inputs".
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `claude/amazing-tesla-eqwri1` (el entorno obligó a este nombre en lugar de `copa-intercontinental-simulador-base`). PR #73 (núcleo), #75 (menú), #76 (landing), #77 (reales editables) y #78 (Confirmado/Modificar/Restaurar), todos fusionados a `main` con squash tras "fusiona" explícito de Carlos; #74 solo documentación. Producción comprobada por Carlos: todo correcto.
+Pendiente: borrar a mano en GitHub la rama `claude/amazing-tesla-eqwri1` (el borrado remoto falla). T2 sigue abierta: migrar el artículo al módulo de datos como fuente única. Aparcadero actualizado en §7.
 **Herramienta:** Claude Code
 
 ## 4. En curso
