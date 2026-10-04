@@ -316,6 +316,10 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - Nombre del equipo "Kazajistán" (así en todo el código: `NL_RANKING`, `NL_GRUPOS`, `NL_CALENDARIO_REAL`, banderas) no coincide con la web de UEFA.com en español, que escribe "Kazajstán" (sin la segunda "i") — confirmado con captura de pantalla el 26/09. No bloquea nada porque el resultado de Islas Feroe-Kazajistán ya está cargado con el nombre existente en el código, pero queda pendiente decidir si se renombra el equipo en todo el dataset de Nations League para que coincida con la fuente oficial.
 - Copa Intercontinental de la FIFA: explicación + simulador (anotado 27/09), sin evaluar.
 - Corrección de `ARQUITECTURA.md` §2: candidata a tarea única del 04/10.
+- Detectado en el inventario del 04/10 (sin evaluar): las refs locales `main` y `origin/main` del entorno de Code estaban obsoletas (`697473d`) frente al `main` remoto real (`e3fac83`); comprobar con `git fetch` antes de fiarse de ellas.
+- Detectado en el inventario del 04/10 (sin evaluar): la entrada de artículos publicados de §1 cita `ESTADO_PARTIDOS` en `src/ArticuloCopaIntercontinental.jsx`, pero no existe en `src/`; el fichero solo tiene `EQUIPOS` y `CUADRO` (líneas 77 y 86).
+- Detectado en el inventario del 04/10 (sin evaluar): el campeón de la AFC se escribe "Al Ahli" en `ArticuloCopaIntercontinental.jsx` (líneas 80 y 87) y "Al-Ahli" en `ArticuloAFCChampionsElite.jsx` (línea 350) y en `AFC_OESTE` (`App.jsx:831`). Unificar el nombre antes de diseñar el simulador de la Copa.
+- Detectado en el inventario del 04/10 (sin evaluar): el comentario de `ganadorTie` (`App.jsx:39`) cita `cascadaInvalidez`, función que no existe en el código.
 
 ## 8. Preguntas abiertas
 
