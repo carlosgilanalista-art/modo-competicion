@@ -2,16 +2,9 @@ import React from "react";
 import useDocumentMeta from "./useDocumentMeta.js";
 
 // ============================================================
-// ARTÍCULO — Copa Intercontinental de la FIFA 2026: cuadro, equipos y
-// lo que falta por decidirse. Texto de Carlos Gil, íntegro.
-//
-// Artículo vivo: las zonas marcadas [ACTUALIZAR] se rellenan tras cada
-// partido. Son marcas internas, no se publican. Para actualizar:
-//   - ESTADO_PARTIDOS, CUADRO y EQUIPOS (datos que alimentan las tablas)
-//   - los textos de "Lo que ya ha pasado", "Lo que sigue abierto" y
-//     "Lo que se juega en diciembre"
-// Esta competición no tiene simulador todavía: el artículo no lo
-// menciona ni lo enlaza.
+// ARTÍCULO — Copa Intercontinental FIFA 2026: explicación del formato
+// (6 equipos, 5 partidos, eliminatoria única). Texto de Carlos Gil, íntegro.
+// Estructura calcada de ArticuloAFCChampionsElite.jsx. Sin simulador.
 // ============================================================
 const C = {
   fondo: "#0A0E17", tarjeta: "#101827", borde: "#1E2A3C",
@@ -20,28 +13,6 @@ const C = {
 };
 const MONO = "'JetBrains Mono', monospace";
 const OSWALD = "'Oswald', sans-serif";
-
-// [ACTUALIZAR tras cada partido]
-const ESTADO_PARTIDOS = "Estado a 01/10/2026: 2 de 5 partidos jugados.";
-
-// [ACTUALIZAR tras cada partido] — columna "Estado" y rivales por confirmar
-const CUADRO = [
-  ["1", "Play-off Copa África-Asia-Pacífico", "Al Ahli (AFC) vs Auckland FC (OFC)", "Yeda (Arabia Saudí)", "Jugado 26/08: Al Ahli 1-0"],
-  ["2", "Copa África-Asia-Pacífico", "Mamelodi Sundowns (CAF) vs Al Ahli", "Pretoria (Sudáfrica)", "Jugado 19/09: Sundowns 2-1"],
-  ["3", "Derbi de las Américas", "Toluca (CONCACAF) vs campeón de la Libertadores (CONMEBOL)", "Por confirmar", "Pendiente"],
-  ["4", "Copa Challenger", "Mamelodi Sundowns vs ganador del partido 3", "Por confirmar", "Pendiente"],
-  ["5", "Final", "PSG vs ganador del partido 4", "Por confirmar", "Pendiente"],
-];
-
-// [ACTUALIZAR] — el rival de CONMEBOL se rellena tras la final de la Libertadores (28/11)
-const EQUIPOS = [
-  ["UEFA", "Paris Saint-Germain", "Campeón de la Champions 2025/26"],
-  ["CAF", "Mamelodi Sundowns", "Campeón de la CAF Champions League 2025/26"],
-  ["AFC", "Al Ahli", "Campeón de la AFC Champions League Elite 2025/26"],
-  ["OFC", "Auckland FC", "Campeón de la OFC Pro League"],
-  ["CONCACAF", "Toluca", "Campeón de la Concacaf Champions Cup 2026"],
-  ["CONMEBOL", "Por determinar", "Final de la Libertadores el 28/11"],
-];
 
 function Seccion({ etiqueta, titulo, children }) {
   return (
@@ -65,24 +36,36 @@ function Destacado({ children }) {
     </div>
   );
 }
-function Lista({ children }) {
-  return <ul style={{ color: C.textoSuave, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px", paddingLeft: 22, maxWidth: 720 }}>{children}</ul>;
+// Rótulo intermedio dentro de una sección (los "Región Oeste" / "Región Este"
+// del original), por debajo del <h2> y por encima de su tabla.
+function Subtitulo({ children }) {
+  return <div style={{ fontFamily: MONO, color: C.textoSuave, fontSize: 11, letterSpacing: 2, margin: "0 0 8px" }}>{children}</div>;
+}
+function Lista({ ordenada, children }) {
+  const estilo = { color: C.textoSuave, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px", maxWidth: 720, paddingLeft: 22 };
+  return ordenada ? <ol style={estilo}>{children}</ol> : <ul style={estilo}>{children}</ul>;
 }
 
-// ---- Tabla genérica con cabecera ----
-function Tabla({ cabecera, filas, minWidth = 560 }) {
-  const th = { color: C.oro, fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: 1, textAlign: "left", padding: "10px 14px", borderBottom: `1px solid ${C.borde}`, whiteSpace: "nowrap" };
-  const td = { color: C.textoSuave, fontSize: 13, lineHeight: 1.6, padding: "10px 14px", borderBottom: `1px solid ${C.borde}`, verticalAlign: "top" };
+// Tabla reutilizable, con el mismo patrón que el resto del sitio: contenedor
+// con scroll horizontal propio y `minWidth` en la tabla, para que en móvil
+// se desplace la tabla y no la página.
+function Tabla({ cabeceras, filas, anchoMin = 420 }) {
   return (
     <div style={{ background: C.tarjeta, border: `1px solid ${C.borde}`, borderRadius: 12, padding: 20, margin: "0 0 14px", overflowX: "auto" }}>
-      <table style={{ borderCollapse: "collapse", width: "100%", minWidth }}>
+      <table style={{ borderCollapse: "collapse", width: "100%", minWidth: anchoMin }}>
         <thead>
-          <tr>{cabecera.map((h) => <th key={h} style={th}>{h}</th>)}</tr>
+          <tr>
+            {cabeceras.map((h) => (
+              <th key={h} style={{ textAlign: "left", fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 2, padding: "6px 12px 10px", borderBottom: `1px solid ${C.borde}`, whiteSpace: "nowrap" }}>{h.toUpperCase()}</th>
+            ))}
+          </tr>
         </thead>
         <tbody>
-          {filas.map((fila) => (
-            <tr key={fila.join("|")}>
-              {fila.map((celda, i) => <td key={i} style={i === 0 ? { ...td, color: C.texto, fontWeight: 600 } : td}>{celda}</td>)}
+          {filas.map((fila, iFila) => (
+            <tr key={iFila}>
+              {fila.map((celda, iCelda) => (
+                <td key={iCelda} style={{ color: iCelda === 0 ? C.texto : C.textoSuave, fontSize: 14, padding: "9px 12px", borderBottom: `1px solid ${C.borde}`, whiteSpace: "nowrap" }}>{celda}</td>
+              ))}
             </tr>
           ))}
         </tbody>
@@ -91,11 +74,29 @@ function Tabla({ cabecera, filas, minWidth = 560 }) {
   );
 }
 
+const EQUIPOS = [
+  ["UEFA", "Paris Saint-Germain", "Campeón de la Champions 2025/26"],
+  ["CAF", "Mamelodi Sundowns", "Campeón de la CAF Champions League 2025/26"],
+  ["AFC", "Al Ahli", "Campeón de la AFC Champions League Elite 2025/26"],
+  ["OFC", "Auckland FC", "Campeón de la OFC Pro League"],
+  ["CONCACAF", "Toluca", "Campeón de la Concacaf Champions Cup 2026 (final el 30/05)"],
+  ["CONMEBOL", "Pendiente", "Campeón de la Libertadores (final el 28/11 en Montevideo)"],
+];
+
+const CUADRO = [
+  ["1", "Play-off Copa África-Asia-Pacífico", "Al Ahli (AFC) vs Auckland FC (OFC)", "Yeda (Arabia Saudí)", "26/08"],
+  ["2", "Copa África-Asia-Pacífico", "Mamelodi Sundowns (CAF) vs vencedor del partido 1", "Pretoria (Sudáfrica)", "19/09"],
+  ["3", "Derbi de las Américas", "Toluca (CONCACAF) vs campeón de la Libertadores (CONMEBOL)", "Sede neutral pendiente", "Diciembre, fecha pendiente"],
+  ["4", "Copa Challenger", "Vencedor del partido 2 vs vencedor del partido 3", "Sede neutral pendiente", "Diciembre, fecha pendiente"],
+  ["5", "Final", "PSG vs vencedor del partido 4", "Sede neutral pendiente", "Diciembre, fecha pendiente"],
+];
+
 export default function ArticuloCopaIntercontinental() {
   useDocumentMeta({
-    title: "Copa Intercontinental de la FIFA 2026: cuadro, equipos y lo que falta por decidirse · Modo Competición",
+    title: "Seis equipos, cinco partidos: así funciona la Copa Intercontinental FIFA 2026 · Modo Competición",
     description: "Copa Intercontinental FIFA 2026: 6 equipos, 5 partidos y eliminatoria única. El PSG espera en la final. Cuadro, resultados y lo que sigue abierto.",
   });
+
   return (
     <div style={{ minHeight: "100vh", background: C.fondo, fontFamily: "'Inter', sans-serif" }}>
       <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 20px 60px" }}>
@@ -108,79 +109,80 @@ export default function ArticuloCopaIntercontinental() {
         </header>
 
         <div style={{ padding: "56px 0 44px" }}>
-          <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 10 }}>COPA INTERCONTINENTAL FIFA 2026</div>
+          <div style={{ fontFamily: MONO, color: C.azul, fontSize: 11, letterSpacing: 3, marginBottom: 10 }}>CLUBES · COPA INTERCONTINENTAL FIFA 2026</div>
           <h1 style={{ fontFamily: OSWALD, color: C.texto, fontSize: 38, lineHeight: 1.15, margin: "0 0 14px" }}>
-            Copa Intercontinental de la FIFA 2026: cuadro, equipos y lo que falta por decidirse
+            Seis equipos, cinco partidos: así funciona la Copa Intercontinental FIFA 2026
           </h1>
-          {/* [ACTUALIZAR tras cada partido] */}
-          <Destacado><B>{ESTADO_PARTIDOS}</B></Destacado>
+          <p style={{ color: C.texto, fontSize: 16, lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
+            Seis campeones continentales, un cuadro en escalera, partido único en cada ronda y un PSG que espera en la final sin haber jugado. Te lo desmontamos pieza a pieza, separando lo resuelto de lo que sigue abierto.
+          </p>
         </div>
 
-        <Seccion etiqueta="01" titulo="Qué es y por qué existe">
+        <P>
+          Hay competiciones con fase de grupos, ida y vuelta y un calendario que da para un máster. Y luego está esta: cinco partidos en total. Si te vas a por un café en mal momento, te has perdido una ronda.
+        </P>
+        <P>
+          La organiza la FIFA y esta es su tercera edición con este formato (2024, 2025 y 2026).
+        </P>
+        <P>Vamos con el desmontaje.</P>
+
+        <Seccion etiqueta="01" titulo="La foto general">
           <P>
-            La Copa Intercontinental es la versión anual que la FIFA mantiene tras el nuevo Mundial de
-            Clubes: campeones continentales, partido único y a ver quién se queda. Es su tercera edición
-            con este formato (2024, 2025 y 2026), así que ya no es la nueva del barrio.
+            Aquí no hay grupos ni ida y vuelta. Cada eliminatoria se resuelve en un solo partido: uno pasa y el otro se va a casa.
+          </P>
+          <P>La aritmética es corta:</P>
+          <Lista>
+            <li>6 equipos, uno por confederación.</li>
+            <li>5 partidos en total.</li>
+            <li>2 tramos: los dos primeros partidos se juegan en el estadio de uno de los equipos. Los tres últimos van a una sede centralizada y neutral, en diciembre.</li>
+          </Lista>
+        </Seccion>
+
+        <Seccion etiqueta="02" titulo="Quién entra y por qué vía">
+          <P>Cada confederación manda a su campeón continental:</P>
+          <Tabla cabeceras={["Confederación", "Equipo", "Cómo llegó"]} filas={EQUIPOS} anchoMin={620} />
+          <P>El campeón de la Libertadores se decide en Montevideo.</P>
+        </Seccion>
+
+        <Seccion etiqueta="03" titulo="La escalera">
+          <P>El campeón de la Champions no pasa por rondas previas: entra directamente en la final. El resto sube peldaño a peldaño:</P>
+          <Lista ordenada>
+            <li>Play-off Copa África-Asia-Pacífico: el campeón de la AFC contra el de la OFC.</li>
+            <li>Copa África-Asia-Pacífico: el campeón de la CAF contra el vencedor del play-off.</li>
+            <li>Derbi de las Américas: el campeón de la CONCACAF contra el de la CONMEBOL.</li>
+            <li>Copa Challenger: el vencedor de la Copa África-Asia-Pacífico contra el vencedor del Derbi de las Américas.</li>
+            <li>Final: el PSG contra el vencedor de la Copa Challenger.</li>
+          </Lista>
+          <P>Fíjate en el detalle: el PSG juega un partido en toda la competición, y es el último.</P>
+        </Seccion>
+
+        <Seccion etiqueta="04" titulo="El cuadro, partido a partido">
+          <Tabla cabeceras={["#", "Partido", "Enfrentamiento", "Sede", "Fecha"]} filas={CUADRO} anchoMin={900} />
+          <P>
+            Un apunte de rigor: algún medio llama al rival de la primera ronda Auckland City. FIFA y las crónicas del partido hablan de Auckland FC, y esa es la referencia que seguimos aquí.
           </P>
         </Seccion>
 
-        <Seccion etiqueta="02" titulo="Formato: 6 equipos, 5 partidos">
-          <P>Aquí no hay grupos ni ida y vuelta. Un partido, uno pasa y otro se va a casa.</P>
-          <Lista>
-            <li>El campeón de la Champions, el PSG, se salta las rondas previas y entra directo en la final.</li>
-            <li>Los demás campeones continentales se lo tienen que ganar por el camino largo.</li>
-            <li>
-              Los dos primeros partidos se juegan en el estadio de uno de los equipos. Los tres últimos
-              (Derbi de las Américas, Copa Challenger y final) van a una sede centralizada y neutral, en
-              diciembre.
-            </li>
-          </Lista>
-        </Seccion>
-
-        <Seccion etiqueta="03" titulo="El cuadro">
-          {/* [ACTUALIZAR tras cada partido] */}
-          <Tabla cabecera={["#", "Partido", "Enfrentamiento", "Sede", "Estado"]} filas={CUADRO} minWidth={720} />
-        </Seccion>
-
-        <Seccion etiqueta="04" titulo="Los equipos">
-          {/* [ACTUALIZAR] cuando se conozca el campeón de la Libertadores */}
-          <Tabla cabecera={["Confederación", "Equipo", "Cómo llegó"]} filas={EQUIPOS} />
-        </Seccion>
-
-        <Seccion etiqueta="05" titulo="Lo que ya ha pasado">
-          {/* [ACTUALIZAR] */}
+        <Seccion etiqueta="05" titulo="Cómo se desempata">
           <P>
-            Dos partidos jugados y dos equipos fuera. Al Ahli eliminó a Auckland FC (1-0, el 26/08) y
-            después cayó ante Mamelodi Sundowns (2-1, el 19/09). Sundowns ya está en la Copa Challenger,
-            esperando rival.
+            Pendiente. La regla oficial de prórroga y penaltis de esta competición no está verificada, y hasta que lo esté no la damos por buena. Es de esas cosas que conviene tener claras antes de la final y no después.
           </P>
         </Seccion>
 
-        <Seccion etiqueta="06" titulo="Lo que sigue abierto">
-          {/* [ACTUALIZAR] */}
+        <Seccion etiqueta="06" titulo="Lo que está pendiente">
+          <P>Cuatro cosas quedan abiertas:</P>
           <Lista>
-            <li>
-              <B>El rival de CONMEBOL.</B> No lo sabremos hasta la final de la Libertadores, el 28/11 en
-              Montevideo. Las semifinales son el 14-15 y el 21-22 de octubre.
-            </li>
-            <li>
-              <B>Fechas y sede de los tres últimos partidos.</B> La FIFA todavía no las ha confirmado.
-              Hasta que lo haga, nada de dar por hecho ninguna sede.
-            </li>
-            <li>
-              <B>Desempate.</B> Aún está pendiente de confirmar la regla de prórroga y penaltis de esta
-              competición. Cuando esté verificada, la añadimos aquí.
-            </li>
+            <li>El rival de CONMEBOL. Sale de la final de la Libertadores, el 28/11 en Montevideo. Las semifinales son el 14-15 y el 21-22 de octubre.</li>
+            <li>Las fechas exactas de los tres últimos partidos. Se juegan en diciembre, pero la FIFA no ha publicado el calendario de 2026. Las fechas de ediciones anteriores no valen como dato de este año.</li>
+            <li>La sede centralizada. Hay medios que dan una por hecha. La FIFA dice que se confirmará más adelante, y manda la FIFA.</li>
+            <li>La regla de desempate.</li>
           </Lista>
-        </Seccion>
-
-        <Seccion etiqueta="07" titulo="Lo que se juega en diciembre">
-          {/* [ACTUALIZAR tras cada partido] */}
-          <Lista>
-            <li>Derbi de las Américas: pendiente</li>
-            <li>Copa Challenger: pendiente</li>
-            <li>Final: pendiente</li>
-          </Lista>
+          <P>
+            Hasta entonces, cualquier fecha o sede de diciembre que leas lleva, como poco, un hueco. Nosotros preferimos esperar a que la FIFA lo publique.
+          </P>
+          <p style={{ color: C.textoSuave, fontSize: 15, lineHeight: 1.75, margin: "0 0 14px", maxWidth: 720, fontStyle: "italic" }}>
+            En Modo Competición seguiremos la competición y actualizaremos este explicativo cuando se confirme lo pendiente.
+          </p>
         </Seccion>
 
         <footer style={{ borderTop: `1px solid ${C.borde}`, paddingTop: 16, color: "#5A6678", fontSize: 11, lineHeight: 1.6 }}>
