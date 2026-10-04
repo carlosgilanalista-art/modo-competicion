@@ -223,9 +223,15 @@ Verificado por script: 26/26 resultados de Jornada 3 cargados, por grupo A1 2 ·
 Rama `datos-nations-league-j3-1-3-oct` fusionada e íntegra en `main`. Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
+**Sesión:** 04/10/2026 (domingo, 2ª tarea) — COMPLETADA
+**Tarea:** Inventario de solo lectura del simulador AFC para preparar el diseño del simulador de la Copa Intercontinental FIFA 2026. Cambio de alcance consciente: desplaza la tarea que figuraba aquí (corrección de `ARQUITECTURA.md` §2, candidata a 04/10, ver §7).
+**Criterio de hecho:** CUMPLIDO — 10 puntos del inventario contestados con ruta y línea o "NO ENCONTRADO"; `git status` limpio y `git diff --stat` vacío al cierre del inventario; sin commit, push ni cambio de rama durante el inventario.
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `claude/zealous-edison-yhyyrr`.
+**Herramienta:** Claude Code
+
 ## 4. En curso
 
-- Ramas pendientes de borrar a mano en GitHub (hasta que se borren): `ccr-ebe2dd0a-ummddn`, `docs-estado-ritmo-sesiones`, `docs-estado-cierre-01-10`, `datos-nations-league-j3-1-3-oct`.
+- Ramas pendientes de borrar a mano en GitHub (hasta que se borren): `ccr-ebe2dd0a-ummddn`, `docs-estado-ritmo-sesiones`, `docs-estado-cierre-01-10`, `datos-nations-league-j3-1-3-oct`, `claude/zealous-edison-yhyyrr`, `docs-estado-aparcadero-inventario-04-10`.
 - PR #11 / rama `claude/sprint1-completed-tasks-gm49a8`: abierta, sin fusionar, con trabajo real y único (dashboard de sprints editoriales `modo-competicion-sprint-tracker.html`, julio 2026, sin referencias posteriores en este documento). Carlos decidió dejarla sin tocar por ahora (ver §3, sesión 27/09) — pendiente decidir si se cierra sin fusionar o se rescata algo de su contenido.
 - Datos reales UEFA fase previa 2026/27 — Playoff de las tres competiciones completo: Champions League (7/7, fase de liga UCL 36/36), Europa League (12/12) y Conference League (24/24). Fusionado a `main` vía PR #43, PR #44 (Champions, rama `claude/datos-playoff-uefa-2026-27-2n5owl`, resuelta) y PR #46 (EL+UECL, rama `claude/playoff-uefa-resultados-851dma`, resuelta — merge confirmado en `main`, pendiente confirmar deployment de Production en Vercel por el precedente del 27/08, ver Decisiones cerradas). Las fases de liga de las tres competiciones ya tienen sorteo real y calendario de jornadas completos (ver §3, sesiones 30/08-31/08) — este ítem queda cerrado salvo por la corrección pendiente de `docs/clasificados-2026-27.md` (sigue diciendo que EL/UECL están bloqueadas), que se deja para otra sesión.
 - Plan de difusión por X del calendario de jornadas UEFA entregado a Carlos (31/08): 2 tweets, uno esta semana y otro la víspera de la Jornada 1 (6-7/09). Publicación manual pendiente por parte de Carlos, no se gestiona desde el repo.
@@ -295,6 +301,7 @@ Rama `datos-nations-league-j3-1-3-oct` fusionada e íntegra en `main`. Nada fue 
 | 04/10 | Copa: origen derivado de los datos (`real ≠ null` → "real" y bloqueado), sin `useOrigenResultados`. Invalidación derivada por participantes (P3 → P4 → P5). Componente nuevo `PartidoUnicoCard`; `FinalCard` intacto. |
 | 04/10 | Copa: nombre canónico "Al-Ahli" (id `al-ahli`). Plaza CONMEBOL con selector y opción genérica por defecto. Regla de empate en `REGLA_DESEMPATE` con `verificada: false` (fuente: Wikipedia). |
 | 04/10 | Copa: el módulo de datos será la fuente única también del artículo (migración en T2). |
+| 04/10 | Cambio de alcance consciente: la tarea del domingo 04/10 pasa a ser el inventario de solo lectura del simulador AFC para diseñar el simulador de la Copa Intercontinental. La corrección de `ARQUITECTURA.md` §2 queda desplazada |
 
 ## 7. Aparcadero
 
@@ -317,6 +324,10 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - `ARQUITECTURA.md` §1 (`window.storage`) y §2 (`origen_ida`/`origen_vuelta` y "sin prórroga → penaltis directo") siguen desfasados respecto al código (confirmado en la sesión T1 de la Copa, 04/10).
 - `generarFinalAleatoria` lleva los penaltis inline (no hay generador de penaltis aislado); la Copa usa un envoltorio propio (`resolverPartidoCopa`) para la regla sin prórroga. Candidato a refactor, sin evaluar.
 - `AFC_OESTE` guarda el país de Al-Ahli como código "KSA", mientras el módulo de la Copa usa "Arabia Saudí" en texto; unificar criterio en T2 si se comparten datos.
+- Detectado en el inventario del 04/10 (sin evaluar): las refs locales `main` y `origin/main` del entorno de Code estaban obsoletas (`697473d`) frente al `main` remoto real (`e3fac83`); comprobar con `git fetch` antes de fiarse de ellas.
+- Detectado en el inventario del 04/10 (sin evaluar): la entrada de artículos publicados de §1 cita `ESTADO_PARTIDOS` en `src/ArticuloCopaIntercontinental.jsx`, pero no existe en `src/`; el fichero solo tiene `EQUIPOS` y `CUADRO` (líneas 77 y 86).
+- Detectado en el inventario del 04/10 (sin evaluar): el campeón de la AFC se escribe "Al Ahli" en `ArticuloCopaIntercontinental.jsx` (líneas 80 y 87) y "Al-Ahli" en `ArticuloAFCChampionsElite.jsx` (línea 350) y en `AFC_OESTE` (`App.jsx:831`). Unificar el nombre antes de diseñar el simulador de la Copa.
+- Detectado en el inventario del 04/10 (sin evaluar): el comentario de `ganadorTie` (`App.jsx:39`) cita `cascadaInvalidez`, función que no existe en el código.
 
 ## 8. Preguntas abiertas
 
