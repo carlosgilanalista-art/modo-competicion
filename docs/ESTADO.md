@@ -222,6 +222,12 @@ Verificado por script: 26/26 resultados de Jornada 3 cargados, por grupo A1 2 ·
 Rama `datos-nations-league-j3-1-3-oct` fusionada e íntegra en `main`. Nada fue al Aparcadero en esta sesión.
 **Herramienta:** Claude Code
 
+**Sesión:** 04/10/2026 (domingo, 2ª tarea) — COMPLETADA
+**Tarea:** Inventario de solo lectura del simulador AFC para preparar el diseño del simulador de la Copa Intercontinental FIFA 2026. Cambio de alcance consciente: desplaza la tarea que figuraba aquí (corrección de `ARQUITECTURA.md` §2, candidata a 04/10, ver §7).
+**Criterio de hecho:** CUMPLIDO — 10 puntos del inventario contestados con ruta y línea o "NO ENCONTRADO"; `git status` limpio y `git diff --stat` vacío al cierre del inventario; sin commit, push ni cambio de rama durante el inventario.
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO.** Rama `claude/zealous-edison-yhyyrr`.
+**Herramienta:** Claude Code
+
 ## 4. En curso
 
 - Ramas pendientes de borrar a mano en GitHub (hasta que se borren): `ccr-ebe2dd0a-ummddn`, `docs-estado-ritmo-sesiones`, `docs-estado-cierre-01-10`, `datos-nations-league-j3-1-3-oct`.
@@ -290,6 +296,7 @@ Rama `datos-nations-league-j3-1-3-oct` fusionada e íntegra en `main`. Nada fue 
 | 27/09 | **Causa raíz encontrada del bloqueo de borrado de ramas** que se venía repitiendo desde el 27/08 como "HTTP 403 del proxy git de la sesión": no era el proxy, sino una regla de protección/ruleset del propio repositorio en GitHub que bloqueaba el borrado de ramas — confirmado porque el borrado también fallaba ("Branch could not be deleted") al intentarlo Carlos directamente desde la interfaz web de GitHub, fuera de esta sesión. Carlos ajustó esa regla y pudo borrar en bloque las ramas fusionadas, incluida toda la deuda `claude/*` histórica (antes congelada hasta el 14/09). Quedan sin borrar, a propósito: `claude/sprint1-completed-tasks-gm49a8` (PR #11, abierta, con trabajo sin fusionar — ver "En curso") |
 | 01/10 | Cambio de ritmo de sesiones: ejecución técnica jueves y domingo, planificación y repaso el viernes. El lunes deja de ser sesión fija; el cierre editorial y el gate semanal pasan del lunes al viernes. Actualizado en `SISTEMA.md` §3, §4 y §6.3 |
 | 01/10 | Cambio de alcance consciente: la Copa Intercontinental (artículo + simulador) entra en el plan; la tarea del domingo 04/10 cae a cambio. Hoy solo se ejecuta la Fase 1 (investigación de formato). El diseño y el código van en otra sesión |
+| 04/10 | Cambio de alcance consciente: la tarea del domingo 04/10 pasa a ser el inventario de solo lectura del simulador AFC para diseñar el simulador de la Copa Intercontinental. La corrección de `ARQUITECTURA.md` §2 queda desplazada |
 
 ## 7. Aparcadero
 
