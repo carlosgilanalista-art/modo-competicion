@@ -6408,7 +6408,16 @@ function calcularCopa(simulados, seleccionConmebol) {
 const ESTADO_COPA_DISTINTIVO = { real: "REAL", simulado: "SIMULADO", simulable: "PENDIENTE", esperando: "PENDIENTE", invalido: "OBSOLETO" };
 function distintivoCopa(partido, estado) { return estado === "simulado" && partido.real ? "EDITADO" : ESTADO_COPA_DISTINTIVO[estado]; }
 
-function PartidoUnicoCard({ partido, calc, colores, tieneEdicion, onSimular, onEditar, onQuitar, onRestaurar }) {
+function resumenCopa(r) {
+  const e = estadoResultadoCopa(r);
+  let t = `${r.gA} - ${r.gB}`;
+  if (e.empate && r.etA !== undefined) t += ` · prórroga ${r.etA} - ${r.etB}`;
+  if (e.etTied && r.penA !== undefined) t += ` · penaltis ${r.penA} - ${r.penB}`;
+  return t;
+}
+
+// Un partido real arranca bloqueado ("✓ Confirmado" + "Modificar"), como en el resto de simuladores.
+function PartidoUnicoCard({ partido, calc, colores, tieneEdicion, desbloqueado, onSimular, onEditar, onQuitar, onRestaurar, onDesbloquear }) {
   const { estado, participantes, resultado } = calc;
   const nombreRef = (r, i) => calc.lados[i] ? textoEquipoCopa(equipoCopa(calc.lados[i])) : `Ganador ${r.partido}`;
   const est = estadoResultadoCopa(resultado);
@@ -6420,6 +6429,9 @@ function PartidoUnicoCard({ partido, calc, colores, tieneEdicion, onSimular, onE
     <input type="number" min="0" data-campo={k} value={resultado?.[k] ?? ""} style={inputStyle}
       onChange={(e) => { const v = validar(e.target.value); if (v !== "INVALIDO") onEditar(partido.id, k, v); }} />
   );
+  const bloqueado = estado === "real" && !desbloqueado;
+  const mostrarControles = !bloqueado && (editable || (estado === "invalido" && participantes));
+  const btnSec = { background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" };
   const penIgual = est && resultado?.penA !== undefined && resultado?.penB !== undefined && Number(resultado.penA) === Number(resultado.penB);
   return (
     <div data-estado={estado} style={{ background: colores.tarjeta, border: `1px solid ${estado === "invalido" ? colores.alerta : colores.acento}`, borderRadius: 8, padding: "12px 16px", marginBottom: 10 }}>
@@ -6436,7 +6448,14 @@ function PartidoUnicoCard({ partido, calc, colores, tieneEdicion, onSimular, onE
       </div>
       {estado === "esperando" && <div style={{ color: colores.alerta, fontSize: 12, fontStyle: "italic", marginTop: 6 }}>Esperando el ganador de un partido previo</div>}
       {estado === "invalido" && <div style={{ color: colores.alerta, fontSize: 12, marginTop: 6 }}>{partido.real ? "Resultado real obsoleto: vuelve a simular o restaura el partido anterior" : "Resultado obsoleto: vuelve a simular"}</div>}
-      {(editable || (estado === "invalido" && participantes)) && (
+      {bloqueado && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: "#5BBB7B", border: "1px solid #5BBB7B", borderRadius: 999, padding: "2px 8px" }}>✓ Confirmado</span>
+          <span data-marcador style={{ color: colores.textoSuave, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>{resumenCopa(resultado)}</span>
+          <button onClick={() => onDesbloquear(partido.id)} style={{ ...btnSec, marginLeft: "auto" }}>✏️ Modificar</button>
+        </div>
+      )}
+      {mostrarControles && (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
           {editable && (
             <>
@@ -6456,7 +6475,7 @@ function PartidoUnicoCard({ partido, calc, colores, tieneEdicion, onSimular, onE
             </>
           )}
           <BotonAleatorio onClick={() => onSimular(partido.id)} label="Simular" colores={colores} />
-          {tieneEdicion && partido.real && <button onClick={() => onRestaurar(partido.id)} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↩ Restaurar real</button>}
+          {(tieneEdicion || desbloqueado) && partido.real && <button onClick={() => onRestaurar(partido.id)} style={{ ...btnSec, marginLeft: "auto" }}>↩ Restaurar resultado real</button>}
           {editable && resultado && !partido.real && <button onClick={() => onQuitar(partido.id)} style={{ background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" }}>↺ reiniciar</button>}
         </div>
       )}
@@ -6468,6 +6487,7 @@ function PartidoUnicoCard({ partido, calc, colores, tieneEdicion, onSimular, onE
 function SimuladorCopaIntercontinentalPage() {
   const c = TEMA_COPA;
   const [simulados, setSimulados] = useState({});
+  const [desbloqueados, setDesbloqueados] = useState({});
   const [seleccionConmebol, setSeleccionConmebol] = useState(PLAZA_CONMEBOL.generico.id);
   useDocumentMeta({
     title: "Simulador Copa Intercontinental FIFA 2026 · Modo Competición",
@@ -6494,9 +6514,16 @@ function SimuladorCopaIntercontinentalPage() {
     });
   };
   // Volver al estado confirmado: se descarta la edición y reaparece el dato real.
-  const restaurar = (pid) => setSimulados((prev) => { const n = { ...prev }; delete n[pid]; return n; });
-  const restaurarReales = () => setSimulados((prev) => { const n = { ...prev }; PARTIDOS.filter((p) => p.real).forEach((p) => delete n[p.id]); return n; });
-  const hayEdicionReal = PARTIDOS.some((p) => p.real && simulados[p.id]);
+  const desbloquear = (pid) => setDesbloqueados((prev) => ({ ...prev, [pid]: true }));
+  const restaurar = (pid) => {
+    setSimulados((prev) => { const n = { ...prev }; delete n[pid]; return n; });
+    setDesbloqueados((prev) => { const n = { ...prev }; delete n[pid]; return n; });
+  };
+  const restaurarReales = () => {
+    setSimulados((prev) => { const n = { ...prev }; PARTIDOS.filter((p) => p.real).forEach((p) => delete n[p.id]); return n; });
+    setDesbloqueados({});
+  };
+  const hayEdicionReal = PARTIDOS.some((p) => p.real && (simulados[p.id] || desbloqueados[p.id]));
   const quitar = (pid) => setSimulados((prev) => { const n = { ...prev }; delete n[pid]; return n; });
   // P3 → P4 → P5 en orden; sobrescribe los obsoletos. P1 y P2 (reales) solo se vuelven a simular si
   // una edición aguas arriba los dejó obsoletos; si no, no se tocan.
@@ -6509,7 +6536,7 @@ function SimuladorCopaIntercontinentalPage() {
     });
     setSimulados(n);
   };
-  const limpiar = () => { setSimulados({}); setSeleccionConmebol(PLAZA_CONMEBOL.generico.id); };
+  const limpiar = () => { setSimulados({}); setDesbloqueados({}); setSeleccionConmebol(PLAZA_CONMEBOL.generico.id); };
   const campeon = calc.P5.estado === "simulado" ? equipoCopa(calc.P5.ganador) : null;
   return (
     <div style={{ minHeight: "100vh", background: c.fondo, fontFamily: "'Inter', sans-serif" }}>
@@ -6536,7 +6563,7 @@ function SimuladorCopaIntercontinentalPage() {
           <button onClick={restaurarReales} disabled={!hayEdicionReal} style={{ background: "none", color: hayEdicionReal ? c.textoSuave : "#555", border: `1px solid ${hayEdicionReal ? c.inputBorder : "#3A3A3A"}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: hayEdicionReal ? "pointer" : "not-allowed" }}>↩ Restaurar los reales</button>
           <button onClick={limpiar} style={{ background: "none", color: c.textoSuave, border: `1px solid ${c.inputBorder}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>↩ Limpiar simulación</button>
         </div>
-        {PARTIDOS.map((p) => <PartidoUnicoCard key={p.id} partido={p} calc={calc[p.id]} colores={c} tieneEdicion={!!simulados[p.id]} onSimular={simular} onEditar={editar} onQuitar={quitar} onRestaurar={restaurar} />)}
+        {PARTIDOS.map((p) => <PartidoUnicoCard key={p.id} partido={p} calc={calc[p.id]} colores={c} tieneEdicion={!!simulados[p.id]} desbloqueado={!!desbloqueados[p.id]} onDesbloquear={desbloquear} onSimular={simular} onEditar={editar} onQuitar={quitar} onRestaurar={restaurar} />)}
         {campeon && (
           <div data-campeon style={{ marginTop: 10, background: c.inputBg, border: `1px solid ${c.acento}`, borderRadius: 8, padding: "10px 14px", color: c.acento, fontSize: 16, fontWeight: 700, fontFamily: "'Oswald', sans-serif" }}>
             🏆 CAMPEÓN: {textoEquipoCopa(campeon)}
