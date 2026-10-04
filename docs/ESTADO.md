@@ -24,7 +24,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - Resultados reales de la Jornada 1 de la fase de liga de la Champions League 2026/27 (18 partidos, 8-10/09/2026) cargados y bloqueados como confirmados, editables campo a campo con el mismo patrón real/editado/restaurar que las rondas previas (ver sesión 11/09). Resultados reales de la Jornada 1 de la fase de liga de la Europa League 2026/27 (18 partidos, 16-17/09/2026) cargados con el mismo mecanismo (ver sesión 18/09). Jornada 2 en adelante de ambas competiciones sigue vacía y editable a mano/simulación, como siempre. Conference League no tiene todavía resultados reales de su Jornada 1 cargados.
 - Simulador de selecciones: Nations League 2026/27 y clasificación para la EURO 2028.
 - Simulador AFC Champions League Elite — Capa 1 (solo fase de liga): dos regiones independientes (Oeste/Este, 16 equipos cada una), motor de sorteo por rejilla propio (no es el bombo-contra-bombo de la UEFA), sorteo real del 18/08/2026 precargado con opción de simular y volver a él. Enlazado desde el menú "Clubes". `#/simulador-afc-champions-elite`.
-- Simulador Copa Intercontinental FIFA 2026 (núcleo T1) — ruta `#/simulador-copa-intercontinental`, sin enlazar desde menú ni landing (pendiente T2). P1 y P2 reales y bloqueados; P3–P5 simulables.
+- Simulador Copa Intercontinental FIFA 2026 (núcleo T1) — ruta `#/simulador-copa-intercontinental`, enlazada desde el menú Clubes → FIFA (PR #75); sin enlazar desde las tarjetas de la landing (pendiente T2). P1 y P2 reales y bloqueados; P3–P5 simulables.
 
 **Artículos publicados**
 

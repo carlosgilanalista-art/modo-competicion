@@ -238,7 +238,8 @@ export default function Landing() {
               <NavDropdownProximamente>Competiciones africanas</NavDropdownProximamente>
               <NavDropdownEtiqueta>FIFA</NavDropdownEtiqueta>
               <NavDropdownEtiqueta>Copa Intercontinental 2026</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/copa-intercontinental">Explicación y cuadro</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/simulador-copa-intercontinental">Simulador</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/copa-intercontinental">Explicación</NavDropdownEnlace>
             </NavDropdown>
             <NavDropdown label="Selecciones">
               <NavDropdownEtiqueta>NATIONS LEAGUE 2026/27</NavDropdownEtiqueta>
