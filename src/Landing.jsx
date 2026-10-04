@@ -188,6 +188,11 @@ function SelectorCompeticion({ abierto, onClose }) {
             simulador="#/simulador-afc-champions-elite" />
         </GrupoCompeticiones>
 
+        <GrupoCompeticiones etiqueta="CLUBES · FIFA 2026">
+          <TarjetaCompeticion color={C.azul} titulo="Copa Intercontinental FIFA"
+            explicacion={[{ href: "#/copa-intercontinental", label: "Cómo funciona" }]} />
+        </GrupoCompeticiones>
+
         <GrupoCompeticiones etiqueta="SELECCIONES">
           <TarjetaCompeticion color={C.azul} titulo="Nations League 2026/27"
             explicacion={[{ href: "#/nations-league", label: "Cómo funciona" }]}
@@ -346,6 +351,11 @@ export default function Landing() {
               sub="La Champions asiática pasa de 24 a 32 equipos: dos ligas paralelas por región, ocho jornadas, corte seco en el top 8 y un play-off aprobado que no se aplica todavía."
               explicacion={[{ href: "#/afc-champions-elite", label: "Cómo funciona" }]}
               simulador="#/simulador-afc-champions-elite" />
+          </GrupoCompeticiones>
+
+          <GrupoCompeticiones etiqueta="CLUBES · FIFA 2026">
+            <TarjetaCompeticion color={C.azul} titulo="Copa Intercontinental FIFA"
+              explicacion={[{ href: "#/copa-intercontinental", label: "Cómo funciona" }]} />
           </GrupoCompeticiones>
 
           <GrupoCompeticiones etiqueta="SELECCIONES">
