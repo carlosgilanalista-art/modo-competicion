@@ -190,7 +190,8 @@ function SelectorCompeticion({ abierto, onClose }) {
 
         <GrupoCompeticiones etiqueta="CLUBES · FIFA 2026">
           <TarjetaCompeticion color={C.azul} titulo="Copa Intercontinental FIFA"
-            explicacion={[{ href: "#/copa-intercontinental", label: "Cómo funciona" }]} />
+            explicacion={[{ href: "#/copa-intercontinental", label: "Cómo funciona" }]}
+            simulador="#/simulador-copa-intercontinental" />
         </GrupoCompeticiones>
 
         <GrupoCompeticiones etiqueta="SELECCIONES">
@@ -356,7 +357,8 @@ export default function Landing() {
 
           <GrupoCompeticiones etiqueta="CLUBES · FIFA 2026">
             <TarjetaCompeticion color={C.azul} titulo="Copa Intercontinental FIFA"
-              explicacion={[{ href: "#/copa-intercontinental", label: "Cómo funciona" }]} />
+              explicacion={[{ href: "#/copa-intercontinental", label: "Cómo funciona" }]}
+              simulador="#/simulador-copa-intercontinental" />
           </GrupoCompeticiones>
 
           <GrupoCompeticiones etiqueta="SELECCIONES">
