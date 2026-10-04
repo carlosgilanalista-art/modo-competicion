@@ -24,6 +24,7 @@ Este documento es la única fuente de verdad del estado del proyecto. Si una cop
 - Resultados reales de la Jornada 1 de la fase de liga de la Champions League 2026/27 (18 partidos, 8-10/09/2026) cargados y bloqueados como confirmados, editables campo a campo con el mismo patrón real/editado/restaurar que las rondas previas (ver sesión 11/09). Resultados reales de la Jornada 1 de la fase de liga de la Europa League 2026/27 (18 partidos, 16-17/09/2026) cargados con el mismo mecanismo (ver sesión 18/09). Jornada 2 en adelante de ambas competiciones sigue vacía y editable a mano/simulación, como siempre. Conference League no tiene todavía resultados reales de su Jornada 1 cargados.
 - Simulador de selecciones: Nations League 2026/27 y clasificación para la EURO 2028.
 - Simulador AFC Champions League Elite — Capa 1 (solo fase de liga): dos regiones independientes (Oeste/Este, 16 equipos cada una), motor de sorteo por rejilla propio (no es el bombo-contra-bombo de la UEFA), sorteo real del 18/08/2026 precargado con opción de simular y volver a él. Enlazado desde el menú "Clubes". `#/simulador-afc-champions-elite`.
+- Simulador Copa Intercontinental FIFA 2026 (núcleo T1) — ruta `#/simulador-copa-intercontinental`, sin enlazar desde menú ni landing (pendiente T2). P1 y P2 reales y bloqueados; P3–P5 simulables.
 
 **Artículos publicados**
 
@@ -290,6 +291,10 @@ Rama `datos-nations-league-j3-1-3-oct` fusionada e íntegra en `main`. Nada fue 
 | 27/09 | **Causa raíz encontrada del bloqueo de borrado de ramas** que se venía repitiendo desde el 27/08 como "HTTP 403 del proxy git de la sesión": no era el proxy, sino una regla de protección/ruleset del propio repositorio en GitHub que bloqueaba el borrado de ramas — confirmado porque el borrado también fallaba ("Branch could not be deleted") al intentarlo Carlos directamente desde la interfaz web de GitHub, fuera de esta sesión. Carlos ajustó esa regla y pudo borrar en bloque las ramas fusionadas, incluida toda la deuda `claude/*` histórica (antes congelada hasta el 14/09). Quedan sin borrar, a propósito: `claude/sprint1-completed-tasks-gm49a8` (PR #11, abierta, con trabajo sin fusionar — ver "En curso") |
 | 01/10 | Cambio de ritmo de sesiones: ejecución técnica jueves y domingo, planificación y repaso el viernes. El lunes deja de ser sesión fija; el cierre editorial y el gate semanal pasan del lunes al viernes. Actualizado en `SISTEMA.md` §3, §4 y §6.3 |
 | 01/10 | Cambio de alcance consciente: la Copa Intercontinental (artículo + simulador) entra en el plan; la tarea del domingo 04/10 cae a cambio. Hoy solo se ejecuta la Fase 1 (investigación de formato). El diseño y el código van en otra sesión |
+| 04/10 | Copa Intercontinental: ruta `#/simulador-copa-intercontinental`; código inline en `App.jsx`; datos en `src/data/copaIntercontinental2026.js` (módulo puro). Motor uniforme (rnd5), sin persistencia, identificación solo con texto. |
+| 04/10 | Copa: origen derivado de los datos (`real ≠ null` → "real" y bloqueado), sin `useOrigenResultados`. Invalidación derivada por participantes (P3 → P4 → P5). Componente nuevo `PartidoUnicoCard`; `FinalCard` intacto. |
+| 04/10 | Copa: nombre canónico "Al-Ahli" (id `al-ahli`). Plaza CONMEBOL con selector y opción genérica por defecto. Regla de empate en `REGLA_DESEMPATE` con `verificada: false` (fuente: Wikipedia). |
+| 04/10 | Copa: el módulo de datos será la fuente única también del artículo (migración en T2). |
 
 ## 7. Aparcadero
 
@@ -309,6 +314,9 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - Nombre del equipo "Kazajistán" (así en todo el código: `NL_RANKING`, `NL_GRUPOS`, `NL_CALENDARIO_REAL`, banderas) no coincide con la web de UEFA.com en español, que escribe "Kazajstán" (sin la segunda "i") — confirmado con captura de pantalla el 26/09. No bloquea nada porque el resultado de Islas Feroe-Kazajistán ya está cargado con el nombre existente en el código, pero queda pendiente decidir si se renombra el equipo en todo el dataset de Nations League para que coincida con la fuente oficial.
 - Copa Intercontinental de la FIFA: explicación + simulador (anotado 27/09), sin evaluar.
 - Corrección de `ARQUITECTURA.md` §2: candidata a tarea única del 04/10.
+- `ARQUITECTURA.md` §1 (`window.storage`) y §2 (`origen_ida`/`origen_vuelta` y "sin prórroga → penaltis directo") siguen desfasados respecto al código (confirmado en la sesión T1 de la Copa, 04/10).
+- `generarFinalAleatoria` lleva los penaltis inline (no hay generador de penaltis aislado); la Copa usa un envoltorio propio (`resolverPartidoCopa`) para la regla sin prórroga. Candidato a refactor, sin evaluar.
+- `AFC_OESTE` guarda el país de Al-Ahli como código "KSA", mientras el módulo de la Copa usa "Arabia Saudí" en texto; unificar criterio en T2 si se comparten datos.
 
 ## 8. Preguntas abiertas
 
