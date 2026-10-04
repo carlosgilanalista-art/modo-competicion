@@ -237,6 +237,13 @@ Ampliaciones posteriores (no estaban en el prompt original): (1) enlace desde el
 Pendiente: borrar a mano en GitHub la rama `claude/amazing-tesla-eqwri1` (el borrado remoto falla). T2 sigue abierta: migrar el artículo al módulo de datos como fuente única. Aparcadero actualizado en §7.
 **Herramienta:** Claude Code
 
+**Sesión:** 04/10/2026 (domingo, 3ª sesión) — COMPLETADA
+**Tarea:** Corregir `ARQUITECTURA.md` §2 para que describa el código real. Decisión de Carlos: se corrige el documento, no el código. Cierra la pregunta abierta de §8 sobre `origen_ida`/`origen_vuelta`. §1 no se toca.
+**Criterio de hecho:** CUMPLIDO. Verificación previa de solo lectura contra el código, con conteos exactos: `origen_ida`/`origen_vuelta` existen en 437 líneas del repo (428 en `public/uefa-fase-previa-2026-27-eliminatorias.json`: 214 y 214, todas `"real"`; 2 en `ARQUITECTURA.md`; 7 en `ESTADO.md`) y 0 en `src/`. Esto resuelve la contradicción de este documento: el 28/08 acertaba (el JSON los usa) y el 06/09 ("0 coincidencias") solo valía para `src/`. El JSON trae además `origen_agregado` (`"derivado"`), no documentado hasta hoy. Ningún código los lee: el estado en vivo usa el campo único `origen` (`real`/`editado`/`real-incompleto`) de `useOrigenResultados`, derivado de los marcadores vía `estadoOrigenReal`.
+Otras tres discrepancias detectadas y corregidas en §2: (1) Ronda 3 y Playoff no usan `sorteoReal`/`esSorteoReal`/`restaurarSorteoReal` (solo `useFaseLiga`), sino `sorteoRealR3`/`sorteoRealPO` y `restaurarSorteoR3`/`restaurarSorteoPO` con `precargarDesdeSorteo` (esto matiza las entradas del 28/08 y del 04/10 que hablan de un único patrón); (2) la cascada en rondas previas no "marca como inválido": `calcularCascadaR2` borra el resultado dependiente y `invalidar` retira su origen; el estado `invalido` visible (OBSOLETO) existe solo en la Copa; (3) "sin prórroga registrada → penaltis directo" no era cierto en general: `estadoEliminatoria` solo lo hace con marcador de penaltis ya registrado, `generarFinalAleatoria` siempre genera prórroga, y la Copa lo hace solo con `REGLA_DESEMPATE.prorroga: false` (hoy `true`) vía `resolverPartidoCopa`/`estadoResultadoCopa`.
+**Veredicto del gate (`CONVENCIONES.md` §3): APTO** (ver informe de la sesión). Rama `ccr-a94a3495-6sj3vk` (el entorno la impuso en lugar de `docs-arquitectura-origen`), base `0e38133` = punta de `origin/main` tras `git fetch`. Solo documentación: 2 ficheros (`ARQUITECTURA.md`, `ESTADO.md`). Sin commit, push ni PR a la hora de redactar esto: pendientes de petición explícita de Carlos.
+**Herramienta:** Claude Code
+
 ## 4. En curso
 
 - Ramas pendientes de borrar a mano en GitHub (hasta que se borren): `ccr-ebe2dd0a-ummddn`, `docs-estado-ritmo-sesiones`, `docs-estado-cierre-01-10`, `datos-nations-league-j3-1-3-oct`, `claude/zealous-edison-yhyyrr`, `docs-estado-aparcadero-inventario-04-10`, `claude/amazing-tesla-eqwri1` (Copa Intercontinental T1, PR #73 fusionado el 04/10; el borrado remoto falló).
@@ -310,6 +317,7 @@ Pendiente: borrar a mano en GitHub la rama `claude/amazing-tesla-eqwri1` (el bor
 | 04/10 | Copa: nombre canónico "Al-Ahli" (id `al-ahli`). Plaza CONMEBOL con selector y opción genérica por defecto. Regla de empate en `REGLA_DESEMPATE` con `verificada: false` (fuente: Wikipedia). |
 | 04/10 | Copa: el módulo de datos será la fuente única también del artículo (migración en T2). |
 | 04/10 | Cambio de alcance consciente: la tarea del domingo 04/10 pasa a ser el inventario de solo lectura del simulador AFC para diseñar el simulador de la Copa Intercontinental. La corrección de `ARQUITECTURA.md` §2 queda desplazada |
+| 04/10 | `ARQUITECTURA.md` §2 corregido para describir el código real (se corrige el documento, no el código). El dataset JSON conserva `origen_ida`/`origen_vuelta`/`origen_agregado` como metadatos de ingesta que el código no lee; el contrato en vivo es el campo único `origen` (`real`/`editado`/`real-incompleto`) de `useOrigenResultados`. Matiza la decisión del 11/08 (flags por campo), que se conserva como histórica pero no describe el estado en vivo. Cierra la pregunta abierta de §8 |
 
 ## 7. Aparcadero
 
@@ -328,8 +336,7 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - Convención UTM en enlaces de difusión (por confirmar).
 - Nombre del equipo "Kazajistán" (así en todo el código: `NL_RANKING`, `NL_GRUPOS`, `NL_CALENDARIO_REAL`, banderas) no coincide con la web de UEFA.com en español, que escribe "Kazajstán" (sin la segunda "i") — confirmado con captura de pantalla el 26/09. No bloquea nada porque el resultado de Islas Feroe-Kazajistán ya está cargado con el nombre existente en el código, pero queda pendiente decidir si se renombra el equipo en todo el dataset de Nations League para que coincida con la fuente oficial.
 - Copa Intercontinental de la FIFA: explicación + simulador (anotado 27/09), sin evaluar.
-- Corrección de `ARQUITECTURA.md` §2: candidata a tarea única del 04/10.
-- `ARQUITECTURA.md` §1 (`window.storage`) y §2 (`origen_ida`/`origen_vuelta` y "sin prórroga → penaltis directo") siguen desfasados respecto al código (confirmado en la sesión T1 de la Copa, 04/10).
+- `ARQUITECTURA.md` §1 (`window.storage`) sigue desfasado respecto al código (confirmado en la sesión T1 de la Copa, 04/10). §2 corregido el 04/10 (3ª sesión).
 - `generarFinalAleatoria` lleva los penaltis inline (no hay generador de penaltis aislado); la Copa usa un envoltorio propio (`resolverPartidoCopa`) para la regla sin prórroga. Candidato a refactor, sin evaluar.
 - `AFC_OESTE` guarda el país de Al-Ahli como código "KSA", mientras el módulo de la Copa usa "Arabia Saudí" en texto; unificar criterio en T2 si se comparten datos.
 - Detectado en el inventario del 04/10 (sin evaluar): las refs locales `main` y `origin/main` del entorno de Code estaban obsoletas (`697473d`) frente al `main` remoto real (`e3fac83`); comprobar con `git fetch` antes de fiarse de ellas.
@@ -341,7 +348,6 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 
 - Copa Intercontinental: sede y fechas de los 3 últimos partidos sin publicar; regla de prórroga/penaltis sin verificar; rival CONMEBOL por determinar hasta el 28/11.
 - El registro irreverente de Modo Competición sigue sin calibrar con ejemplos propios reales. La voz de objetivoanalista.com es técnica y didáctica, no es esa. Bloquea afinar el tono de los artículos nuevos.
-- `ARQUITECTURA.md` §2 describe flags `origen_ida`/`origen_vuelta` a nivel de campo. El código real (`useOrigenResultados`, `src/App.jsx`) usa en su lugar un único campo `origen` por eliminatoria con tres estados (`real`, `editado`, `real-incompleto`). Señalado el 17/08 y dejado sin corregir a petición explícita — pendiente decidir si se actualiza el documento o el código.
 - ¿Qué borradores de X se publicaron y cuándo? (inventario del lunes 21/09)
 - ¿Está cargado el calendario de jornadas de las 3 competiciones? ¿Y J1 de Champions y Europa?
 - ¿Se celebró la sesión de arquitectura CAF del 06/09 en el Project técnico?
