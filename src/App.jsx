@@ -4278,10 +4278,41 @@ const NL_RESULTADOS_JORNADA3_REAL = {
   "D1|Malta|Gibraltar": { gl: 1, gv: 1 },
   "D2|Azerbaiyán|Liechtenstein": { gl: 0, gv: 0 },
 };
+// Resultados reales de la Jornada 4 (4-6/10/2026, fuente: UEFA.com), mismo
+// patrón que las jornadas anteriores. 26/26 partidos de la jornada
+// verificados contra NL_CALENDARIO_REAL antes de cargar (las 14 grupos).
+const NL_RESULTADOS_JORNADA4_REAL = {
+  "A1|Francia|Bélgica": { gl: 4, gv: 1 },
+  "A1|Italia|Turquía": { gl: 3, gv: 1 },
+  "A2|Grecia|Alemania": { gl: 0, gv: 0 },
+  "A2|Países Bajos|Serbia": { gl: 2, gv: 1 },
+  "A3|Croacia|España": { gl: 1, gv: 2 },
+  "A3|Inglaterra|Chequia": { gl: 3, gv: 0 },
+  "A4|Portugal|Noruega": { gl: 2, gv: 1 },
+  "A4|Gales|Dinamarca": { gl: 0, gv: 1 },
+  "B1|Escocia|Eslovenia": { gl: 1, gv: 2 },
+  "B1|Suiza|Macedonia del Norte": { gl: 3, gv: 0 },
+  "B2|Irlanda del Norte|Georgia": { gl: 0, gv: 0 },
+  "B2|Ucrania|Hungría": { gl: 1, gv: 2 },
+  "B3|Kosovo|Austria": { gl: 1, gv: 1 },
+  "B3|República de Irlanda|Israel": { gl: 1, gv: 1 },
+  "B4|Bosnia y Herzegovina|Polonia": { gl: 1, gv: 0 },
+  "B4|Rumanía|Suecia": { gl: 0, gv: 1 },
+  "C1|Albania|San Marino": { gl: 2, gv: 1 },
+  "C1|Bielorrusia|Finlandia": { gl: 1, gv: 0 },
+  "C2|Chipre|Letonia": { gl: 2, gv: 1 },
+  "C2|Montenegro|Armenia": { gl: 0, gv: 0 },
+  "C3|Kazajistán|Islas Feroe": { gl: 2, gv: 2 },
+  "C3|Moldavia|Eslovaquia": { gl: 0, gv: 4 },
+  "C4|Estonia|Islandia": { gl: 0, gv: 0 },
+  "C4|Luxemburgo|Bulgaria": { gl: 0, gv: 2 },
+  "D1|Malta|Andorra": { gl: 1, gv: 0 },
+  "D2|Azerbaiyán|Lituania": { gl: 1, gv: 0 },
+};
 // Combinado de todas las jornadas reales cargadas hasta ahora — useNationsLeague
 // solo necesita un mapa plano clave→resultado, igual que UCL/UEL con su única
 // jornada; aquí se fusionan porque Nations League ya tiene más de una.
-const NL_RESULTADOS_REAL = { ...NL_RESULTADOS_JORNADA1_REAL, ...NL_RESULTADOS_JORNADA2_REAL, ...NL_RESULTADOS_JORNADA3_REAL };
+const NL_RESULTADOS_REAL = { ...NL_RESULTADOS_JORNADA1_REAL, ...NL_RESULTADOS_JORNADA2_REAL, ...NL_RESULTADOS_JORNADA3_REAL, ...NL_RESULTADOS_JORNADA4_REAL };
 
 // ---- Clasificación de grupo (reglamento UEFA Nations League) ----
 // A diferencia de la fase liga de clubes, el PRIMER criterio de desempate es el
