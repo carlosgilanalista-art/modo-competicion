@@ -76,6 +76,7 @@ anótalo en el Aparcadero de ESTADO.md y recuérdame el criterio de hecho pendie
 Cerramos. Actualiza docs/ESTADO.md: qué ha quedado hecho, qué queda en curso
 y en qué rama, y qué ideas han ido al Aparcadero.
 Dime también si hay ramas de esta sesión pendientes de fusionar o borrar.
+Si tienes acceso al Project, sincroniza los docs/*.md que hayan cambiado en esta sesión (reemplazando, sin duplicar). Si no lo tienes, dime la lista exacta de docs/*.md cambiados para que los suba a mano. No lo des por hecho en ningún caso.
 ```
 
 ---
@@ -88,5 +89,3 @@ Dime también si hay ramas de esta sesión pendientes de fusionar o borrar.
 | Arquitectura, contratos de datos, investigación crítica | Opus, esfuerzo alto |
 
 La decisión de qué modelo usar se toma **al planificar la sesión**, no a mitad. Si a mitad de una sesión con Sonnet aparece algo que requiere Opus, eso es señal de que la tarea no estaba bien definida: va al Aparcadero, no se cambia de modelo sobre la marcha.
-
-Si tienes acceso al Project, sincroniza los docs/*.md que hayan cambiado en esta sesión (reemplazando, sin duplicar). Si no lo tienes, dime la lista exacta de docs/*.md cambiados para que los suba a mano. No lo des por hecho en ningún caso.
