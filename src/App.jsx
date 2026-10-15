@@ -1444,6 +1444,32 @@ const UCL_RESULTADOS_JORNADA1_REAL = {
   "Manchester United|Sabah": { gl: 4, gv: 0 },
   "Slavia Praga|Lens": { gl: 2, gv: 3 },
 };
+// Resultados reales de la Jornada 2 de la fase de liga UCL 2026/27, jugada el
+// 13-14 de octubre de 2026 (fuente: UEFA.com, contrastada con al menos una
+// fuente independiente por partido). Mismo formato y mecanismo que la Jornada 1;
+// los 18 partidos son exactamente los que UCL_JORNADA_REAL marca como jornada 2
+// (verificado por script, 0 discrepancias).
+const UCL_RESULTADOS_JORNADA2_REAL = {
+  "Lens|Sporting CP": { gl: 0, gv: 2 },
+  "Sabah|Slavia Praga": { gl: 2, gv: 0 },
+  "Arsenal|Lille": { gl: 3, gv: 0 },
+  "Atlético de Madrid|Manchester United": { gl: 2, gv: 0 },
+  "Inter|Club Brugge": { gl: 3, gv: 4 },
+  "Galatasaray|Barcelona": { gl: 1, gv: 4 },
+  "RB Leipzig|PSV Eindhoven": { gl: 1, gv: 0 },
+  "Viking|Bayern de Múnich": { gl: 3, gv: 3 },
+  "Villarreal|Napoli": { gl: 3, gv: 1 },
+  "Feyenoord|Como": { gl: 3, gv: 2 },
+  "LASK Linz|Liverpool": { gl: 3, gv: 6 },
+  "Roma|Real Madrid": { gl: 3, gv: 4 },
+  "Aston Villa|Fenerbahçe": { gl: 6, gv: 0 },
+  "Shakhtar Donetsk|AEK Atenas": { gl: 3, gv: 1 },
+  "Bodø/Glimt|Borussia Dortmund": { gl: 1, gv: 0 },
+  "Manchester City|Paris Saint-Germain": { gl: 2, gv: 4 },
+  "Real Betis|Porto": { gl: 3, gv: 2 },
+  "Slovan Bratislava|VfB Stuttgart": { gl: 0, gv: 3 },
+};
+const UCL_RESULTADOS_REAL = { ...UCL_RESULTADOS_JORNADA1_REAL, ...UCL_RESULTADOS_JORNADA2_REAL };
 
 // Sorteo real (no simulado) de la fase de liga de la Europa League 2026/27.
 // A diferencia de la Champions, el reparto de bombos NO se pudo derivar del
@@ -2508,7 +2534,7 @@ function useChampions(datosReales) {
     ];
     return { plazas, error: null };
   }, [clasificados]);
-  const liga = useFaseLiga(poolLiga, FL_CFG_UCL, UCL_SORTEO_REAL, UCL_RESULTADOS_JORNADA1_REAL);
+  const liga = useFaseLiga(poolLiga, FL_CFG_UCL, UCL_SORTEO_REAL, UCL_RESULTADOS_REAL);
 
   return {
     coefs, allTeams,
