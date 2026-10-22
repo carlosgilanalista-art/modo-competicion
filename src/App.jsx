@@ -1469,7 +1469,31 @@ const UCL_RESULTADOS_JORNADA2_REAL = {
   "Real Betis|Porto": { gl: 3, gv: 2 },
   "Slovan Bratislava|VfB Stuttgart": { gl: 0, gv: 3 },
 };
-const UCL_RESULTADOS_REAL = { ...UCL_RESULTADOS_JORNADA1_REAL, ...UCL_RESULTADOS_JORNADA2_REAL };
+// Resultados reales de la Jornada 3 de la fase de liga UCL 2026/27, jugada el
+// 20-21 de octubre de 2026 (fuente: UEFA.com). Mismo formato y mecanismo que las
+// jornadas 1 y 2; los 18 partidos son exactamente los que UCL_JORNADA_REAL marca
+// como jornada 3 (verificado por script).
+const UCL_RESULTADOS_JORNADA3_REAL = {
+  "Fenerbahçe|Slavia Praga": { gl: 2, gv: 2 },
+  "Sabah|Borussia Dortmund": { gl: 1, gv: 2 },
+  "Paris Saint-Germain|Barcelona": { gl: 4, gv: 2 },
+  "Liverpool|Villarreal": { gl: 4, gv: 3 },
+  "Manchester City|AEK Atenas": { gl: 5, gv: 1 },
+  "Roma|Slovan Bratislava": { gl: 4, gv: 0 },
+  "Porto|PSV Eindhoven": { gl: 0, gv: 1 },
+  "Napoli|Bodø/Glimt": { gl: 4, gv: 3 },
+  "VfB Stuttgart|Atlético de Madrid": { gl: 1, gv: 1 },
+  "Lille|Galatasaray": { gl: 2, gv: 4 },
+  "Como|Manchester United": { gl: 4, gv: 1 },
+  "Bayern de Múnich|Arsenal": { gl: 2, gv: 2 },
+  "Real Madrid|RB Leipzig": { gl: 4, gv: 1 },
+  "Inter|Shakhtar Donetsk": { gl: 1, gv: 0 },
+  "Sporting CP|LASK Linz": { gl: 2, gv: 3 },
+  "Aston Villa|Viking": { gl: 3, gv: 1 },
+  "Club Brugge|Lens": { gl: 3, gv: 0 },
+  "Real Betis|Feyenoord": { gl: 1, gv: 0 },
+};
+const UCL_RESULTADOS_REAL = { ...UCL_RESULTADOS_JORNADA1_REAL, ...UCL_RESULTADOS_JORNADA2_REAL, ...UCL_RESULTADOS_JORNADA3_REAL };
 
 // Sorteo real (no simulado) de la fase de liga de la Europa League 2026/27.
 // A diferencia de la Champions, el reparto de bombos NO se pudo derivar del
