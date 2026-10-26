@@ -1782,7 +1782,31 @@ const UEL_RESULTADOS_JORNADA2_REAL = {
   "TSG Hoffenheim|Beşiktaş": { gl: 2, gv: 3 },
   "NEC Nijmegen|Levski Sofia": { gl: 1, gv: 1 },
 };
-const UEL_RESULTADOS_REAL = { ...UEL_RESULTADOS_JORNADA1_REAL, ...UEL_RESULTADOS_JORNADA2_REAL };
+// Resultados reales de la Jornada 3 de la fase de liga UEL 2026/27, jugada el
+// jueves 22 de octubre de 2026 (fuente: UEFA.com). Mismo formato y mecanismo que
+// las jornadas 1 y 2; los 18 partidos son exactamente los que UEL_JORNADA_REAL
+// marca como jornada 3 (verificado por script, 0 discrepancias).
+const UEL_RESULTADOS_JORNADA3_REAL = {
+  "Juventus|Rennes": { gl: 2, gv: 2 },
+  "Ferencváros|Torreense": { gl: 4, gv: 1 },
+  "Union Saint-Gilloise|Hapoel Beer-Sheva": { gl: 4, gv: 0 },
+  "GNK Dinamo|NEC Nijmegen": { gl: 2, gv: 4 },
+  "Sturm Graz|Marsella": { gl: 1, gv: 0 },
+  "Lech Poznań|Sunderland": { gl: 1, gv: 1 },
+  "OFI Creta|Bayer Leverkusen": { gl: 0, gv: 2 },
+  "Ararat-Armenia|AZ Alkmaar": { gl: 0, gv: 4 },
+  "Olympiakos|Sparta Praga": { gl: 1, gv: 0 },
+  "Viktoria Plzeň|Levski Sofia": { gl: 1, gv: 2 },
+  "Celtic|Celta de Vigo": { gl: 1, gv: 2 },
+  "Bournemouth|Milan": { gl: 3, gv: 0 },
+  "Celje|Salzburgo": { gl: 2, gv: 2 },
+  "Jagiellonia Białystok|Anderlecht": { gl: 0, gv: 3 },
+  "Omonoia|Benfica": { gl: 1, gv: 4 },
+  "TSG Hoffenheim|Lyon": { gl: 3, gv: 0 },
+  "Beşiktaş|Crystal Palace": { gl: 2, gv: 2 },
+  "Lillestrøm|Real Sociedad": { gl: 0, gv: 6 },
+};
+const UEL_RESULTADOS_REAL = { ...UEL_RESULTADOS_JORNADA1_REAL, ...UEL_RESULTADOS_JORNADA2_REAL, ...UEL_RESULTADOS_JORNADA3_REAL };
 
 // Sorteo real (no simulado) de la fase de liga de la Conference League 2026/27.
 // Mismo motivo que en Europa League: los 6 bombos de 6 (UECL_POT_REAL) y los
@@ -2000,6 +2024,31 @@ const UECL_RESULTADOS_JORNADA1_REAL = {
   "Brann|Lincoln Red Imps": { gl: 2, gv: 1 },
   "Hearts|Nordsjælland": { gl: 1, gv: 1 },
 };
+// Resultados reales de la Jornada 2 de la fase de liga UECL 2026/27, jugada el
+// jueves 22 de octubre de 2026 (fuente: UEFA.com). Mismo formato y mecanismo que
+// la Jornada 1; los 18 partidos son exactamente los que UECL_JORNADA_REAL marca
+// como jornada 2 (verificado por script, 0 discrepancias).
+const UECL_RESULTADOS_JORNADA2_REAL = {
+  "Kairat Almaty|Panathinaikos": { gl: 1, gv: 5 },
+  "Crvena Zvezda|Copenhagen": { gl: 2, gv: 2 },
+  "Pafos|Riga": { gl: 1, gv: 1 },
+  "Getafe|Lugano": { gl: 2, gv: 5 },
+  "Trabzonspor|Hearts": { gl: 2, gv: 0 },
+  "Jablonec|Brighton & Hove Albion": { gl: 0, gv: 0 },
+  "Nordsjælland|CSKA Sofia": { gl: 2, gv: 2 },
+  "Inter Escaldes|Universitatea Craiova": { gl: 1, gv: 3 },
+  "Kauno Žalgiris|Brann": { gl: 1, gv: 4 },
+  "Iberia Tbilisi|Mjällby": { gl: 1, gv: 1 },
+  "Braga|Gent": { gl: 2, gv: 0 },
+  "Ajax|Atalanta": { gl: 2, gv: 0 },
+  "Mónaco|Friburgo": { gl: 3, gv: 0 },
+  "Midtjylland|Sint-Truidense": { gl: 0, gv: 1 },
+  "Lincoln Red Imps|Twente": { gl: 1, gv: 4 },
+  "Borac|KuPS Kuopio": { gl: 2, gv: 0 },
+  "Aarhus|Egnatia": { gl: 1, gv: 1 },
+  "Thun|Hajduk Split": { gl: 0, gv: 1 },
+};
+const UECL_RESULTADOS_REAL = { ...UECL_RESULTADOS_JORNADA1_REAL, ...UECL_RESULTADOS_JORNADA2_REAL };
 
 // ---- Edición tras el sorteo: intercambio de visitantes entre dos partidos ----
 // Intercambiar los visitantes de dos partidos del mismo "bloque" (mismo bombo
@@ -3237,7 +3286,7 @@ function useConference(cl, el, datosReales) {
     }
     return { plazas, error: null };
   }, [clasificados, el.perdedoresPO]);
-  const liga = useFaseLiga(poolLiga, FL_CFG_UECL, UECL_SORTEO_REAL, UECL_RESULTADOS_JORNADA1_REAL);
+  const liga = useFaseLiga(poolLiga, FL_CFG_UECL, UECL_SORTEO_REAL, UECL_RESULTADOS_REAL);
 
   return {
     coefs, allTeams,
