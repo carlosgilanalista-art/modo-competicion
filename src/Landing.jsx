@@ -242,7 +242,9 @@ export default function Landing() {
               <NavDropdownEnlace href="#/simulador-copa-intercontinental">Simulador</NavDropdownEnlace>
               <NavDropdownEnlace href="#/copa-intercontinental">Explicación</NavDropdownEnlace>
               <NavDropdownEtiqueta>España</NavDropdownEtiqueta>
-              <NavDropdownEnlace href="#/copa-del-rey">Copa del Rey 2026/27</NavDropdownEnlace>
+              <NavDropdownEtiqueta>Copa del Rey 2026/27</NavDropdownEtiqueta>
+              <NavDropdownEnlace href="#/simulador-copa-del-rey">Simulador</NavDropdownEnlace>
+              <NavDropdownEnlace href="#/copa-del-rey">Explicación</NavDropdownEnlace>
             </NavDropdown>
             <NavDropdown label="Selecciones">
               <NavDropdownEtiqueta>NATIONS LEAGUE 2026/27</NavDropdownEtiqueta>

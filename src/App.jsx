@@ -11,6 +11,7 @@ import ArticuloCopaDelRey from "./ArticuloCopaDelRey.jsx";
 import ResultadosReales from "./ResultadosReales.jsx";
 import useDocumentMeta from "./useDocumentMeta.js";
 import { REGLA_DESEMPATE, EQUIPOS, PLAZA_CONMEBOL, PARTIDOS } from "./data/copaIntercontinental2026.js";
+import { CATEGORIAS as CATEGORIAS_REY, EQUIPOS as EQUIPOS_REY, PREVIA as PREVIA_REY, R1 as R1_REY, R1_RESULTADOS_REAL as R1_RESULTADOS_REAL_REY } from "./data/copaDelRey2026.js";
 import { useResultadosReales, precargarRonda, ganadorRealR1, perdedorRealR1, sorteoRealParaPool } from "./datosReales.js";
 
 // ============================================================
@@ -6761,6 +6762,277 @@ function SimuladorCopaIntercontinentalPage() {
 }
 
 // ============================================================
+// SIMULADOR COPA DEL REY 2026/27 (T1: previa real + 1ª eliminatoria)
+// ============================================================
+// Datos en src/data/copaDelRey2026.js (módulo puro). Sin persistencia: estado en memoria.
+// El origen real/editado lo lleva useOrigenResultados (una instancia para la previa y otra para la
+// 1ª eliminatoria). Un resultado de la 1ª eliminatoria guarda los participantes con los que se
+// jugó o simuló: si un cambio en la previa cambia el local, el resultado queda OBSOLETO (no se
+// borra) y reaparece al restaurar la previa.
+const TEMA_REY = TEMA_NL;
+const EQ_REY = Object.fromEntries(EQUIPOS_REY.map((e) => [e.id, e]));
+const CAT_REY = Object.fromEntries(CATEGORIAS_REY.map((c) => [c.id, c.nombre]));
+const PREVIA_POR_ID_REY = Object.fromEntries(PREVIA_REY.map((p) => [p.id, p]));
+const DIAS_REY = { "2026-10-27": "Martes 27 de octubre", "2026-10-28": "Miércoles 28 de octubre", "2026-10-29": "Jueves 29 de octubre" };
+
+function ganadorPreviaRey(p, res) {
+  const e = estadoEliminatoria(res);
+  return e.fase === "resuelto" ? (e.ganador === "A" ? p.a : p.b) : null;
+}
+function localReyR1(lado, resPrevia) {
+  return lado.equipo ?? ganadorPreviaRey(PREVIA_POR_ID_REY[lado.previa], resPrevia[lado.previa]);
+}
+const resPreviaRealRey = () => Object.fromEntries(PREVIA_REY.map((p) => [p.id, { ...p.real }]));
+// Resultados reales de la 1ª eliminatoria por cruce (clave `local|visitante` con el local real).
+const R1_REAL_REY = (() => {
+  const resPrevia = resPreviaRealRey(), out = {};
+  R1_REY.forEach((c) => {
+    const l = localReyR1(c.local, resPrevia), v = c.visitante.equipo;
+    const r = R1_RESULTADOS_REAL_REY[`${EQ_REY[l].nombre}|${EQ_REY[v].nombre}`];
+    if (r) out[c.id] = { ...r, participantes: [l, v] };
+  });
+  return out;
+})();
+const origenR1RealRey = (r) => (estadoPartidoUnico(r).fase === "resuelto" ? "real" : "real-incompleto");
+
+// Por cruce: participantes ([local, visitante] | null), resultado, estado y ganador (id | null).
+// Estados: esperando (falta el ganador de la previa) · simulable · resuelto · obsoleto.
+function calcularR1Rey(resPrevia, resR1) {
+  return R1_REY.map((c) => {
+    const local = localReyR1(c.local, resPrevia), visitante = c.visitante.equipo;
+    const participantes = local ? [local, visitante] : null;
+    const guardado = resR1[c.id] || null;
+    let estado = "esperando", ganador = null;
+    if (participantes) {
+      if (guardado && (guardado.participantes[0] !== local || guardado.participantes[1] !== visitante)) estado = "obsoleto";
+      else {
+        const e = estadoPartidoUnico(guardado);
+        estado = e.fase === "resuelto" ? "resuelto" : "simulable";
+        if (e.fase === "resuelto") ganador = e.ganador === "A" ? local : visitante;
+      }
+    }
+    return { cruce: c, participantes, local, visitante, resultado: guardado, estado, ganador };
+  });
+}
+
+function resumenReyR1(r) {
+  const e = estadoPartidoUnico(r);
+  let t = `${r.gA} - ${r.gB}`;
+  if (e.empate && r.etA !== undefined) t += ` · prórroga ${r.etA} - ${r.etB}`;
+  if (e.etTied && r.penA !== undefined) t += ` · penaltis ${r.penA} - ${r.penB}`;
+  return t;
+}
+
+function useCopaDelRey() {
+  const [resPrevia, setResPrevia] = useState(resPreviaRealRey);
+  const [resR1, setResR1] = useState(() => ({ ...R1_REAL_REY }));
+  const oP = useOrigenResultados();
+  const oR = useOrigenResultados();
+  const iniciado = useRef(false);
+  useEffect(() => {
+    if (iniciado.current) return;
+    iniciado.current = true;
+    oP.marcarOrigen(Object.fromEntries(PREVIA_REY.map((p) => [p.id, estadoOrigenReal(p.real)])));
+    oR.marcarOrigen(Object.fromEntries(Object.entries(R1_REAL_REY).map(([id, r]) => [id, origenR1RealRey(r)])));
+  }, []);
+
+  const calc = useMemo(() => calcularR1Rey(resPrevia, resR1), [resPrevia, resR1]);
+  const porId = useMemo(() => Object.fromEntries(calc.map((x) => [x.cruce.id, x])), [calc]);
+
+  // Previa (doble partido): mismo patrón que las rondas previas UEFA.
+  const changePrevia = (id, field, value) => {
+    const nuevo = { ...resPrevia[id], [field]: value };
+    setResPrevia((p) => ({ ...p, [id]: nuevo }));
+    oP.marcarEditado(id); oP.revisarCompletado(id, nuevo);
+  };
+  const resetPrevia = (id) => setResPrevia((p) => { const n = { ...p }; delete n[id]; return n; });
+  const restaurarPrevia = (id) => { setResPrevia((p) => ({ ...p, [id]: { ...PREVIA_POR_ID_REY[id].real } })); oP.restaurar(id, estadoOrigenReal(PREVIA_POR_ID_REY[id].real)); };
+
+  // 1ª eliminatoria (partido único).
+  const simular = (id) => {
+    const x = porId[id];
+    if (!x.participantes) return;
+    setResR1((p) => ({ ...p, [id]: { ...generarFinalAleatoria(), participantes: x.participantes } }));
+    oR.marcarEditado(id);
+  };
+  const editar = (id, k, v) => {
+    const x = porId[id];
+    if (!x.participantes || x.estado === "esperando") return;
+    setResR1((prev) => {
+      const base = x.estado === "obsoleto" ? {} : (prev[id] || {});
+      const r = { ...base, participantes: x.participantes };
+      if (v === undefined) delete r[k]; else r[k] = v;
+      const g = r.gA !== undefined && r.gB !== undefined && Number(r.gA) !== Number(r.gB);
+      if (g || r.gA === undefined || r.gB === undefined) { delete r.etA; delete r.etB; delete r.penA; delete r.penB; }
+      else if (r.etA !== undefined && r.etB !== undefined && Number(r.gA) + Number(r.etA) !== Number(r.gB) + Number(r.etB)) { delete r.penA; delete r.penB; }
+      return { ...prev, [id]: r };
+    });
+    oR.marcarEditado(id);
+  };
+  const quitar = (id) => setResR1((p) => { const n = { ...p }; delete n[id]; return n; });
+  const restaurar = (id) => {
+    if (!(id in R1_REAL_REY)) return;
+    setResR1((p) => ({ ...p, [id]: R1_REAL_REY[id] }));
+    oR.restaurar(id, origenR1RealRey(R1_REAL_REY[id]));
+  };
+  // Rellena lo pendiente y lo obsoleto; no toca lo resuelto (real, editado o ya simulado) ni lo bloqueado.
+  const simularTodo = () => {
+    const ids = calc.filter((x) => x.participantes && (x.estado === "simulable" || x.estado === "obsoleto")).map((x) => x.cruce.id);
+    setResR1((prev) => {
+      const n = { ...prev };
+      ids.forEach((id) => { n[id] = { ...generarFinalAleatoria(), participantes: porId[id].participantes }; });
+      return n;
+    });
+    ids.forEach((id) => oR.marcarEditado(id));
+  };
+  const limpiar = () => {
+    setResPrevia(resPreviaRealRey());
+    setResR1({ ...R1_REAL_REY });
+    oP.restaurarTodos(Object.fromEntries(PREVIA_REY.map((p) => [p.id, estadoOrigenReal(p.real)])));
+    oR.reiniciar();
+    oR.marcarOrigen(Object.fromEntries(Object.entries(R1_REAL_REY).map(([id, r]) => [id, origenR1RealRey(r)])));
+  };
+  return { resPrevia, calc, porId, oP, oR, changePrevia, resetPrevia, restaurarPrevia, simular, editar, quitar, restaurar, simularTodo, limpiar };
+}
+
+function CruceReyCard({ x, colores, origen, bloqueado, onSimular, onEditar, onQuitar, onRestaurar, onDesbloquear }) {
+  const { cruce, participantes, resultado, estado, ganador } = x;
+  const nombre = (id) => EQ_REY[id].nombre;
+  const nombreLocal = participantes ? nombre(participantes[0]) : `Ganador ${cruce.local.previa}`;
+  const nombreVisit = nombre(cruce.visitante.equipo);
+  const catLocal = participantes ? CAT_REY[EQ_REY[participantes[0]].categoria] : CAT_REY.previa;
+  const catVisit = CAT_REY[EQ_REY[cruce.visitante.equipo].categoria];
+  const est = estadoPartidoUnico(estado === "obsoleto" ? null : resultado);
+  const hayBaseReal = origen === "real" || origen === "editado" || origen === "real-incompleto";
+  const color = estado === "obsoleto" ? colores.alerta : estado === "resuelto" ? colores.acento : colores.textoSuave;
+  const distintivo = estado === "obsoleto" ? "OBSOLETO" : origen === "editado" ? "EDITADO" : origen === "real" || origen === "real-incompleto" ? "REAL" : estado === "resuelto" ? "SIMULADO" : estado === "obsoleto" ? "OBSOLETO" : "PENDIENTE";
+  const inputStyle = { width: 38, background: colores.inputBg, border: `1px solid ${colores.inputBorder}`, borderRadius: 4, color: colores.acento, padding: "3px 4px", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, textAlign: "center" };
+  const campo = (k) => (
+    <input type="number" min="0" data-campo={k} value={estado === "obsoleto" ? "" : (resultado?.[k] ?? "")} style={inputStyle}
+      onChange={(e) => { const v = validar(e.target.value); if (v !== "INVALIDO") onEditar(cruce.id, k, v); }} />
+  );
+  const btnSec = { background: "none", border: `1px solid ${colores.inputBorder}`, color: colores.textoSuave, borderRadius: 4, padding: "2px 8px", fontSize: 11, cursor: "pointer" };
+  const penIgual = resultado && estado !== "obsoleto" && resultado.penA !== undefined && resultado.penB !== undefined && Number(resultado.penA) === Number(resultado.penB);
+  return (
+    <div data-cruce={cruce.id} data-estado={estado} data-origen={distintivo} style={{ background: colores.tarjeta, border: `1px solid ${estado === "obsoleto" ? colores.alerta : colores.borde}`, borderRadius: 8, padding: "10px 14px", marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.acento, border: `1px solid ${colores.borde}`, borderRadius: 4, padding: "2px 6px" }}>{cruce.hora} · G{cruce.grupo}</span>
+        <span style={{ color: colores.textoSuave, fontSize: 11 }}>{catLocal} vs {catVisit}</span>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color, border: `1px solid ${color}`, borderRadius: 4, padding: "2px 6px", marginLeft: "auto" }}>{distintivo}</span>
+      </div>
+      <div style={{ color: colores.texto, fontSize: 14 }}>
+        <strong>{nombreLocal}</strong> <span style={{ color: colores.textoSuave }}>vs</span> {nombreVisit}
+        {cruce.local.previa && participantes && <span style={{ color: colores.textoSuave, fontSize: 11 }}> · local: ganador de la previa</span>}
+      </div>
+      {estado === "esperando" && <div style={{ color: colores.alerta, fontSize: 12, fontStyle: "italic", marginTop: 6 }}>Esperando el ganador de la eliminatoria previa {cruce.local.previa}</div>}
+      {estado === "obsoleto" && <div style={{ color: colores.alerta, fontSize: 12, marginTop: 6 }}>{hayBaseReal ? "Resultado obsoleto: el local ya no es el de la previa real. Restaura la previa o vuelve a simular" : "Resultado obsoleto: el local ha cambiado. Vuelve a simular"}</div>}
+      {bloqueado && estado !== "obsoleto" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: "#5BBB7B", border: "1px solid #5BBB7B", borderRadius: 999, padding: "2px 8px" }}>✓ Confirmado</span>
+          <span data-marcador style={{ color: colores.textoSuave, fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>{resumenReyR1(resultado)}</span>
+          <button data-accion="modificar" onClick={() => onDesbloquear(cruce.id)} style={{ ...btnSec, marginLeft: "auto" }}>✏️ Modificar</button>
+        </div>
+      )}
+      {!bloqueado && estado !== "esperando" && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+          {origen === "editado" && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, letterSpacing: 1, color: colores.alerta, border: `1px solid ${colores.alerta}`, borderRadius: 999, padding: "2px 8px" }}>✎ Editado (resultado real modificado)</span>}
+          {campo("gA")}<span style={{ color: colores.textoSuave }}>-</span>{campo("gB")}
+          {est.empate && (<><span style={{ color: colores.alerta, fontSize: 11 }}>(prórroga)</span>{campo("etA")}<span style={{ color: colores.textoSuave }}>-</span>{campo("etB")}</>)}
+          {est.etTied && (<><span style={{ color: colores.alerta, fontSize: 11 }}>(pen.)</span>{campo("penA")}<span style={{ color: colores.textoSuave }}>-</span>{campo("penB")}</>)}
+          <BotonAleatorio onClick={() => onSimular(cruce.id)} label="Simular" colores={colores} />
+          {hayBaseReal
+            ? <button data-accion="restaurar" onClick={() => onRestaurar(cruce.id)} style={{ ...btnSec, marginLeft: "auto" }}>↩ Restaurar resultado real</button>
+            : resultado && <button onClick={() => onQuitar(cruce.id)} style={{ ...btnSec, marginLeft: "auto" }}>↺ reiniciar</button>}
+        </div>
+      )}
+      {penIgual && <div style={{ color: colores.alerta, fontSize: 11, marginTop: 4 }}>Los penaltis no pueden terminar en empate</div>}
+      {ganador && <div data-ganador style={{ color: colores.acento, fontSize: 12, marginTop: 6 }}>✓ Pasa a la 2ª eliminatoria: <strong>{nombre(ganador)}</strong></div>}
+    </div>
+  );
+}
+
+function SimuladorCopaDelReyPage() {
+  const c = TEMA_REY;
+  const rey = useCopaDelRey();
+  useDocumentMeta({
+    title: "Simulador Copa del Rey 2026/27 · Modo Competición",
+    description: "Simula la 1ª eliminatoria de la Copa del Rey 2026/27 sobre la previa ya jugada: 56 cruces a partido único y los 28 clasificados a la segunda eliminatoria.",
+  });
+  const { calc } = rey;
+  const resueltos = calc.filter((x) => x.estado === "resuelto").length;
+  const clasificados = calc.filter((x) => x.ganador).map((x) => EQ_REY[x.ganador].nombre);
+  const completo = resueltos === calc.length;
+  const dias = Object.keys(DIAS_REY);
+  const hayCambios = Object.keys(rey.oP.origen).some((id) => rey.oP.origen[id] === "editado") || Object.keys(rey.oR.origen).some((id) => rey.oR.origen[id] === "editado");
+  const btn = { background: "none", color: c.textoSuave, border: `1px solid ${c.inputBorder}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" };
+  const seccion = { fontFamily: "'JetBrains Mono', monospace", color: c.textoSuave, fontSize: 12, letterSpacing: 2, margin: "24px 0 10px" };
+  return (
+    <div style={{ minHeight: "100vh", background: c.fondo, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 20px 60px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", color: c.textoSuave, fontSize: 11, letterSpacing: 3 }}>SIMULADOR COPA DEL REY 2026/27</div>
+          <div style={{ display: "flex", gap: 14 }}>
+            <a href="#/" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>← Inicio</a>
+            <a href="#/copa-del-rey" style={{ color: c.textoSuave, fontSize: 12, textDecoration: "none" }}>Cómo funciona</a>
+          </div>
+        </div>
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", color: c.texto, fontSize: 28, margin: "8px 0 6px" }}>Copa del Rey 2026/27</h1>
+        <p style={{ color: c.textoSuave, fontSize: 13, lineHeight: 1.6, maxWidth: 700, marginBottom: 16 }}>
+          La previa a doble partido ya se ha jugado: sus resultados se pueden modificar y el cambio de un ganador cambia el local de su cruce de la 1ª eliminatoria. La 1ª eliminatoria (56 cruces a partido único, del 27 al 29 de octubre) se puede simular o rellenar a mano; empate, prórroga y penaltis. El tramo termina con los 56 clasificados a la segunda eliminatoria (28 cruces).
+        </p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <BotonAleatorio onClick={rey.simularTodo} label="Simular todo" colores={c} />
+          <button onClick={rey.limpiar} style={btn}>↩ Limpiar</button>
+          <span data-progreso style={{ color: c.textoSuave, fontSize: 12, fontFamily: "'JetBrains Mono', monospace", marginLeft: "auto" }}>{resueltos}/{calc.length} cruces resueltos</span>
+        </div>
+        {hayCambios && <div style={{ color: c.alerta, fontSize: 11, marginBottom: 8 }}>Hay resultados reales modificados: "Limpiar" los devuelve a su estado real.</div>}
+
+        <div style={seccion}>ELIMINATORIA PREVIA · DOBLE PARTIDO · 26/09–11/10 ({PREVIA_REY.length} de {PREVIA_REY.length} reales)</div>
+        {PREVIA_REY.map((p) => {
+          const g = ganadorPreviaRey(p, rey.resPrevia[p.id]);
+          return (
+            <div key={p.id} data-previa={p.id} data-fiabilidad={p.fiabilidad} style={{ marginBottom: 10 }}>
+              <div style={{ color: c.textoSuave, fontSize: 11, marginBottom: 3 }}>
+                {p.fiabilidad === "🟡" ? <span data-rotulo style={{ color: "#D4A94C" }}>🟡 por confirmar con acta</span> : <span>🟢 confirmado en fuente oficial</span>}
+              </div>
+              <TieCard nombreA={EQ_REY[p.a].nombre} nombreB={EQ_REY[p.b].nombre} tie={{ id: p.id }} resultado={rey.resPrevia[p.id]} definido colores={c}
+                onChange={rey.changePrevia} onReset={rey.resetPrevia} origen={rey.oP.origen[p.id]} bloqueado={rey.oP.esBloqueado(p.id)}
+                onDesbloquear={rey.oP.desbloquear} onRestaurar={rey.restaurarPrevia} />
+              {g && <div data-pasa style={{ color: c.acento, fontSize: 12, margin: "4px 0 0 4px" }}>✓ Pasa a la 1ª eliminatoria: <strong>{EQ_REY[g].nombre}</strong></div>}
+            </div>
+          );
+        })}
+
+        {dias.map((d) => {
+          const cruces = calc.filter((x) => x.cruce.dia === d);
+          return (
+            <div key={d} data-dia={d}>
+              <div style={seccion}>1ª ELIMINATORIA · {DIAS_REY[d].toUpperCase()} · {cruces.length} CRUCES · {cruces.filter((x) => x.estado === "resuelto").length} RESUELTOS</div>
+              {cruces.map((x) => (
+                <CruceReyCard key={x.cruce.id} x={x} colores={c} origen={rey.oR.origen[x.cruce.id]} bloqueado={rey.oR.esBloqueado(x.cruce.id)}
+                  onSimular={rey.simular} onEditar={rey.editar} onQuitar={rey.quitar} onRestaurar={rey.restaurar} onDesbloquear={rey.oR.desbloquear} />
+              ))}
+            </div>
+          );
+        })}
+
+        {completo && (
+          <div data-clasificados style={{ marginTop: 16, background: c.inputBg, border: `1px solid ${c.acento}`, borderRadius: 8, padding: "12px 16px" }}>
+            <div style={{ color: c.acento, fontSize: 16, fontWeight: 700, fontFamily: "'Oswald', sans-serif", marginBottom: 8 }}>Clasificados a la 2ª eliminatoria ({clasificados.length} equipos · {clasificados.length / 2} cruces)</div>
+            <ol style={{ color: c.texto, fontSize: 13, lineHeight: 1.7, margin: 0, paddingLeft: 22, columnWidth: 220 }}>
+              {clasificados.map((n) => <li key={n}>{n}</li>)}
+            </ol>
+          </div>
+        )}
+        <footer style={{ borderTop: `1px solid ${c.borde}`, paddingTop: 16, marginTop: 16, color: c.textoSuave, fontSize: 11, lineHeight: 1.6 }}>
+          Modo Competición · Motor de partido aleatorio uniforme, el mismo que el resto de simuladores del sitio. La 2ª eliminatoria en adelante no está incluida.
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // APP PRINCIPAL — landing + artículo + simulador (rutas por hash)
 // ============================================================
 function useHashRoute() {
@@ -6789,7 +7061,7 @@ export default function App() {
   // empieza por "#/simulador", así que el orden de las ramas es lo que las separa.
   // Mismo cuidado con el simulador de la ACL Elite: la rama de
   // "#/simulador-afc-champions-elite" va ANTES que la de "#/simulador".
-  const vista = hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-copa-intercontinental") ? "simulador-copa" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/procedimiento-sorteo-ucl") ? "procedimiento-sorteo-ucl" : hash.startsWith("#/copa-intercontinental") ? "copa-intercontinental" : hash.startsWith("#/copa-del-rey") ? "copa-del-rey" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
+  const vista = hash.startsWith("#/simulador-copa-del-rey") ? "simulador-rey" : hash.startsWith("#/simulador-afc-champions-elite") ? "simulador-afc" : hash.startsWith("#/simulador-copa-intercontinental") ? "simulador-copa" : hash.startsWith("#/simulador-clasificacion-euro2028") ? "simulador-eq" : hash.startsWith("#/simulador-selecciones") ? "simulador-nl" : hash.startsWith("#/simulador") ? "simulador" : hash.startsWith("#/formato-liga") ? "formato-liga" : hash.startsWith("#/formato") ? "formato" : hash.startsWith("#/nations-league") ? "nations-league" : hash.startsWith("#/euro2028") ? "euro2028" : hash.startsWith("#/afc-champions-elite") ? "afc-champions-elite" : hash.startsWith("#/procedimiento-sorteo-ucl") ? "procedimiento-sorteo-ucl" : hash.startsWith("#/copa-intercontinental") ? "copa-intercontinental" : hash.startsWith("#/copa-del-rey") ? "copa-del-rey" : hash.startsWith("#/resultados") ? "resultados" : "inicio";
 
   useEffect(() => {
     if (hash.startsWith("#/simulador/")) {
@@ -6837,6 +7109,7 @@ export default function App() {
       {vista === "simulador-nl" && <SimuladorNationsLeaguePage nl={nl} />}
       {vista === "simulador-eq" && <SimuladorEuro2028Page eq={eq} />}
       {vista === "simulador-copa" && <SimuladorCopaIntercontinentalPage />}
+      {vista === "simulador-rey" && <SimuladorCopaDelReyPage />}
       {vista === "simulador-afc" && <SimuladorAFCPage afc={afc} region={regionAFC} setRegion={setRegionAFC} />}
       {vista === "simulador" && (
         <div style={{ minHeight: "100vh", background: fondoActivo, fontFamily: "'Inter', sans-serif" }}>
