@@ -6773,7 +6773,7 @@ const TEMA_REY = TEMA_NL;
 const EQ_REY = Object.fromEntries(EQUIPOS_REY.map((e) => [e.id, e]));
 const CAT_REY = Object.fromEntries(CATEGORIAS_REY.map((c) => [c.id, c.nombre]));
 const PREVIA_POR_ID_REY = Object.fromEntries(PREVIA_REY.map((p) => [p.id, p]));
-const DIAS_REY = { "2026-10-27": "Martes 27 de octubre", "2026-10-28": "Miércoles 28 de octubre", "2026-10-29": "Jueves 29 de octubre" };
+const DIAS_REY = { "2026-10-27": "Martes 27 de octubre", "2026-10-29": "Jueves 29 de octubre", "2026-11-03": "Martes 3 de noviembre", "2026-11-04": "Miércoles 4 de noviembre", "2026-11-05": "Jueves 5 de noviembre", "2026-11-10": "Martes 10 de noviembre", "2026-11-12": "Jueves 12 de noviembre", "2026-11-13": "Viernes 13 de noviembre" };
 
 function ganadorPreviaRey(p, res) {
   const e = estadoEliminatoria(res);
@@ -6978,7 +6978,7 @@ function SimuladorCopaDelReyPage() {
         </div>
         <h1 style={{ fontFamily: "'Oswald', sans-serif", color: c.texto, fontSize: 28, margin: "8px 0 6px" }}>Copa del Rey 2026/27</h1>
         <p style={{ color: c.textoSuave, fontSize: 13, lineHeight: 1.6, maxWidth: 700, marginBottom: 16 }}>
-          La previa a doble partido ya se ha jugado: sus resultados se pueden modificar y el cambio de un ganador cambia el local de su cruce de la 1ª eliminatoria. La 1ª eliminatoria (56 cruces a partido único, del 27 al 29 de octubre) se puede simular o rellenar a mano; empate, prórroga y penaltis. El tramo termina con los 56 clasificados a la segunda eliminatoria (28 cruces).
+          La previa a doble partido ya se ha jugado: sus resultados se pueden modificar y el cambio de un ganador cambia el local de su cruce de la 1ª eliminatoria. La 1ª eliminatoria (56 cruces a partido único, del 27 de octubre al 13 de noviembre) se puede simular o rellenar a mano; empate, prórroga y penaltis. El tramo termina con los 56 clasificados a la segunda eliminatoria (28 cruces).
         </p>
         <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap", alignItems: "center" }}>
           <BotonAleatorio onClick={rey.simularTodo} label="Simular todo" colores={c} />
