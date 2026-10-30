@@ -236,8 +236,8 @@ export const PREVIA = [
 export const R1 = [
   { n: 1, id: "R1-01", local: { previa: "PR-4" }, visitante: { equipo: "elche-cf" }, dia: "2026-10-27", hora: "19:00", grupo: 3 },
   { n: 2, id: "R1-02", local: { previa: "PR-7" }, visitante: { equipo: "malaga-cf" }, dia: "2026-10-27", hora: "21:00", grupo: 3 },
-  { n: 3, id: "R1-03", local: { previa: "PR-1" }, visitante: { equipo: "deportivo-alaves" }, dia: "2026-10-28", hora: "19:00", grupo: 2 },
-  { n: 4, id: "R1-04", local: { previa: "PR-8" }, visitante: { equipo: "valencia-cf" }, dia: "2026-10-28", hora: "21:00", grupo: 3 },
+  { n: 3, id: "R1-03", local: { previa: "PR-1" }, visitante: { equipo: "deportivo-alaves" }, dia: "2026-11-03", hora: "19:00", grupo: 2 },
+  { n: 4, id: "R1-04", local: { previa: "PR-8" }, visitante: { equipo: "valencia-cf" }, dia: "2026-11-10", hora: "21:00", grupo: 3 },
   { n: 5, id: "R1-05", local: { previa: "PR-3" }, visitante: { equipo: "getafe-cf" }, dia: "2026-10-29", hora: "19:00", grupo: 4 },
   { n: 6, id: "R1-06", local: { previa: "PR-2" }, visitante: { equipo: "ca-osasuna" }, dia: "2026-10-29", hora: "19:00", grupo: 2 },
   { n: 7, id: "R1-07", local: { previa: "PR-10" }, visitante: { equipo: "athletic-club" }, dia: "2026-10-29", hora: "21:00", grupo: 2 },
@@ -246,28 +246,28 @@ export const R1 = [
   { n: 10, id: "R1-10", local: { previa: "PR-5" }, visitante: { equipo: "rc-deportivo" }, dia: "2026-10-29", hora: "21:00", grupo: 1 },
   { n: 11, id: "R1-11", local: { equipo: "sestao-river-club" }, visitante: { equipo: "rcd-espanyol" }, dia: "2026-10-27", hora: "19:00", grupo: 2 },
   { n: 12, id: "R1-12", local: { equipo: "rc-recreativo-de-huelva" }, visitante: { equipo: "rayo-vallecano" }, dia: "2026-10-27", hora: "21:00", grupo: 4 },
-  { n: 13, id: "R1-13", local: { equipo: "cda-navalcarnero" }, visitante: { equipo: "real-betis" }, dia: "2026-10-28", hora: "21:00", grupo: 4 },
-  { n: 14, id: "R1-14", local: { equipo: "salamanca-cf-uds" }, visitante: { equipo: "rc-celta" }, dia: "2026-10-28", hora: "21:00", grupo: 1 },
+  { n: 13, id: "R1-13", local: { equipo: "cda-navalcarnero" }, visitante: { equipo: "real-betis" }, dia: "2026-11-12", hora: "19:00", grupo: 4 },
+  { n: 14, id: "R1-14", local: { equipo: "salamanca-cf-uds" }, visitante: { equipo: "rc-celta" }, dia: "2026-11-13", hora: "21:00", grupo: 1 },
   { n: 15, id: "R1-15", local: { equipo: "cd-manacor" }, visitante: { equipo: "villarreal-cf" }, dia: "2026-10-27", hora: "21:00", grupo: 3 },
-  { n: 16, id: "R1-16", local: { equipo: "cd-tarancon" }, visitante: { equipo: "levante-ud" }, dia: "2026-10-28", hora: "19:00", grupo: 3 },
+  { n: 16, id: "R1-16", local: { equipo: "cd-tarancon" }, visitante: { equipo: "levante-ud" }, dia: "2026-11-05", hora: "19:00", grupo: 3 },
   { n: 17, id: "R1-17", local: { equipo: "cd-cuarte" }, visitante: { equipo: "girona-fc" }, dia: "2026-10-27", hora: "18:30", grupo: 2 },
-  { n: 18, id: "R1-18", local: { equipo: "cd-pamplona" }, visitante: { equipo: "sd-eibar" }, dia: "2026-10-28", hora: "19:00", grupo: 2 },
-  { n: 19, id: "R1-19", local: { equipo: "cf-trival-valderas-alcorcon" }, visitante: { equipo: "cd-leganes" }, dia: "2026-10-28", hora: "20:00", grupo: 4 },
-  { n: 20, id: "R1-20", local: { equipo: "cd-covadonga" }, visitante: { equipo: "real-valladolid" }, dia: "2026-10-28", hora: "20:00", grupo: 1 },
+  { n: 18, id: "R1-18", local: { equipo: "cd-pamplona" }, visitante: { equipo: "sd-eibar" }, dia: "2026-11-03", hora: "19:00", grupo: 2 },
+  { n: 19, id: "R1-19", local: { equipo: "cf-trival-valderas-alcorcon" }, visitante: { equipo: "cd-leganes" }, dia: "2026-11-10", hora: "20:00", grupo: 4 },
+  { n: 20, id: "R1-20", local: { equipo: "cd-covadonga" }, visitante: { equipo: "real-valladolid" }, dia: "2026-10-29", hora: "20:00", grupo: 1 },
   { n: 21, id: "R1-21", local: { equipo: "cd-guijuelo" }, visitante: { equipo: "real-sporting-de-gijon" }, dia: "2026-10-29", hora: "20:00", grupo: 1 },
   { n: 22, id: "R1-22", local: { equipo: "cd-laredo" }, visitante: { equipo: "burgos-cf" }, dia: "2026-10-29", hora: "20:00", grupo: 1 },
   { n: 23, id: "R1-23", local: { equipo: "cd-varea" }, visitante: { equipo: "fc-andorra" }, dia: "2026-10-29", hora: "20:00", grupo: 2 },
   { n: 24, id: "R1-24", local: { equipo: "ud-castellonense" }, visitante: { equipo: "ud-almeria" }, dia: "2026-10-27", hora: "19:45", grupo: 3 },
   { n: 25, id: "R1-25", local: { equipo: "rsd-alcala" }, visitante: { equipo: "ud-las-palmas" }, dia: "2026-10-27", hora: "20:00", grupo: 4 },
   { n: 26, id: "R1-26", local: { equipo: "cd-atletico-paso" }, visitante: { equipo: "cordoba-cf" }, dia: "2026-10-27", hora: "20:00", grupo: 4 },
-  { n: 27, id: "R1-27", local: { equipo: "utebo-fc" }, visitante: { equipo: "ce-sabadell" }, dia: "2026-10-28", hora: "19:00", grupo: 2 },
-  { n: 28, id: "R1-28", local: { equipo: "ud-poblense" }, visitante: { equipo: "ad-ceuta-fc" }, dia: "2026-10-28", hora: "19:00", grupo: 3 },
-  { n: 29, id: "R1-29", local: { equipo: "cd-alcoyano" }, visitante: { equipo: "rcd-mallorca" }, dia: "2026-10-28", hora: "20:00", grupo: 3 },
-  { n: 30, id: "R1-30", local: { equipo: "cd-numancia" }, visitante: { equipo: "real-oviedo" }, dia: "2026-10-28", hora: "20:00", grupo: 1 },
-  { n: 31, id: "R1-31", local: { equipo: "cd-badajoz" }, visitante: { equipo: "cd-tenerife" }, dia: "2026-10-28", hora: "20:00", grupo: 4 },
-  { n: 32, id: "R1-32", local: { equipo: "cs-puertollano" }, visitante: { equipo: "albacete-balompie" }, dia: "2026-10-28", hora: "20:00", grupo: 3 },
-  { n: 33, id: "R1-33", local: { equipo: "cd-cieza" }, visitante: { equipo: "granada-cf" }, dia: "2026-10-28", hora: "20:30", grupo: 3 },
-  { n: 34, id: "R1-34", local: { equipo: "xerez-cd" }, visitante: { equipo: "cadiz-cf" }, dia: "2026-10-28", hora: "21:00", grupo: 4 },
+  { n: 27, id: "R1-27", local: { equipo: "utebo-fc" }, visitante: { equipo: "ce-sabadell" }, dia: "2026-11-04", hora: "20:30", grupo: 2 },
+  { n: 28, id: "R1-28", local: { equipo: "ud-poblense" }, visitante: { equipo: "ad-ceuta-fc" }, dia: "2026-10-29", hora: "19:00", grupo: 3 },
+  { n: 29, id: "R1-29", local: { equipo: "cd-alcoyano" }, visitante: { equipo: "rcd-mallorca" }, dia: "2026-11-05", hora: "21:00", grupo: 3 },
+  { n: 30, id: "R1-30", local: { equipo: "cd-numancia" }, visitante: { equipo: "real-oviedo" }, dia: "2026-10-29", hora: "20:00", grupo: 1 },
+  { n: 31, id: "R1-31", local: { equipo: "cd-badajoz" }, visitante: { equipo: "cd-tenerife" }, dia: "2026-11-04", hora: "21:00", grupo: 4 },
+  { n: 32, id: "R1-32", local: { equipo: "cs-puertollano" }, visitante: { equipo: "albacete-balompie" }, dia: "2026-11-04", hora: "20:45", grupo: 3 },
+  { n: 33, id: "R1-33", local: { equipo: "cd-cieza" }, visitante: { equipo: "granada-cf" }, dia: "2026-10-29", hora: "20:30", grupo: 3 },
+  { n: 34, id: "R1-34", local: { equipo: "xerez-cd" }, visitante: { equipo: "cadiz-cf" }, dia: "2026-10-29", hora: "21:00", grupo: 4 },
   { n: 35, id: "R1-35", local: { equipo: "cd-atletico-baleares" }, visitante: { equipo: "cd-eldense" }, dia: "2026-10-29", hora: "19:00", grupo: 3 },
   { n: 36, id: "R1-36", local: { equipo: "ub-conquense" }, visitante: { equipo: "cd-castellon" }, dia: "2026-10-29", hora: "20:00", grupo: 3 },
   { n: 37, id: "R1-37", local: { equipo: "cf-calamocha" }, visitante: { equipo: "ce-europa" }, dia: "2026-10-27", hora: "19:00", grupo: 2 },
@@ -279,19 +279,62 @@ export const R1 = [
   { n: 43, id: "R1-43", local: { equipo: "cd-don-benito" }, visitante: { equipo: "cd-extremadura" }, dia: "2026-10-27", hora: "20:30", grupo: 4 },
   { n: 44, id: "R1-44", local: { equipo: "cd-tudelano" }, visitante: { equipo: "real-zaragoza" }, dia: "2026-10-27", hora: "21:00", grupo: 2 },
   { n: 45, id: "R1-45", local: { equipo: "arosa-sc" }, visitante: { equipo: "pontevedra-cf" }, dia: "2026-10-27", hora: "21:00", grupo: 1 },
-  { n: 46, id: "R1-46", local: { equipo: "coruxo-fc" }, visitante: { equipo: "zamora-cf" }, dia: "2026-10-28", hora: "19:00", grupo: 1 },
-  { n: 47, id: "R1-47", local: { equipo: "club-portugalete" }, visitante: { equipo: "real-union" }, dia: "2026-10-28", hora: "19:00", grupo: 2 },
-  { n: 48, id: "R1-48", local: { equipo: "pena-sport-fc" }, visitante: { equipo: "sd-huesca" }, dia: "2026-10-28", hora: "19:00", grupo: 2 },
-  { n: 49, id: "R1-49", local: { equipo: "sd-amorebieta" }, visitante: { equipo: "ud-logrones" }, dia: "2026-10-28", hora: "20:00", grupo: 2 },
-  { n: 50, id: "R1-50", local: { equipo: "cp-mijas-las-lagunas" }, visitante: { equipo: "real-jaen" }, dia: "2026-10-28", hora: "20:00", grupo: 3 },
-  { n: 51, id: "R1-51", local: { equipo: "reus-fc-reddis" }, visitante: { equipo: "barakaldo-cf" }, dia: "2026-10-28", hora: "20:30", grupo: 2 },
-  { n: 52, id: "R1-52", local: { equipo: "cd-minera" }, visitante: { equipo: "fc-cartagena" }, dia: "2026-10-28", hora: "20:30", grupo: 3 },
-  { n: 53, id: "R1-53", local: { equipo: "rs-gimnastica-torrelavega" }, visitante: { equipo: "ud-ourense" }, dia: "2026-10-28", hora: "20:30", grupo: 1 },
+  { n: 46, id: "R1-46", local: { equipo: "coruxo-fc" }, visitante: { equipo: "zamora-cf" }, dia: "2026-10-29", hora: "19:00", grupo: 1 },
+  { n: 47, id: "R1-47", local: { equipo: "club-portugalete" }, visitante: { equipo: "real-union" }, dia: "2026-11-04", hora: "19:00", grupo: 2 },
+  { n: 48, id: "R1-48", local: { equipo: "pena-sport-fc" }, visitante: { equipo: "sd-huesca" }, dia: "2026-10-29", hora: "19:00", grupo: 2 },
+  { n: 49, id: "R1-49", local: { equipo: "sd-amorebieta" }, visitante: { equipo: "ud-logrones" }, dia: "2026-11-04", hora: "20:00", grupo: 2 },
+  { n: 50, id: "R1-50", local: { equipo: "cp-mijas-las-lagunas" }, visitante: { equipo: "real-jaen" }, dia: "2026-10-29", hora: "20:00", grupo: 3 },
+  { n: 51, id: "R1-51", local: { equipo: "reus-fc-reddis" }, visitante: { equipo: "barakaldo-cf" }, dia: "2026-11-04", hora: "20:30", grupo: 2 },
+  { n: 52, id: "R1-52", local: { equipo: "cd-minera" }, visitante: { equipo: "fc-cartagena" }, dia: "2026-11-04", hora: "20:30", grupo: 3 },
+  { n: 53, id: "R1-53", local: { equipo: "rs-gimnastica-torrelavega" }, visitante: { equipo: "ud-ourense" }, dia: "2026-10-29", hora: "20:30", grupo: 1 },
   { n: 54, id: "R1-54", local: { equipo: "ud-sanse" }, visitante: { equipo: "cd-coria" }, dia: "2026-10-29", hora: "19:00", grupo: 4 },
   { n: 55, id: "R1-55", local: { equipo: "real-avila-cf" }, visitante: { equipo: "unionistas-de-salamanca" }, dia: "2026-10-29", hora: "20:00", grupo: 1 },
   { n: 56, id: "R1-56", local: { equipo: "antequera-cf" }, visitante: { equipo: "aguilas-fc" }, dia: "2026-10-29", hora: "20:00", grupo: 3 },
 ];
 
-// Resultados reales de la 1ª eliminatoria (aún ninguno), clave `local|visitante` con los nombres de EQUIPOS (el local es el
-// real: para los cruces con ganador de la previa, el ganador real). Valor: { gA, gB, etA?, etB?, penA?, penB? } (A = local).
-export const R1_RESULTADOS_REAL = {};
+// Resultados reales de la 1ª eliminatoria (40 jugados el 27 y 29/10; Mijas–Jaén aplazado y 15 por jugar, sin cargar), clave
+// `local|visitante` con los nombres de EQUIPOS (el local es el real: para los cruces con ganador de la previa, el ganador real).
+// Valor: { gA, gB, etA?, etB?, penA?, penB? } (A = local). En los 4 cruces con penaltis, etA/etB = 0-0 es una decisión de Carlos (30/10):
+// NO está verificado si hubo prórroga ni su marcador; el motor la necesita para dar ganador.
+export const R1_RESULTADOS_REAL = {
+  "CD Cuarte|Girona FC": { gA: 0, gB: 2 }, // R1-17
+  "UD Pinatar|Elche CF": { gA: 1, gB: 3 }, // R1-01
+  "CF Calamocha|CE Europa": { gA: 0, gB: 3 }, // R1-37
+  "Sestao River Club|RCD Espanyol": { gA: 4, gB: 3 }, // R1-11
+  "UD Castellonense|UD Almería": { gA: 1, gB: 2 }, // R1-24
+  "CD Ciudad de Lucena|CF Rayo Majadahonda": { gA: 0, gB: 1 }, // R1-42
+  "RSD Alcalá|UD Las Palmas": { gA: 1, gB: 3 }, // R1-25
+  "Gimnástica Segoviana|Cultural Leonesa": { gA: 0, gB: 1 }, // R1-40
+  "Atlético Tordesillas|CD Mirandés": { gA: 3, gB: 3, etA: 0, etB: 0, penA: 2, penB: 4 }, // R1-39
+  "UD Llanera|SD Ponferradina": { gA: 1, gB: 1, etA: 0, etB: 0, penA: 3, penB: 5 }, // R1-41
+  "CD Don Benito|CD Extremadura": { gA: 2, gB: 4 }, // R1-43
+  "CE Manresa|UE Sant Andreu": { gA: 2, gB: 2, etA: 0, etB: 0, penA: 1, penB: 4 }, // R1-38
+  "CD Atlético Paso|Córdoba CF": { gA: 3, gB: 1 }, // R1-26
+  "RC Recreativo de Huelva|Rayo Vallecano": { gA: 2, gB: 3 }, // R1-12
+  "CD Manacor|Villarreal CF": { gA: 0, gB: 5 }, // R1-15
+  "EMERS Sporting de Alcázar|Málaga CF": { gA: 0, gB: 3 }, // R1-02
+  "CD Tudelano|Real Zaragoza": { gA: 0, gB: 4 }, // R1-44
+  "Arosa SC|Pontevedra CF": { gA: 2, gB: 0 }, // R1-45
+  "Peña Sport FC|SD Huesca": { gA: 1, gB: 5 }, // R1-48
+  "CD Numancia|Real Oviedo": { gA: 3, gB: 3, etA: 0, etB: 0, penA: 4, penB: 2 }, // R1-30
+  "UD Sanse|CD Coria": { gA: 1, gB: 2 }, // R1-54
+  "UB Lebrijana|Getafe CF": { gA: 2, gB: 3 }, // R1-05
+  "CD Atlético Baleares|CD Eldense": { gA: 0, gB: 1 }, // R1-35
+  "UD Poblense|AD Ceuta FC": { gA: 1, gB: 2 }, // R1-28
+  "Atlético Calatayud|CA Osasuna": { gA: 0, gB: 6 }, // R1-06
+  "Coruxo FC|Zamora CF": { gA: 0, gB: 2 }, // R1-46
+  "CD Cieza|Granada CF": { gA: 0, gB: 3 }, // R1-33
+  "Antequera CF|Águilas FC": { gA: 2, gB: 0 }, // R1-56
+  "UB Conquense|CD Castellón": { gA: 0, gB: 3 }, // R1-36
+  "Real Ávila CF|Unionistas de Salamanca": { gA: 1, gB: 0 }, // R1-55
+  "CD Laredo|Burgos CF": { gA: 2, gB: 4 }, // R1-22
+  "CD Guijuelo|Real Sporting de Gijón": { gA: 1, gB: 3 }, // R1-21
+  "CD Covadonga|Real Valladolid": { gA: 0, gB: 1 }, // R1-20
+  "CD Varea|FC Andorra": { gA: 0, gB: 3 }, // R1-23
+  "RS Gimnástica Torrelavega|UD Ourense": { gA: 3, gB: 1 }, // R1-53
+  "AE Prat|Athletic Club": { gA: 1, gB: 6 }, // R1-07
+  "AD Sporting Hortaleza|Sevilla FC": { gA: 0, gB: 3 }, // R1-08
+  "Xerez CD|Cádiz CF": { gA: 1, gB: 3 }, // R1-34
+  "Auriense CA|RC Deportivo": { gA: 0, gB: 3 }, // R1-10
+  "Ribadesella CF|Real Racing Club": { gA: 0, gB: 2 }, // R1-09
+};
