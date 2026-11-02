@@ -475,4 +475,4 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - ¿Producción de AFC Capa 1 el 24/08 o el 25/08?
 - Registro irreverente: sin resolver.
 - ¿En cuál de los dos Projects de Claude.ai (técnico/arquitectura o editorial) se hace la planificación de viernes? `SISTEMA.md` §3 dice que esa sesión decide la tarea única del domingo y la del jueves (ambas de ejecución técnica), pero no especifica en qué Project ocurre la planificación en sí.
-- Copa Intercontinental, artículo (02/11): reescrito solo con datos 🟢 (apartados 05 y 06, resultados de P1 y P2, sedes y fechas de P3–P5). Pendiente de comprobar: los goles de P2 (quién marcó cada gol) contra la crónica FIFA y el texto completo de los arts. 11 y 19.
+- Copa Intercontinental, artículo (02/11): reescrito solo con datos 🟢 (apartados 05 y 06, resultados de P1 y P2, sedes y fechas de P3–P5). Revisado el 02/11 contra FIFA, CAF y OFC: goles de P2 (Nuno Santos 17' y 80', Ronwen Williams p.p. 19') y Sundowns en P4 confirmados. Sigue pendiente el texto completo de los arts. 11 y 19 (PDF bloqueado, solo extractos). Fuera del artículo por criterio 🟡/🔴: semifinales, minuto de la roja, horas, entradas.

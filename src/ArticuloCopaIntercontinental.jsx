@@ -136,7 +136,7 @@ export default function ArticuloCopaIntercontinental() {
           <P>Cada confederación manda a su campeón continental:</P>
           <Tabla cabeceras={["Confederación", "Equipo", "Cómo llegó"]} filas={FILAS_EQUIPOS} anchoMin={620} />
           <P>
-            La plaza de la CONMEBOL se decide en la final de la Libertadores, entre Palmeiras y Estudiantes, el 28/11 en el Estadio Centenario de Montevideo. El campeón de la OFC es el Auckland FC, ganador de la OFC Pro League 2026.
+            La plaza de la CONMEBOL se decide en la final de la Libertadores, entre el Palmeiras y el Estudiantes de La Plata, el 28/11 en el Estadio Centenario de Montevideo. El campeón de la OFC es el Auckland FC, que ganó la final de la OFC Pro League 2026 por 2-1 al South Melbourne el 24/05 en Eden Park.
           </P>
         </Seccion>
 
@@ -156,8 +156,8 @@ export default function ArticuloCopaIntercontinental() {
           <Tabla cabeceras={["#", "Partido", "Enfrentamiento", "Sede", "Fecha"]} filas={FILAS_CUADRO} anchoMin={900} />
           <P>Lo jugado hasta ahora:</P>
           <Lista>
-            <li><B>Play-off Copa África-Asia-Pacífico (26/08, Yeda):</B> Al-Ahli 1-0 Auckland FC. Gol de Abu Al Shamat en el 63'. Sin prórroga.</li>
-            <li><B>Copa África-Asia-Pacífico (19/09, Pretoria):</B> Mamelodi Sundowns 2-1 Al-Ahli. Santos adelantó a los Sundowns en el 17', un autogol de Williams igualó en el 19' y Santos marcó de nuevo en el 80'. Sin prórroga.</li>
+            <li><B>Play-off Copa África-Asia-Pacífico (26/08, Yeda):</B> Al-Ahli 1-0 Auckland FC. Gol de Abu Al Shamat en el 63', con asistencia de Spertsyan, en el Alinma Stadium. El Auckland FC acabó con diez por la roja directa a Cosgrove en los minutos finales. Sin prórroga.</li>
+            <li><B>Copa África-Asia-Pacífico (19/09, Pretoria):</B> Mamelodi Sundowns 2-1 Al-Ahli. Nuno Santos adelantó a los Sundowns en el 17', un autogol de Ronwen Williams igualó en el 19' y Santos marcó de nuevo en el 80'. Sin prórroga.</li>
           </Lista>
           <P>
             Los tres últimos partidos se juegan en Catar: el Derbi de las Américas el 09/12 y la Copa Challenger el 12/12, ambos en el Estadio Jassim bin Hamad de Doha, y la Final el 16/12 en el Estadio Ahmad bin Ali de Al Rayyan.
@@ -166,7 +166,7 @@ export default function ArticuloCopaIntercontinental() {
 
         <Seccion etiqueta="05" titulo="Cómo se desempata">
           <P>
-            Según el reglamento de 2026 (art. 11), si un partido termina empatado a los 90 minutos hay prórroga de dos tiempos de 15 minutos. Si sigue el empate, se decide en los penaltis.
+            Según el reglamento de 2026 (art. 11), si un partido termina empatado a los 90 minutos hay prórroga de dos tiempos de 15 minutos, con cinco minutos de descanso antes de empezarla y una pausa para beber de un minuto como máximo entre los dos tiempos. Si sigue el empate, se decide en los penaltis.
           </P>
           <P>
             En cuanto a los cambios (art. 19), cada equipo puede hacer hasta cinco en tres ventanas. En la prórroga se añade un cambio más y una ventana extra.
