@@ -466,7 +466,7 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 
 ## 8. Preguntas abiertas
 
-- Copa Intercontinental: sede y fechas de los 3 últimos partidos sin publicar; regla de prórroga/penaltis sin verificar; rival CONMEBOL por determinar hasta el 28/11.
+- Copa Intercontinental: resuelto el 02/11 el bloqueo de sede, fechas y regla de prórroga/penaltis (reglamento FIFA 2026, art. 11) y el rival CONMEBOL se conoce desde el 22/10 (Palmeiras o Estudiantes; final el 28/11). Sigue abierto: el reglamento solo se ha comprobado por extractos de los arts. 11 y 19, falta el PDF completo; no se codifican el tope de suplentes en el acta de P3–P5 ni el cambio extra por conmoción (sin fuente oficial completa). Desbloquea el T2 de la Copa Intercontinental; cuándo se hace lo decide la planificación del viernes.
 - El registro irreverente de Modo Competición sigue sin calibrar con ejemplos propios reales. La voz de objetivoanalista.com es técnica y didáctica, no es esa. Bloquea afinar el tono de los artículos nuevos.
 - ¿Qué borradores de X se publicaron y cuándo? (inventario del lunes 21/09)
 - ¿Está cargado el calendario de jornadas de las 3 competiciones? ¿Y J1 de Champions y Europa?
@@ -475,4 +475,4 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - ¿Producción de AFC Capa 1 el 24/08 o el 25/08?
 - Registro irreverente: sin resolver.
 - ¿En cuál de los dos Projects de Claude.ai (técnico/arquitectura o editorial) se hace la planificación de viernes? `SISTEMA.md` §3 dice que esa sesión decide la tarea única del domingo y la del jueves (ambas de ejecución técnica), pero no especifica en qué Project ocurre la planificación en sí.
-- Copa Intercontinental, artículo (anotado 02/11, fuera de la T2, sin evaluar): actualizar los apartados 05 y 06 ("Cómo se desempata" y "Lo que está pendiente"): regla de prórroga/penaltis, finalistas y semifinales de la Libertadores (14-15 y 21-22/10, ya jugadas), fechas y sede de los tres últimos partidos, y el apunte Auckland City/Auckland FC. Fuentes a consultar: FIFA.com (página de la FIFA Intercontinental Cup 2026), reglamento de la competición en el centro de documentos de la FIFA, CONMEBOL.com (Libertadores) y las crónicas de P1 y P2.
+- Copa Intercontinental, artículo (02/11): reescrito solo con datos 🟢 (apartados 05 y 06, resultados de P1 y P2, sedes y fechas de P3–P5). Pendiente de comprobar: los goles de P2 (quién marcó cada gol) contra la crónica FIFA y el texto completo de los arts. 11 y 19.
