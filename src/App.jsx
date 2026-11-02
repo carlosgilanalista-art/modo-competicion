@@ -6754,7 +6754,9 @@ function SimuladorCopaIntercontinentalPage() {
         )}
         <footer style={{ borderTop: `1px solid ${c.borde}`, paddingTop: 16, marginTop: 16, color: c.textoSuave, fontSize: 11, lineHeight: 1.6 }}>
           Modo Competición · El motor de partido es el mismo aleatorio uniforme que el resto de simuladores del sitio.
-          Regla de empate (prórroga y penaltis) sin verificar contra el reglamento FIFA; fuente: {REGLA_DESEMPATE.fuente}.
+          {REGLA_DESEMPATE.verificada
+            ? `Empate a 90': prórroga de 2×15' y penaltis. Fuente: ${REGLA_DESEMPATE.fuente}.`
+            : `Regla de empate (prórroga y penaltis) sin verificar contra el reglamento FIFA; fuente: ${REGLA_DESEMPATE.fuente}.`}
         </footer>
       </div>
     </div>

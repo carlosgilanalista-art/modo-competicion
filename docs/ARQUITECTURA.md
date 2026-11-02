@@ -71,7 +71,7 @@ Revisado el 04/10/2026 contra el código (se corrige el documento, no el código
 
 - `estadoEliminatoria` (doble partido) solo resuelve directamente por penaltis si ya hay un marcador de penaltis no empatado (dataset real sin desglose de prórroga); si no, devuelve `necesita_prorroga`.
 - `generarFinalAleatoria` (partido único) siempre genera prórroga y, si persiste el empate, penaltis.
-- Copa: la regla vive en `REGLA_DESEMPATE.prorroga` (`src/data/copaIntercontinental2026.js`, aún sin verificar contra el reglamento FIFA). `estadoResultadoCopa` y `resolverPartidoCopa` leen esa regla: con `prorroga: false` un empate en 90' va directo a penaltis; con `true` se delega en `estadoPartidoUnico` y `generarFinalAleatoria`. Hoy es `true`.
+- Copa: la regla vive en `REGLA_DESEMPATE.prorroga` (`src/data/copaIntercontinental2026.js`, verificada contra el reglamento FIFA 2026, art. 11). `estadoResultadoCopa` y `resolverPartidoCopa` leen esa regla: con `prorroga: false` un empate en 90' va directo a penaltis; con `true` se delega en `estadoPartidoUnico` y `generarFinalAleatoria`. Hoy es `true`.
 
 ---
 

@@ -2,14 +2,16 @@
 // Forma de los resultados reales: la misma que espera estadoPartidoUnico en App.jsx
 // (gA, gB y, solo si los hubo, etA/etB de prórroga y penA/penB de penaltis).
 
-// SIN VERIFICAR — fuente: Wikipedia (2026 FIFA Intercontinental Cup), no el reglamento FIFA.
-// Único punto de cambio de la regla de desempate.
+// Verificada contra el Reglamento de la Copa Intercontinental de la FIFA 2026, art. 11:
+// empate a 90' → prórroga de 2×15' → penaltis. Único punto de cambio de la regla de desempate.
+// No codificado a propósito (sin fuente oficial completa): tope de suplentes en el acta de P3–P5
+// y cambio extra por conmoción.
 export const REGLA_DESEMPATE = {
   prorroga: true,
   minutosProrroga: 30,
   penaltis: true,
-  verificada: false,
-  fuente: "Wikipedia",
+  verificada: true,
+  fuente: "Reglamento FIFA Copa Intercontinental 2026, art. 11",
 };
 
 // `acceso` es el texto que muestra el artículo (src/ArticuloCopaIntercontinental.jsx); el simulador no lo usa.
@@ -24,16 +26,19 @@ export const EQUIPOS = [
 export const PLAZA_CONMEBOL = {
   id: "conmebol",
   confederacion: "CONMEBOL",
-  estado: "por_determinar", // "por_determinar" | "semifinalistas" | "finalistas" | "campeon"
-  candidatos: [], // { id, nombre, pais }
+  estado: "finalistas", // "por_determinar" | "semifinalistas" | "finalistas" | "campeon"
+  candidatos: [ // { id, nombre, pais } — finalistas de la Libertadores 2026
+    { id: "palmeiras", nombre: "Palmeiras", pais: "Brasil" },
+    { id: "estudiantes", nombre: "Estudiantes", pais: "Argentina" },
+  ],
   campeon: null, // id | null
   generico: { id: "conmebol-generico", nombre: "Campeón de la Libertadores (por determinar)" },
   // Texto de la fila de CONMEBOL en la tabla de equipos del artículo (el simulador no lo usa).
-  articulo: { equipo: "Pendiente", acceso: "Campeón de la Libertadores (final el 28/11 en Montevideo)" },
+  articulo: { equipo: "Palmeiras o Estudiantes", acceso: "Campeón de la Libertadores 2026 (final el 28/11 en el Estadio Centenario de Montevideo)" },
 };
 
-// `enfrentamiento` es el texto de la tabla del cuadro del artículo (el simulador no lo usa); fecha y sede pendientes
-// (null) se muestran allí como "Diciembre, fecha pendiente" y "Sede neutral pendiente".
+// `enfrentamiento` es el texto de la tabla del cuadro del artículo (el simulador no lo usa).
+// P3–P5: fechas y sedes del anuncio de la FIFA del 22/10/2026.
 // Referencias de equipo:
 //   { tipo: "equipo", id } · { tipo: "ganador", partido: "Px" } · { tipo: "plaza", plaza: "conmebol" }
 export const PARTIDOS = [
@@ -55,18 +60,18 @@ export const PARTIDOS = [
     id: "P3", nombre: "Derbi de las Américas",
     enfrentamiento: "Toluca (CONCACAF) vs campeón de la Libertadores (CONMEBOL)",
     a: { tipo: "equipo", id: "toluca" }, b: { tipo: "plaza", plaza: "conmebol" },
-    fecha: null, sede: null, sedeNeutral: null, real: null,
+    fecha: "2026-12-09", sede: "Estadio Jassim bin Hamad, Doha (Catar)", sedeNeutral: true, real: null,
   },
   {
     id: "P4", nombre: "Copa Challenger",
     enfrentamiento: "Vencedor del partido 2 vs vencedor del partido 3",
     a: { tipo: "ganador", partido: "P2" }, b: { tipo: "ganador", partido: "P3" },
-    fecha: null, sede: null, sedeNeutral: null, real: null,
+    fecha: "2026-12-12", sede: "Estadio Jassim bin Hamad, Doha (Catar)", sedeNeutral: true, real: null,
   },
   {
     id: "P5", nombre: "Final",
     enfrentamiento: "PSG vs vencedor del partido 4",
     a: { tipo: "equipo", id: "psg" }, b: { tipo: "ganador", partido: "P4" },
-    fecha: null, sede: null, sedeNeutral: null, real: null,
+    fecha: "2026-12-16", sede: "Estadio Ahmad bin Ali, Al Rayyan (Catar)", sedeNeutral: true, real: null,
   },
 ];
