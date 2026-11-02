@@ -1,5 +1,6 @@
 import React from "react";
 import useDocumentMeta from "./useDocumentMeta.js";
+import { EQUIPOS, PLAZA_CONMEBOL, PARTIDOS } from "./data/copaIntercontinental2026.js";
 
 // ============================================================
 // ARTÍCULO — Copa Intercontinental FIFA 2026: explicación del formato
@@ -74,22 +75,17 @@ function Tabla({ cabeceras, filas, anchoMin = 420 }) {
   );
 }
 
-const EQUIPOS = [
-  ["UEFA", "Paris Saint-Germain", "Campeón de la Champions 2025/26"],
-  ["CAF", "Mamelodi Sundowns", "Campeón de la CAF Champions League 2025/26"],
-  ["AFC", "Al Ahli", "Campeón de la AFC Champions League Elite 2025/26"],
-  ["OFC", "Auckland FC", "Campeón de la OFC Pro League"],
-  ["CONCACAF", "Toluca", "Campeón de la Concacaf Champions Cup 2026 (final el 30/05)"],
-  ["CONMEBOL", "Pendiente", "Campeón de la Libertadores (final el 28/11 en Montevideo)"],
+// Datos de las tablas: fuente única en src/data/copaIntercontinental2026.js.
+const FILAS_EQUIPOS = [
+  ...EQUIPOS.map((e) => [e.confederacion, e.nombre, e.acceso]),
+  [PLAZA_CONMEBOL.confederacion, PLAZA_CONMEBOL.articulo.equipo, PLAZA_CONMEBOL.articulo.acceso],
 ];
-
-const CUADRO = [
-  ["1", "Play-off Copa África-Asia-Pacífico", "Al Ahli (AFC) vs Auckland FC (OFC)", "Yeda (Arabia Saudí)", "26/08"],
-  ["2", "Copa África-Asia-Pacífico", "Mamelodi Sundowns (CAF) vs vencedor del partido 1", "Pretoria (Sudáfrica)", "19/09"],
-  ["3", "Derbi de las Américas", "Toluca (CONCACAF) vs campeón de la Libertadores (CONMEBOL)", "Sede neutral pendiente", "Diciembre, fecha pendiente"],
-  ["4", "Copa Challenger", "Vencedor del partido 2 vs vencedor del partido 3", "Sede neutral pendiente", "Diciembre, fecha pendiente"],
-  ["5", "Final", "PSG vs vencedor del partido 4", "Sede neutral pendiente", "Diciembre, fecha pendiente"],
-];
+const fechaCorta = (iso) => iso.split("-").reverse().slice(0, 2).join("/");
+const FILAS_CUADRO = PARTIDOS.map((p) => [
+  p.id.slice(1), p.nombre, p.enfrentamiento,
+  p.sede ?? "Sede neutral pendiente",
+  p.fecha ? fechaCorta(p.fecha) : "Diciembre, fecha pendiente",
+]);
 
 export default function ArticuloCopaIntercontinental() {
   useDocumentMeta({
@@ -140,7 +136,7 @@ export default function ArticuloCopaIntercontinental() {
 
         <Seccion etiqueta="02" titulo="Quién entra y por qué vía">
           <P>Cada confederación manda a su campeón continental:</P>
-          <Tabla cabeceras={["Confederación", "Equipo", "Cómo llegó"]} filas={EQUIPOS} anchoMin={620} />
+          <Tabla cabeceras={["Confederación", "Equipo", "Cómo llegó"]} filas={FILAS_EQUIPOS} anchoMin={620} />
           <P>El campeón de la Libertadores se decide en Montevideo.</P>
         </Seccion>
 
@@ -157,7 +153,7 @@ export default function ArticuloCopaIntercontinental() {
         </Seccion>
 
         <Seccion etiqueta="04" titulo="El cuadro, partido a partido">
-          <Tabla cabeceras={["#", "Partido", "Enfrentamiento", "Sede", "Fecha"]} filas={CUADRO} anchoMin={900} />
+          <Tabla cabeceras={["#", "Partido", "Enfrentamiento", "Sede", "Fecha"]} filas={FILAS_CUADRO} anchoMin={900} />
           <P>
             Un apunte de rigor: algún medio llama al rival de la primera ronda Auckland City. FIFA y las crónicas del partido hablan de Auckland FC, y esa es la referencia que seguimos aquí.
           </P>
