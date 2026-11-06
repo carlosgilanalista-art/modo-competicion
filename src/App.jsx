@@ -1727,7 +1727,7 @@ const UEL_DIA_REAL = {
   "Olympiakos|TSG Hoffenheim": "Jue 21", "Omonoia|Benfica": "Jue 22", "Omonoia|Beşiktaş": "Jue 28",
   "Omonoia|Celta de Vigo": "Mié 16", "Omonoia|Celtic": "Jue 10", "Real Sociedad|Bournemouth": "Jue 17",
   "Real Sociedad|Lyon": "Jue 5", "Real Sociedad|Torreense": "Jue 10", "Real Sociedad|Viktoria Plzeň": "Jue 21",
-  "Rennes|GNK Dinamo": "Jue 10", "Rennes|OFI Creta": "Jue 15", "Rennes|Olympiakos": "Jue 5",
+  "Rennes|GNK Dinamo": "Jue 10", "Rennes|OFI Creta": "Jue 15", "Rennes|Olympiakos": "Mié 4",
   "Rennes|Omonoia": "Jue 21", "Salzburgo|Ararat-Armenia": "Jue 26", "Salzburgo|Crystal Palace": "Jue 28",
   "Salzburgo|Milan": "Jue 15", "Salzburgo|Sparta Praga": "Jue 10", "Sparta Praga|AZ Alkmaar": "Jue 26",
   "Sparta Praga|Bournemouth": "Jue 5", "Sparta Praga|Lillestrøm": "Jue 15", "Sparta Praga|Rennes": "Jue 28",
