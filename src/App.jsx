@@ -4534,10 +4534,25 @@ const NL_RESULTADOS_JORNADA4_REAL = {
   "D1|Malta|Andorra": { gl: 1, gv: 0 },
   "D2|Azerbaiyán|Lituania": { gl: 1, gv: 0 },
 };
+// Resultados reales de la Jornada 5 (jueves 12/11/2026): carga PARCIAL, 8 de 26
+// partidos (cambio de alcance consciente de Carlos, 13/11). Los otros 18 (10 del
+// 13/11 y 8 del 14/11) siguen vacíos y editables/simulables. Verificados contra
+// NL_CALENDARIO_REAL antes de cargar. Inglaterra–Croacia: marcador sin confirmar
+// como final en la fuente pegada.
+const NL_RESULTADOS_JORNADA5_REAL = {
+  "A1|Turquía|Bélgica": { gl: 1, gv: 2 },
+  "C2|Armenia|Chipre": { gl: 1, gv: 1 },
+  "A3|Chequia|España": { gl: 0, gv: 2 },
+  "C1|Albania|Finlandia": { gl: 2, gv: 0 },
+  "C2|Montenegro|Letonia": { gl: 2, gv: 1 },
+  "C1|San Marino|Bielorrusia": { gl: 0, gv: 2 },
+  "A1|Italia|Francia": { gl: 3, gv: 1 },
+  "A3|Inglaterra|Croacia": { gl: 2, gv: 1 },
+};
 // Combinado de todas las jornadas reales cargadas hasta ahora — useNationsLeague
 // solo necesita un mapa plano clave→resultado, igual que UCL/UEL con su única
 // jornada; aquí se fusionan porque Nations League ya tiene más de una.
-const NL_RESULTADOS_REAL = { ...NL_RESULTADOS_JORNADA1_REAL, ...NL_RESULTADOS_JORNADA2_REAL, ...NL_RESULTADOS_JORNADA3_REAL, ...NL_RESULTADOS_JORNADA4_REAL };
+const NL_RESULTADOS_REAL = { ...NL_RESULTADOS_JORNADA1_REAL, ...NL_RESULTADOS_JORNADA2_REAL, ...NL_RESULTADOS_JORNADA3_REAL, ...NL_RESULTADOS_JORNADA4_REAL, ...NL_RESULTADOS_JORNADA5_REAL };
 
 // ---- Clasificación de grupo (reglamento UEFA Nations League) ----
 // A diferencia de la fase liga de clubes, el PRIMER criterio de desempate es el
