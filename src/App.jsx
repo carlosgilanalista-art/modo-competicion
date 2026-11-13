@@ -7051,7 +7051,7 @@ function SimuladorCopaDelReyPage() {
   const resueltos = calc.filter((x) => x.estado === "resuelto").length;
   const clasificados = calc.filter((x) => x.ganador).map((x) => EQ_REY[x.ganador].nombre);
   const completo = resueltos === calc.length;
-  const dias = Object.keys(DIAS_REY);
+  const dias = Object.keys(DIAS_REY).filter((d) => calc.some((x) => x.cruce.dia === d)); // sin cabeceras de días sin cruces
   const hayCambios = Object.keys(rey.oP.origen).some((id) => rey.oP.origen[id] === "editado") || Object.keys(rey.oR.origen).some((id) => rey.oR.origen[id] === "editado");
   const btn = { background: "none", color: c.textoSuave, border: `1px solid ${c.inputBorder}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" };
   const seccion = { fontFamily: "'JetBrains Mono', monospace", color: c.textoSuave, fontSize: 12, letterSpacing: 2, margin: "24px 0 10px" };
