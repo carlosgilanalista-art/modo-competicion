@@ -6847,7 +6847,7 @@ const TEMA_REY = TEMA_NL;
 const EQ_REY = Object.fromEntries(EQUIPOS_REY.map((e) => [e.id, e]));
 const CAT_REY = Object.fromEntries(CATEGORIAS_REY.map((c) => [c.id, c.nombre]));
 const PREVIA_POR_ID_REY = Object.fromEntries(PREVIA_REY.map((p) => [p.id, p]));
-const DIAS_REY = { "2026-10-27": "Martes 27 de octubre", "2026-10-29": "Jueves 29 de octubre", "2026-11-03": "Martes 3 de noviembre", "2026-11-04": "Miércoles 4 de noviembre", "2026-11-05": "Jueves 5 de noviembre", "2026-11-10": "Martes 10 de noviembre", "2026-11-12": "Jueves 12 de noviembre", "2026-11-13": "Viernes 13 de noviembre" };
+const DIAS_REY = { "2026-10-27": "Martes 27 de octubre", "2026-10-29": "Jueves 29 de octubre", "2026-11-03": "Martes 3 de noviembre", "2026-11-04": "Miércoles 4 de noviembre", "2026-11-05": "Jueves 5 de noviembre", "2026-11-10": "Martes 10 de noviembre", "2026-11-12": "Jueves 12 de noviembre", "2026-11-13": "Viernes 13 de noviembre", "2026-11-18": "Miércoles 18 de noviembre" };
 
 function ganadorPreviaRey(p, res) {
   const e = estadoEliminatoria(res);
