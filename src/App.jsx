@@ -4534,11 +4534,12 @@ const NL_RESULTADOS_JORNADA4_REAL = {
   "D1|Malta|Andorra": { gl: 1, gv: 0 },
   "D2|Azerbaiyán|Lituania": { gl: 1, gv: 0 },
 };
-// Resultados reales de la Jornada 5 (jueves 12/11/2026): carga PARCIAL, 8 de 26
-// partidos (cambio de alcance consciente de Carlos, 13/11). Los otros 18 (10 del
-// 13/11 y 8 del 14/11) siguen vacíos y editables/simulables. Verificados contra
-// NL_CALENDARIO_REAL antes de cargar. Inglaterra–Croacia: marcador sin confirmar
-// como final en la fuente pegada.
+// Resultados reales de la Jornada 5 (12-14/11/2026): 26/26 partidos, las 14
+// grupos. Cargada en dos tandas: jueves 12/11 (8, parcial por decisión de Carlos
+// el 13/11) y viernes 13 y sábado 14/11 (10 + 8, 15/11). Verificados contra
+// NL_CALENDARIO_REAL antes de cargar. Inglaterra–Croacia (12/11) e Irlanda del
+// Norte–Ucrania (14/11) llegaron sin el minuto de partido; Carlos confirmó ambos
+// marcadores como finales el 15/11.
 const NL_RESULTADOS_JORNADA5_REAL = {
   "A1|Turquía|Bélgica": { gl: 1, gv: 2 },
   "C2|Armenia|Chipre": { gl: 1, gv: 1 },
@@ -4548,6 +4549,24 @@ const NL_RESULTADOS_JORNADA5_REAL = {
   "C1|San Marino|Bielorrusia": { gl: 0, gv: 2 },
   "A1|Italia|Francia": { gl: 3, gv: 1 },
   "A3|Inglaterra|Croacia": { gl: 2, gv: 1 },
+  "C3|Moldavia|Kazajistán": { gl: 2, gv: 1 },
+  "C3|Eslovaquia|Islas Feroe": { gl: 2, gv: 2 },
+  "C4|Luxemburgo|Estonia": { gl: 0, gv: 1 },
+  "C4|Bulgaria|Islandia": { gl: 0, gv: 5 },
+  "D1|Andorra|Gibraltar": { gl: 2, gv: 0 },
+  "D2|Liechtenstein|Azerbaiyán": { gl: 0, gv: 1 },
+  "A2|Países Bajos|Grecia": { gl: 7, gv: 0 },
+  "A2|Serbia|Alemania": { gl: 1, gv: 3 },
+  "B1|Escocia|Macedonia del Norte": { gl: 2, gv: 1 },
+  "B1|Eslovenia|Suiza": { gl: 0, gv: 0 },
+  "B3|Kosovo|Israel": { gl: 0, gv: 0 },
+  "A4|Noruega|Gales": { gl: 3, gv: 1 },
+  "B2|Georgia|Hungría": { gl: 0, gv: 2 },
+  "B4|Suecia|Bosnia y Herzegovina": { gl: 3, gv: 2 },
+  "B4|Rumanía|Polonia": { gl: 2, gv: 1 },
+  "A4|Portugal|Dinamarca": { gl: 1, gv: 4 },
+  "B3|Austria|República de Irlanda": { gl: 1, gv: 0 },
+  "B2|Irlanda del Norte|Ucrania": { gl: 1, gv: 0 },
 };
 // Combinado de todas las jornadas reales cargadas hasta ahora — useNationsLeague
 // solo necesita un mapa plano clave→resultado, igual que UCL/UEL con su única
