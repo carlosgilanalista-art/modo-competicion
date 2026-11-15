@@ -348,3 +348,28 @@ export const R1_RESULTADOS_REAL = {
   "CD Tarancón|Levante UD": { gA: 1, gB: 2 }, // R1-16
   "Salamanca CF UDS|RC Celta": { gA: 0, gB: 5 }, // R1-14
 };
+
+// ============================================================
+// SIMULADOR (T2): 2ª eliminatoria. Fuentes: Bases de Competición de los Torneos Federación 2026/27
+// (RFEF), arts. 9 y 10.C, e investigación «Fase 2» del 15/11/2026 (Project editorial).
+// 28 cruces a partido único, miércoles 2/12/2026 (🟢, calendario RFEF; el reparto 2-4/12 es 🔴).
+// Sorteo real anunciado para el lunes 23/11, 13:00 (🟡, solo prensa): todavía no celebrado.
+// ============================================================
+
+export const R2_FECHA = "2026-12-02";
+
+// Sorteo real de la 2ª eliminatoria: null hasta que se celebre. Cargarlo es tarea de solo datos:
+// [{ id: "R2-01", a: "R1-xx", b: "R1-yy" }, ...] (28 cruces), en el orden de extracción de las bolas
+// (a = primera bola, es local si los dos son de la misma categoría). a/b son ids de R1: el equipo es
+// el ganador de ese cruce, así que vale aunque algún cruce de la 1ª siga sin resolver el día del sorteo.
+export const R2_SORTEO_REAL = null;
+
+// Resultados reales de la 2ª eliminatoria, clave `local|visitante` con los nombres de EQUIPOS (mismo formato que
+// R1_RESULTADOS_REAL). Solo se aplican sobre el sorteo real.
+export const R2_RESULTADOS_REAL = {};
+
+// Categoría con la que cuenta cada equipo para el sorteo y la localía a partir de la 2ª eliminatoria. Los 4 de la
+// Copa Federación juegan la liga 2026/27 en Segunda Federación (🟢, calendarios RFEF del 14/08) y el art. 9 reagrupa
+// por la competición de 2026/27: cuentan como Segunda Federación (decisión de Carlos, 15/11; que la RFEF lo aplique
+// así en esta ronda es 🔴, en 2025/26 trató aparte al campeón de la Copa Federación). No cambia EQUIPOS.
+export const CATEGORIA_SORTEO = { "copa-fed": "segunda-fed" };
