@@ -7086,26 +7086,45 @@ function useCopaDelRey() {
     oR2.reiniciar(); oR2.marcarOrigen(origenesRealesRey(R2_REAL_REY));
   };
 
-  // Rellena lo pendiente y lo obsoleto, ronda a ronda (1ª eliminatoria → sorteo de la 2ª si no hay → 2ª eliminatoria);
-  // no toca lo resuelto (real, editado o ya simulado) ni lo bloqueado.
-  const simularTodo = () => {
-    const nR1 = { ...resR1 };
-    const ids1 = calc.filter(pendienteRey).map((x) => x.cruce.id);
-    ids1.forEach((id) => { nR1[id] = { ...generarFinalAleatoria(), participantes: porId[id].participantes }; });
-    const calcR1 = calcularR1Rey(resPrevia, nR1);
-    let sorteo = sorteoR2, nR2 = { ...resR2 };
+  // "Simular todo" rellena lo pendiente y lo obsoleto; no toca lo resuelto (real, editado o ya simulado) ni lo bloqueado.
+  // Por eliminatoria: la 1ª solo simula sus cruces; la 2ª sortea si aún no hay sorteo (con la 1ª completa) y simula
+  // sus cruces. El general lo hace en cadena: 1ª eliminatoria → sorteo de la 2ª si no hay → 2ª eliminatoria.
+  const rellenarR1 = (base) => {
+    const n = { ...base };
+    const ids = calc.filter(pendienteRey).map((x) => x.cruce.id);
+    ids.forEach((id) => { n[id] = { ...generarFinalAleatoria(), participantes: porId[id].participantes }; });
+    return { n, ids };
+  };
+  const rellenarR2 = (calcR1) => {
+    let sorteo = sorteoR2, n = { ...resR2 };
     const sorteoNuevo = !sorteo ? sortearR2Rey(calcR1) : null;
-    if (sorteoNuevo) { sorteo = sorteoNuevo; nR2 = {}; }
-    const ids2 = [];
-    calcularR2Rey(calcR1, sorteo, nR2).filter(pendienteRey).forEach((x) => {
-      nR2[x.cruce.id] = { ...generarFinalAleatoria(), participantes: x.participantes };
-      ids2.push(x.cruce.id);
+    if (sorteoNuevo) { sorteo = sorteoNuevo; n = {}; }
+    const ids = [];
+    calcularR2Rey(calcR1, sorteo, n).filter(pendienteRey).forEach((x) => {
+      n[x.cruce.id] = { ...generarFinalAleatoria(), participantes: x.participantes };
+      ids.push(x.cruce.id);
     });
-    setResR1(nR1);
-    ids1.forEach((id) => oR.marcarEditado(id));
+    return { n, ids, sorteoNuevo };
+  };
+  const aplicarR2 = ({ n, ids, sorteoNuevo }) => {
     if (sorteoNuevo) { setSorteoR2(sorteoNuevo); oR2.reiniciar(); }
-    setResR2(nR2);
-    ids2.forEach((id) => oR2.marcarEditado(id));
+    setResR2(n);
+    ids.forEach((id) => oR2.marcarEditado(id));
+  };
+  const simularR1Todo = () => {
+    const r1 = rellenarR1(resR1);
+    setResR1(r1.n);
+    r1.ids.forEach((id) => oR.marcarEditado(id));
+  };
+  const simularR2Todo = () => {
+    if (!sorteoR2 && calc.some((x) => !x.ganador)) return;
+    aplicarR2(rellenarR2(calc));
+  };
+  const simularTodo = () => {
+    const r1 = rellenarR1(resR1);
+    setResR1(r1.n);
+    r1.ids.forEach((id) => oR.marcarEditado(id));
+    aplicarR2(rellenarR2(calcularR1Rey(resPrevia, r1.n)));
   };
   const limpiar = () => {
     setResPrevia(resPreviaRealRey());
@@ -7118,7 +7137,7 @@ function useCopaDelRey() {
     oR2.reiniciar();
     oR2.marcarOrigen(origenesRealesRey(R2_REAL_REY));
   };
-  return { resPrevia, calc, porId, oP, oR, changePrevia, resetPrevia, restaurarPrevia, simular, editar, quitar, restaurar, simularTodo, limpiar,
+  return { resPrevia, calc, porId, oP, oR, changePrevia, resetPrevia, restaurarPrevia, simular, editar, quitar, restaurar, simularTodo, simularR1Todo, simularR2Todo, limpiar,
     sorteoR2, calc2, oR2, r2, sortearR2, esSorteoRealR2, restaurarSorteoR2 };
 }
 
@@ -7242,6 +7261,9 @@ function SimuladorCopaDelReyPage() {
           );
         })}
 
+        <div data-r1-acciones style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 24 }}>
+          <BotonAleatorio onClick={rey.simularR1Todo} label="Simular toda la 1ª eliminatoria" colores={c} />
+        </div>
         {dias.map((d) => {
           const cruces = calc.filter((x) => x.cruce.dia === d);
           return (
@@ -7273,6 +7295,7 @@ function SimuladorCopaDelReyPage() {
           {completo
             ? <BotonAleatorio onClick={rey.sortearR2} label={rey.sorteoR2 ? "Sortear de nuevo" : "Sortear la 2ª eliminatoria"} colores={c} />
             : <span data-sorteo-bloqueado style={{ color: c.alerta, fontSize: 12 }}>El sorteo simulado necesita los 56 cruces de la 1ª eliminatoria resueltos (faltan {calc.length - resueltos}).</span>}
+          {rey.sorteoR2 || completo ? <BotonAleatorio onClick={rey.simularR2Todo} label="Simular toda la 2ª eliminatoria" colores={c} /> : null}
           {R2_SORTEO_REAL_REY && !rey.esSorteoRealR2 && <button onClick={rey.restaurarSorteoR2} style={btn}>↩ Restaurar sorteo real</button>}
         </div>
         {calc2.map((x) => (

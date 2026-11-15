@@ -503,6 +503,7 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - Nations League (13/11): ~~Inglaterra 2-1 Croacia llegó sin el minuto de partido~~ **Resuelto el 15/11:** Carlos confirmó como finales Inglaterra 2-1 Croacia e Irlanda del Norte 1-0 Ucrania (el segundo llegó igual de cortado el 14/11). Por si se repite lo del 22/10: un mensaje puede llegar cortado, contar los partidos antes de cargar.
 - Stop hook (13/11): el hook pide commit y push con cambios sin commitear, en contra de `CONVENCIONES.md` §1; se respetó la convención. Valorar ajustarlo.
 - Artículo `#/copa-del-rey` (13/11): sigue con fechas y estado previos a la 1ª eliminatoria (ver 30/10); además hay 12 cruces reprogramados y 9 resultados nuevos.
+- Simulador de la Copa del Rey (15/11): ~~Carlos pide que el botón "Simular todo" esté en cada una de las eliminatorias~~ **Resuelto el 15/11** como cambio de alcance consciente de Carlos (no cae ninguna tarea del plan): botones "Simular toda la 1ª eliminatoria" y "Simular toda la 2ª eliminatoria" (esta sortea si aún no hay sorteo y la 1ª está completa); se mantiene el "Simular todo" general.
 
 ## 8. Preguntas abiertas
 
