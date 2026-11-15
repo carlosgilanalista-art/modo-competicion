@@ -292,7 +292,7 @@ export const R1 = [
   { n: 56, id: "R1-56", local: { equipo: "antequera-cf" }, visitante: { equipo: "aguilas-fc" }, dia: "2026-10-29", hora: "20:00", grupo: 3 },
 ];
 
-// Resultados reales de la 1ª eliminatoria (49 jugados: 40 el 27 y 29/10 y 9 el 10 y 12/11; 7 sin cargar, aplazados o por jugar), clave
+// Resultados reales de la 1ª eliminatoria (50 jugados: 40 el 27 y 29/10, 9 el 10 y 12/11 y 1 el 13/11; 6 sin cargar, aplazados al 18/11), clave
 // `local|visitante` con los nombres de EQUIPOS (el local es el real: para los cruces con ganador de la previa, el ganador real).
 // Valor: { gA, gB, etA?, etB?, penA?, penB? } (A = local). En los 4 cruces con penaltis, etA/etB = 0-0 es una decisión de Carlos (30/10):
 // NO está verificado si hubo prórroga ni su marcador; el motor la necesita para dar ganador.
@@ -346,4 +346,5 @@ export const R1_RESULTADOS_REAL = {
   "CS Puertollano|Albacete Balompié": { gA: 0, gB: 3 }, // R1-32
   "CDA Navalcarnero|Real Betis": { gA: 2, gB: 3 }, // R1-13
   "CD Tarancón|Levante UD": { gA: 1, gB: 2 }, // R1-16
+  "Salamanca CF UDS|RC Celta": { gA: 0, gB: 5 }, // R1-14
 };
