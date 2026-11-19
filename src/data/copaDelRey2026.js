@@ -380,3 +380,40 @@ export const R2_RESULTADOS_REAL = {};
 // por la competición de 2026/27: cuentan como Segunda Federación (decisión de Carlos, 15/11; que la RFEF lo aplique
 // así en esta ronda es 🔴, en 2025/26 trató aparte al campeón de la Copa Federación). No cambia EQUIPOS.
 export const CATEGORIA_SORTEO = { "copa-fed": "segunda-fed" };
+
+// ============================================================
+// SIMULADOR (T3): dieciseisavos, octavos, cuartos, semifinales y final (todo simulación hasta que haya sorteos reales).
+// Criterios confirmados por Carlos el 15/11 y 19/11 (ver docs/ESTADO.md §3, T3). Fechas: dieciseisavos 16/12 (🟢 calendario RFEF),
+// octavos y cuartos «enero» (🟡 una sola fuente), semifinales 10/02 y 03/03 a doble partido (🟡) y final en La Cartuja (Sevilla),
+// sábado 24/04/2027 (🟢), a partido único y sin local.
+// ============================================================
+
+export const R3_FECHA = "2026-12-16";
+export const FINAL_FECHA = "2027-04-24";
+
+// Los 4 de la Supercopa de España: no juegan hasta dieciseisavos.
+export const SUPERCOPA_IDS = ["fc-barcelona", "real-madrid", "real-sociedad", "atletico-de-madrid"];
+
+// Competición europea 2026/27 de los clubes españoles presentes en la Copa (listados de acceso UEFA ya cargados en el simulador
+// de clubes: Champions = CL_DIRECTOS_FASE_LIGA; Europa League = EL_DIRECTOS_FASE_LIGA; Conference = Getafe, entrante del playoff
+// Ruta Liga). Decisión de Carlos (19/11): en dieciseisavos un equipo de Conference no puede cruzarse con uno de Champions o
+// Europa League; si el sorteo no puede evitarlo, el cruce queda rotulado como inevitable. Editable a mano si cambia el acceso.
+export const EUROPA_REY = {
+  "fc-barcelona": "UCL", "real-madrid": "UCL", "villarreal-cf": "UCL", "atletico-de-madrid": "UCL", "real-betis": "UCL",
+  "real-sociedad": "UEL", "rc-celta": "UEL",
+  "getafe-cf": "UECL",
+};
+
+// Sorteos reales de cada ronda: null hasta que se celebren. Mismo formato que R2_SORTEO_REAL:
+// [{ id: "R3-01", a: slot, b: slot }, ...] donde slot es el id de un cruce de la ronda anterior ("R2-05") o, en dieciseisavos,
+// "EQ:<id de equipo>" para los de la Supercopa. a = primera bola. Semifinales: ids SF-01 y SF-02 (a = ida en casa, 🔴 supuesto).
+export const R3_SORTEO_REAL = null;
+export const R4_SORTEO_REAL = null;
+export const R5_SORTEO_REAL = null;
+export const SF_SORTEO_REAL = null;
+
+// Resultados reales por ronda, clave `local|visitante` con nombres de EQUIPOS (mismo formato que R2_RESULTADOS_REAL). Solo se
+// aplican sobre el sorteo real. Las semifinales (doble partido) y la final aún no tienen hueco de resultados reales.
+export const R3_RESULTADOS_REAL = {};
+export const R4_RESULTADOS_REAL = {};
+export const R5_RESULTADOS_REAL = {};
