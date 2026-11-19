@@ -4568,9 +4568,8 @@ const NL_RESULTADOS_JORNADA5_REAL = {
   "B3|Austria|República de Irlanda": { gl: 1, gv: 0 },
   "B2|Irlanda del Norte|Ucrania": { gl: 1, gv: 0 },
 };
-// Resultados reales de la Jornada 6 (domingo 15/11/2026): carga PARCIAL, 8 de 26
-// partidos (los del 15/11; los 18 restantes son del 16 y 17/11 y siguen vacíos y
-// editables/simulables). Verificados contra NL_CALENDARIO_REAL antes de cargar.
+// Resultados reales de la Jornada 6 (15-17/11/2026): 26/26. Primero 8 (15/11) y
+// después 18 (16 y 17/11). Verificados contra NL_CALENDARIO_REAL antes de cargar.
 const NL_RESULTADOS_JORNADA6_REAL = {
   "C2|Letonia|Armenia": { gl: 0, gv: 0 },
   "C2|Chipre|Montenegro": { gl: 1, gv: 4 },
@@ -4580,6 +4579,25 @@ const NL_RESULTADOS_JORNADA6_REAL = {
   "A1|Bélgica|Italia": { gl: 4, gv: 1 },
   "A3|Croacia|Chequia": { gl: 2, gv: 1 },
   "A3|España|Inglaterra": { gl: 2, gv: 3 },
+  // 16/11 (10) y 17/11 (8), cargados el 19/11: completan la J6 (26/26).
+  "C3|Islas Feroe|Moldavia": { gl: 1, gv: 0 },
+  "C3|Kazajistán|Eslovaquia": { gl: 2, gv: 2 },
+  "C4|Islandia|Luxemburgo": { gl: 3, gv: 0 },
+  "C4|Estonia|Bulgaria": { gl: 2, gv: 1 },
+  "D2|Lituania|Liechtenstein": { gl: 2, gv: 1 },
+  "D1|Gibraltar|Malta": { gl: 1, gv: 1 },
+  "A2|Alemania|Países Bajos": { gl: 5, gv: 0 },
+  "A2|Grecia|Serbia": { gl: 1, gv: 0 },
+  "B1|Suiza|Escocia": { gl: 4, gv: 0 },
+  "B1|Macedonia del Norte|Eslovenia": { gl: 0, gv: 3 },
+  "B3|Israel|Austria": { gl: 1, gv: 1 },
+  "B4|Bosnia y Herzegovina|Rumanía": { gl: 2, gv: 1 },
+  "B2|Ucrania|Georgia": { gl: 1, gv: 0 },
+  "A4|Dinamarca|Noruega": { gl: 2, gv: 3 },
+  "A4|Gales|Portugal": { gl: 2, gv: 3 },
+  "B2|Hungría|Irlanda del Norte": { gl: 1, gv: 1 },
+  "B4|Polonia|Suecia": { gl: 1, gv: 1 },
+  "B3|República de Irlanda|Kosovo": { gl: 3, gv: 0 },
 };
 
 // Combinado de todas las jornadas reales cargadas hasta ahora — useNationsLeague

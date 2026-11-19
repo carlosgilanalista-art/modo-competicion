@@ -226,7 +226,7 @@ export const PREVIA = [
   { id: "PR-5", a: "auriense-ca", b: "cd-san-jose", real: { idaA: 2, idaB: 0, vueltaA: 0, vueltaB: 1 }, fiabilidad: "🟢" },
   { id: "PR-6", a: "ribadesella-cf", b: "sd-noja", real: { idaA: 1, idaB: 0, vueltaA: 1, vueltaB: 1 }, fiabilidad: "🟢" },
   { id: "PR-7", a: "cp-talayuela", b: "emers-sporting-de-alcazar", real: { idaA: 1, idaB: 2, vueltaA: 0, vueltaB: 1 }, fiabilidad: "🟢" },
-  { id: "PR-8", a: "ud-maracena", b: "cf-ue-tavernes-de-la-valldigna", real: { idaA: 1, idaB: 1, vueltaA: 0, vueltaB: 0, penA: 2, penB: 4 }, fiabilidad: "🟢" },
+  { id: "PR-8", a: "ud-maracena", b: "cf-ue-tavernes-de-la-valldigna", real: { idaA: 1, idaB: 1, vueltaA: 0, vueltaB: 0, etA: 0, etB: 0, penA: 2, penB: 4 }, fiabilidad: "🟢" },
   { id: "PR-9", a: "ad-sporting-hortaleza", b: "atletico-union-guimar", real: { idaA: 1, idaB: 0, vueltaA: 3, vueltaB: 3 }, fiabilidad: "🟡" },
   { id: "PR-10", a: "cf-san-rafael", b: "ae-prat", real: { idaA: 1, idaB: 5, vueltaA: 0, vueltaB: 5 }, fiabilidad: "🟡" },
 ];
@@ -292,32 +292,33 @@ export const R1 = [
   { n: 56, id: "R1-56", local: { equipo: "antequera-cf" }, visitante: { equipo: "aguilas-fc" }, dia: "2026-10-29", hora: "20:00", grupo: 3 },
 ];
 
-// Resultados reales de la 1ª eliminatoria (50 jugados: 40 el 27 y 29/10, 9 el 10 y 12/11 y 1 el 13/11; 6 sin cargar, aplazados al 18/11), clave
+// Resultados reales de la 1ª eliminatoria (56 de 56: 40 el 27 y 29/10, 9 el 10 y 12/11, 1 el 13/11 y 6 el 18/11), clave
 // `local|visitante` con los nombres de EQUIPOS (el local es el real: para los cruces con ganador de la previa, el ganador real).
-// Valor: { gA, gB, etA?, etB?, penA?, penB? } (A = local). En los 4 cruces con penaltis, etA/etB = 0-0 es una decisión de Carlos (30/10):
-// NO está verificado si hubo prórroga ni su marcador; el motor la necesita para dar ganador.
+// Valor: { gA, gB, etA?, etB?, penA?, penB? } (A = local). gA/gB = marcador a los 90'; etA/etB = goles SOLO de la prórroga (se suman).
+// Prórrogas y penaltis verificados el 19/11 con investigación (fuentes en prensa/clubes; sin acta RFEF): 6 con penaltis (prórroga 0-0
+// salvo R1-38; PR-8 también 0-0) y 12 resueltos en prórroga sin penaltis. Los demás, 90' (🟡 los que solo constan en listados EFE/Sporting News).
 export const R1_RESULTADOS_REAL = {
   "CD Cuarte|Girona FC": { gA: 0, gB: 2 }, // R1-17
   "UD Pinatar|Elche CF": { gA: 1, gB: 3 }, // R1-01
   "CF Calamocha|CE Europa": { gA: 0, gB: 3 }, // R1-37
-  "Sestao River Club|RCD Espanyol": { gA: 4, gB: 3 }, // R1-11
-  "UD Castellonense|UD Almería": { gA: 1, gB: 2 }, // R1-24
+  "Sestao River Club|RCD Espanyol": { gA: 2, gB: 2, etA: 2, etB: 1 }, // R1-11
+  "UD Castellonense|UD Almería": { gA: 0, gB: 0, etA: 1, etB: 2 }, // R1-24
   "CD Ciudad de Lucena|CF Rayo Majadahonda": { gA: 0, gB: 1 }, // R1-42
-  "RSD Alcalá|UD Las Palmas": { gA: 1, gB: 3 }, // R1-25
+  "RSD Alcalá|UD Las Palmas": { gA: 1, gB: 1, etA: 0, etB: 2 }, // R1-25
   "Gimnástica Segoviana|Cultural Leonesa": { gA: 0, gB: 1 }, // R1-40
   "Atlético Tordesillas|CD Mirandés": { gA: 3, gB: 3, etA: 0, etB: 0, penA: 2, penB: 4 }, // R1-39
   "UD Llanera|SD Ponferradina": { gA: 1, gB: 1, etA: 0, etB: 0, penA: 3, penB: 5 }, // R1-41
-  "CD Don Benito|CD Extremadura": { gA: 2, gB: 4 }, // R1-43
-  "CE Manresa|UE Sant Andreu": { gA: 2, gB: 2, etA: 0, etB: 0, penA: 1, penB: 4 }, // R1-38
+  "CD Don Benito|CD Extremadura": { gA: 2, gB: 2, etA: 0, etB: 2 }, // R1-43
+  "CE Manresa|UE Sant Andreu": { gA: 0, gB: 0, etA: 2, etB: 2, penA: 1, penB: 4 }, // R1-38
   "CD Atlético Paso|Córdoba CF": { gA: 3, gB: 1 }, // R1-26
-  "RC Recreativo de Huelva|Rayo Vallecano": { gA: 2, gB: 3 }, // R1-12
+  "RC Recreativo de Huelva|Rayo Vallecano": { gA: 1, gB: 1, etA: 1, etB: 2 }, // R1-12
   "CD Manacor|Villarreal CF": { gA: 0, gB: 5 }, // R1-15
   "EMERS Sporting de Alcázar|Málaga CF": { gA: 0, gB: 3 }, // R1-02
   "CD Tudelano|Real Zaragoza": { gA: 0, gB: 4 }, // R1-44
   "Arosa SC|Pontevedra CF": { gA: 2, gB: 0 }, // R1-45
   "Peña Sport FC|SD Huesca": { gA: 1, gB: 5 }, // R1-48
   "CD Numancia|Real Oviedo": { gA: 3, gB: 3, etA: 0, etB: 0, penA: 4, penB: 2 }, // R1-30
-  "UD Sanse|CD Coria": { gA: 1, gB: 2 }, // R1-54
+  "UD Sanse|CD Coria": { gA: 1, gB: 1, etA: 0, etB: 1 }, // R1-54
   "UB Lebrijana|Getafe CF": { gA: 2, gB: 3 }, // R1-05
   "CD Atlético Baleares|CD Eldense": { gA: 0, gB: 1 }, // R1-35
   "UD Poblense|AD Ceuta FC": { gA: 1, gB: 2 }, // R1-28
@@ -326,12 +327,12 @@ export const R1_RESULTADOS_REAL = {
   "CD Cieza|Granada CF": { gA: 0, gB: 3 }, // R1-33
   "Antequera CF|Águilas FC": { gA: 2, gB: 0 }, // R1-56
   "UB Conquense|CD Castellón": { gA: 0, gB: 3 }, // R1-36
-  "Real Ávila CF|Unionistas de Salamanca": { gA: 1, gB: 0 }, // R1-55
+  "Real Ávila CF|Unionistas de Salamanca": { gA: 0, gB: 0, etA: 1, etB: 0 }, // R1-55
   "CD Laredo|Burgos CF": { gA: 2, gB: 4 }, // R1-22
   "CD Guijuelo|Real Sporting de Gijón": { gA: 1, gB: 3 }, // R1-21
   "CD Covadonga|Real Valladolid": { gA: 0, gB: 1 }, // R1-20
   "CD Varea|FC Andorra": { gA: 0, gB: 3 }, // R1-23
-  "RS Gimnástica Torrelavega|UD Ourense": { gA: 3, gB: 1 }, // R1-53
+  "RS Gimnástica Torrelavega|UD Ourense": { gA: 1, gB: 1, etA: 2, etB: 0 }, // R1-53
   "AE Prat|Athletic Club": { gA: 1, gB: 6 }, // R1-07
   "AD Sporting Hortaleza|Sevilla FC": { gA: 0, gB: 3 }, // R1-08
   "Xerez CD|Cádiz CF": { gA: 1, gB: 3 }, // R1-34
@@ -344,9 +345,15 @@ export const R1_RESULTADOS_REAL = {
   "SD Amorebieta|UD Logroñés": { gA: 1, gB: 0 }, // R1-49
   "CF UE Tavernes de la Valldigna|Valencia CF": { gA: 0, gB: 6 }, // R1-04
   "CS Puertollano|Albacete Balompié": { gA: 0, gB: 3 }, // R1-32
-  "CDA Navalcarnero|Real Betis": { gA: 2, gB: 3 }, // R1-13
-  "CD Tarancón|Levante UD": { gA: 1, gB: 2 }, // R1-16
+  "CDA Navalcarnero|Real Betis": { gA: 2, gB: 2, etA: 0, etB: 1 }, // R1-13
+  "CD Tarancón|Levante UD": { gA: 1, gB: 1, etA: 0, etB: 1 }, // R1-16
   "Salamanca CF UDS|RC Celta": { gA: 0, gB: 5 }, // R1-14
+  "Club Portugalete|Real Unión": { gA: 0, gB: 0, etA: 0, etB: 0, penA: 4, penB: 1 }, // R1-47
+  "Reus FC Reddis|Barakaldo CF": { gA: 1, gB: 1, etA: 0, etB: 0, penA: 4, penB: 3 }, // R1-51
+  "Utebo FC|CE Sabadell": { gA: 0, gB: 3 }, // R1-27
+  "CD Badajoz|CD Tenerife": { gA: 2, gB: 5 }, // R1-31
+  "CD Alcoyano|RCD Mallorca": { gA: 1, gB: 1, etA: 0, etB: 2 }, // R1-29
+  "CD Minera|FC Cartagena": { gA: 1, gB: 1, etA: 0, etB: 1 }, // R1-52
 };
 
 // ============================================================
