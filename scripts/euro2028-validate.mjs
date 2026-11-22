@@ -5,6 +5,7 @@
 import {
   eqSimularPipelineCompleto, eqStats,
   EQ_ANFITRIONES, EQ_PROHIBIDOS, EQ_TAMANOS_GRUPO, EQ_REPESCA_CFG,
+  EQ_SEPARADOS, EQ_INVIERNO, EQ_INVIERNO_MAX, EQ_VIAJE_PARES, EQ_VIAJE_MAX_PARES, EQ_BOMBOS_CFG,
 } from "../dist-sim/App.js";
 
 const N = Number(process.argv[2]) || 1000;
@@ -38,10 +39,10 @@ for (let sim = 0; sim < N; sim++) {
   const sumaEquipos = r.sorteo.reduce((s, g) => s + g.equipos.length, 0);
   if (sumaEquipos !== 54) fail("2-suma-54", sim, `suma=${sumaEquipos}`);
 
-  // 3) Los 4 anfitriones caen en 4 grupos distintos, en el 100% de las simulaciones.
+  // 3) Los 4 anfitriones e Irlanda del Norte caen en 5 grupos distintos, en el 100% de las simulaciones.
   const grupoDe = (nombre) => r.sorteo.find((g) => g.equipos.some((e) => e.nombre === nombre))?.id;
-  const gruposAnfitrion = EQ_ANFITRIONES.map(grupoDe);
-  if (new Set(gruposAnfitrion).size !== 4) fail("3-anfitriones-separados", sim, gruposAnfitrion.join(","));
+  const gruposAnfitrion = EQ_SEPARADOS.map(grupoDe);
+  if (new Set(gruposAnfitrion).size !== EQ_SEPARADOS.length) fail("3-anfitriones-separados", sim, gruposAnfitrion.join(","));
 
   // 4) Ningún emparejamiento de la lista de prohibidos aparece nunca.
   for (const g of r.sorteo) {
@@ -51,11 +52,38 @@ for (let sim = 0; sim < N; sim++) {
     }
   }
 
-  // 5) Los cuartofinalistas de la Liga A caen siempre en grupos de cuatro.
-  const qfLigaA = r.rankingProvisional.slice(0, 8).map((e) => e.nombre);
-  for (const q of qfLigaA) {
+  // 5) Los 4 ganadores de cuartos de la Liga A caen siempre en grupos de cuatro (A-F).
+  for (const c of r.cuartos) {
+    const q = r.resultadosCuartos[c.id].ganador;
     const g = r.sorteo.find((gr) => gr.equipos.some((e) => e.nombre === q));
     if (g.tamano !== 4) fail("5-qf-liga-a-grupos-de-4", sim, `${q} en grupo de ${g.tamano}`);
+  }
+
+  // 12) Procedimiento: un equipo por bombo y grupo (bombos 1-4 en los 12 grupos, bombo 5 solo en G-L).
+  const bomboDe = (nombre) => { const i = r.rankingProvisional.findIndex((e) => e.nombre === nombre); return i < 12 ? 1 : i < 24 ? 2 : i < 36 ? 3 : i < 48 ? 4 : 5; };
+  for (const g of r.sorteo) {
+    const porBombo = new Map();
+    g.equipos.forEach((e) => porBombo.set(bomboDe(e.nombre), (porBombo.get(bomboDe(e.nombre)) || 0) + 1));
+    if ([...porBombo.values()].some((n) => n > 1)) fail("12-un-equipo-por-bombo", sim, `${g.id}: ${[...porBombo].map(([b, n]) => `b${b}x${n}`).join(",")}`);
+    if (g.tamano === 4 && porBombo.has(5)) fail("12-bombo5-solo-grupos-de-5", sim, `${g.id} (4) tiene bombo 5`);
+    if (g.tamano === 5 && porBombo.size !== 5) fail("12-grupo-de-5-completo", sim, `${g.id} tiene ${porBombo.size} bombos`);
+  }
+  // 13) Grupos de cinco: como máximo un equipo de los play-offs NL o un derrotado de cuartos (puestos 11-14, 21-24, 29-32, 37-40 y derrotados).
+  const derrotados = new Set(r.cuartos.map((c) => r.resultadosCuartos[c.id].derrotado));
+  const puestoDe = (nombre) => r.rankingProvisional.findIndex((e) => e.nombre === nombre) + 1;
+  const esPO = (nombre) => EQ_BOMBOS_CFG.puestosPlayoffNL.some(([d, h]) => puestoDe(nombre) >= d && puestoDe(nombre) <= h);
+  for (const g of r.sorteo) {
+    if (g.tamano !== 5) continue;
+    const n = g.equipos.filter((e) => esPO(e.nombre) || derrotados.has(e.nombre)).length;
+    if (n > EQ_BOMBOS_CFG.maxPlayoffODerrotadoGrupoDe5) fail("13-po-o-derrotado-grupo-de-5", sim, `${g.id}: ${n}`);
+  }
+  // 14) Riesgo de invierno: máximo 2 por grupo. 15) Viajes excesivos: máximo 1 par por grupo (sobre las selecciones resueltas).
+  for (const g of r.sorteo) {
+    const nombres = g.equipos.map((e) => e.nombre);
+    const inv = nombres.filter((n) => EQ_INVIERNO.includes(n)).length;
+    if (inv > EQ_INVIERNO_MAX) fail("14-invierno", sim, `${g.id}: ${inv}`);
+    const pares = EQ_VIAJE_PARES.filter(([a, b]) => nombres.includes(a) && nombres.includes(b)).length;
+    if (pares > EQ_VIAJE_MAX_PARES) fail("15-viaje", sim, `${g.id}: ${pares} pares`);
   }
 
   // 6) Clasificados directos = exactamente 20 (12 primeros + 8 segundos).
@@ -138,6 +166,7 @@ for (const f of fallos) porCheck.set(f.check, (porCheck.get(f.check) || 0) + 1);
 const checks = [
   "1-sorteo-54", "1-sorteo-sin-repetir", "2-num-grupos", "2-reparto-tamanos", "2-suma-54",
   "3-anfitriones-separados", "4-prohibidos", "5-qf-liga-a-grupos-de-4",
+  "12-un-equipo-por-bombo", "12-bombo5-solo-grupos-de-5", "12-grupo-de-5-completo", "13-po-o-derrotado-grupo-de-5", "14-invierno", "15-viaje",
   "6-directos-20", "6-directos-sin-repetir", "7-descarte-quinto", "7-tabla-completa-sanity", "7-descarte-cambia-los-numeros",
   "8-plazas-anfitrion-rango", "8-escenario-repesca", "9-equipos-repesca", "9-combo-valido",
   "10-finales-24", "10-finales-sin-duplicados", "10-sin-solape-etapa4-repesca",

@@ -5655,38 +5655,56 @@ const EQ_CALENDARIO = {
   repescaFinales: "26-28 mar 2028",
 };
 
-// ---- DERIVADO (aritmética; no publicado explícitamente así) ----
-// 54 equipos en 12 grupos de 4 o 5 → 6 de cinco + 6 de cuatro es la única
-// solución entera posible, pero UEFA no lo ha publicado como tal. Configurable
-// por si el reparto real difiere.
-const EQ_TAMANOS_GRUPO = { totalGrupos: 12, gruposDe5: 6, gruposDe4: 6 };
+// ---- CONFIRMADO — procedimiento oficial del sorteo (UEFA, "Qualifying draw procedure",
+// European Qualifiers 2026-28; sorteo del 6/12/2026, ICC Belfast) ----
+// 54 equipos en 12 grupos: A-F de cuatro y G-L de cinco (6 + 6).
+const EQ_GRUPOS_IDS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+const EQ_TAMANOS_GRUPO = { totalGrupos: 12, gruposDe5: 6, gruposDe4: 6, idsDe4: ["A", "B", "C", "D", "E", "F"], idsDe5: ["G", "H", "I", "J", "K", "L"] };
 
-// ---- SUPUESTO (no publicado — valor por defecto configurable; marcar en UI) ----
-// Estructura de bombos del sorteo de clasificación: no hay procedimiento
-// oficial publicado (se espera antes del sorteo real del 6/12/2026). Por
-// defecto: 5 bombos — 4 de 12 selecciones (una plaza en cada uno de los 12
-// grupos) + 1 de 6 (solo para la 5ª plaza de los seis grupos de cinco) —:
-// ordenados por ranking provisional NL, forzando que los 8 cuartofinalistas
-// de Liga A (ranks 1-8 del ranking provisional, ver Fase 1) caigan siempre en
-// los 6 grupos de cuatro.
+// Cinco bombos por el ranking provisional NL 2026/27 al cierre de la fase de liga (Art. 19.02):
+// bombos 1-4 de 12 (puestos 1-12, 13-24, 25-36, 37-48) y bombo 5 de 6 (49-54). Se sortea bombo
+// a bombo, vaciando cada uno antes del siguiente (1 → 5); cada grupo recibe un equipo por bombo
+// y los equipos extraídos se colocan por orden alfabético de grupo (A → L; G → L en el bombo 5);
+// si una restricción se produce o se anticipa, va al primer grupo alfabético disponible.
+// Los 4 ganadores de cuartos de la Liga A (un marcador por cruce, "Ganador QFn") solo caen en
+// grupos de cuatro (A-F); los 4 derrotados ("Derrotado QFn") caen en cualquier grupo. Cada
+// cruce de cuartos se identifica una vez como ganador y una vez como derrotado, así que el
+// bombo 1 son 4 equipos propios (puestos 9-12) + 8 marcadores.
 const EQ_BOMBOS_CFG = {
   numBombos: 5,
   tamanos: [12, 12, 12, 12, 6],
   bombo5SoloGruposDe5: true,
-  qfLigaAForzadoAGruposDe4: true,
+  qfGanadoresSoloGruposDe4: true,
+  // Un grupo de cinco admite como máximo UN equipo de los play-offs NL (A/B o B/C) o UN derrotado de cuartos.
+  maxPlayoffODerrotadoGrupoDe5: 1,
+  // Participantes de los play-offs NL de marzo de 2027 por puesto del ranking provisional (Art. 16.01 NL).
+  puestosPlayoffNL: [[11, 14], [21, 24], [29, 32], [37, 40]],
 };
 
-// Emparejamientos prohibidos del sorteo: no hay lista oficial publicada para
-// esta clasificación. Semilla = las mismas restricciones ya documentadas para
-// la Nations League 2026/27 (motivos políticos), pendiente de confirmación
-// oficial específica para la Euro 2028. Parametrizable: añadir/quitar pares
-// según se vaya confirmando.
+// Cuatro anfitriones (Inglaterra, Escocia, Gales y República de Irlanda) e Irlanda del Norte: grupos distintos.
+const EQ_SEPARADOS = [...EQ_ANFITRIONES, "Irlanda del Norte"];
+
+// Emparejamientos prohibidos (lista oficial). "Gibraltar/España" se aplica al cruce de cuartos que incluya a España.
 const EQ_PROHIBIDOS = [
-  ["Kosovo", "Serbia"],
   ["Armenia", "Azerbaiyán"],
+  ["Bielorrusia", "Ucrania"],
   ["Gibraltar", "España"],
-  ["Bosnia y Herzegovina", "Kosovo"],
+  ["Kosovo", "Bosnia y Herzegovina"],
+  ["Kosovo", "Serbia"],
 ];
+
+// Riesgo de invierno severo: como máximo dos de estas siete selecciones en un mismo grupo.
+const EQ_INVIERNO = ["Estonia", "Islas Feroe", "Finlandia", "Islandia", "Letonia", "Lituania", "Noruega"];
+const EQ_INVIERNO_MAX = 2;
+
+// Viajes excesivos (8 h o más, en ambos sentidos): como máximo UN par de estos en un mismo grupo.
+// Inglaterra, Francia, Portugal, España y Gales: si juegan los cuartos NL, la restricción se aplica a su cruce.
+const EQ_VIAJE_PARES = [
+  ...["Andorra", "Inglaterra", "Francia", "Gibraltar", "Islandia", "Malta", "Irlanda del Norte", "Portugal", "República de Irlanda", "Escocia", "España", "Gales"].map((x) => ["Kazajistán", x]),
+  ["Islandia", "Azerbaiyán"], ["Portugal", "Azerbaiyán"],
+  ["Armenia", "Islandia"], ["Chipre", "Islandia"],
+];
+const EQ_VIAJE_MAX_PARES = 1;
 
 // Fuente de la "fuerza" de cada selección: por defecto, la posición en el
 // ranking provisional de la Nations League (única métrica intrínseca a esta
@@ -5763,95 +5781,139 @@ function eqObtenerRankingProvisional() {
   return { ranking: eqRankingProvisional(fase1.grupos, fase1.clasificaciones), origen: "simulado", fase1 };
 }
 
-// ---- Etapa 3: sorteo de los 12 grupos de clasificación ----
-// Bombos secuenciales por ranking provisional según EQ_BOMBOS_CFG (SUPUESTO,
-// ver capa de datos). El bombo extra (6 equipos) decide, al entrar, cuáles de
-// los 12 grupos son "de cinco"; el resto quedan "de cuatro". Backtracking con
-// reintento aleatorio — mismo patrón que sortear()/nlSortearEmparejamiento —
-// generalizado a N bombos y a un predicado de validez en vez de la
-// comprobación fija de país.
-function eqConstruirBombos(rankingProvisional, cfg) {
+// ---- Etapa 3: sorteo de los 12 grupos de clasificación (procedimiento oficial UEFA) ----
+// Las "entradas" del sorteo son selecciones o marcadores de los cuartos de la Liga A:
+//   { nombre, bombo (1-5), equipos: [nombres reales posibles], esPO, tipoQF: "ganador"|"derrotado"|null, qf, placeholder }
+// Un marcador "Ganador QFn"/"Derrotado QFn" arrastra los atributos (anfitrión, invierno, viaje,
+// prohibidos) de las dos selecciones de su cruce, como dice el procedimiento ("la restricción
+// se aplica al cruce de cuartos correspondiente"); se sustituye por la selección real cuando
+// se juegan los cuartos (eqResolverCuartos), antes de la fase de grupos.
+function eqEntradasSorteo(rankingProvisional, cuartos, cfg = EQ_BOMBOS_CFG) {
+  const esPO = (puesto) => cfg.puestosPlayoffNL.some(([d, h]) => puesto >= d && puesto <= h);
+  const idxCuarto = new Map();
+  cuartos.forEach((c) => { idxCuarto.set(c.a, c); idxCuarto.set(c.b, c); });
   const bombos = [];
   let i = 0;
-  for (const tam of cfg.tamanos) { bombos.push(rankingProvisional.slice(i, i + tam)); i += tam; }
+  cfg.tamanos.forEach((tam, b) => {
+    const entradas = [];
+    rankingProvisional.slice(i, i + tam).forEach((e, k) => {
+      const puesto = i + k + 1;
+      const cuarto = idxCuarto.get(e.nombre);
+      if (cuarto) return; // las 8 selecciones de cuartos entran como marcadores (abajo)
+      entradas.push({ ...e, bombo: b + 1, equipos: [e.nombre], esPO: esPO(puesto), tipoQF: null });
+    });
+    bombos.push(entradas);
+    i += tam;
+  });
+  cuartos.forEach((c) => {
+    const equipos = [c.a, c.b];
+    bombos[0].push({ nombre: `Ganador ${c.id}`, bombo: 1, equipos, esPO: false, tipoQF: "ganador", qf: c.id, placeholder: true });
+    bombos[0].push({ nombre: `Derrotado ${c.id}`, bombo: 1, equipos, esPO: false, tipoQF: "derrotado", qf: c.id, placeholder: true });
+  });
   return bombos;
 }
-// Contexto de restricciones del sorteo, derivado del ranking provisional.
-function eqContextoRestricciones(rankingProvisional, cfg = EQ_BOMBOS_CFG, anfitriones = EQ_ANFITRIONES, prohibidos = EQ_PROHIBIDOS) {
-  return { cfg, anfitriones, prohibidos, qfLigaA: new Set(rankingProvisional.slice(0, 8).map((e) => e.nombre)) };
+// Contexto de restricciones del sorteo.
+function eqContextoRestricciones(cfg = EQ_BOMBOS_CFG, prohibidos = EQ_PROHIBIDOS) {
+  return { cfg, separados: new Set(EQ_SEPARADOS), prohibidos, invierno: new Set(EQ_INVIERNO), viaje: EQ_VIAJE_PARES };
 }
-// Única fuente de verdad de las restricciones del sorteo: la usan tanto el
-// sorteo automático (backtracking) como la edición manual, para que ninguna
-// de las dos pueda producir un sorteo que la otra consideraría ilegal.
-// `grupo` es { equipos: [...], tamano }. Devuelve null si el equipo puede
-// entrar, o el motivo (texto para la UI) por el que no puede.
-function eqMotivoBloqueo(equipo, grupo, ctx) {
-  const { cfg, anfitriones, prohibidos, qfLigaA } = ctx;
+const eqChocan = (e1, e2, pares) => e1.equipos.some((x) => e2.equipos.some((y) => pares.some(([p, q]) => (p === x && q === y) || (p === y && q === x))));
+const eqPorTipo = (e, set) => e.equipos.some((n) => set.has(n));
+// Única fuente de verdad de las restricciones del sorteo: la usan el sorteo automático, la
+// comprobación de viabilidad y la edición manual, para que ninguna produzca un sorteo ilegal
+// para las otras. `grupo` es { id, equipos: [entradas], tamano }. Devuelve null si la entrada
+// puede entrar, o el motivo (texto para la UI) por el que no puede.
+function eqMotivoBloqueo(entrada, grupo, ctx) {
+  const { cfg, separados, prohibidos, invierno, viaje } = ctx;
   if (grupo.equipos.length >= grupo.tamano) return "Grupo completo";
-  if (cfg.qfLigaAForzadoAGruposDe4 && qfLigaA.has(equipo.nombre) && grupo.tamano !== 4)
-    return "Cuartofinalista de Liga A: solo puede caer en un grupo de cuatro";
-  if (anfitriones.includes(equipo.nombre) && grupo.equipos.some((e) => anfitriones.includes(e.nombre)))
-    return "Ya hay un anfitrión en este grupo";
-  const choque = grupo.equipos.find((e) => prohibidos.some(([x, y]) => (x === equipo.nombre && y === e.nombre) || (y === equipo.nombre && x === e.nombre)));
+  if (grupo.equipos.some((e) => e.bombo === entrada.bombo)) return `Ya tiene un equipo del bombo ${entrada.bombo}`;
+  if (cfg.bombo5SoloGruposDe5 && entrada.bombo === cfg.numBombos && grupo.tamano !== 5) return "Bombo 5: solo grupos de cinco (G-L)";
+  if (cfg.qfGanadoresSoloGruposDe4 && entrada.tipoQF === "ganador" && grupo.tamano !== 4) return "Ganador de cuartos NL: solo grupos de cuatro (A-F)";
+  const restringido = (e) => e.esPO || e.tipoQF === "derrotado";
+  if (grupo.tamano === 5 && restringido(entrada) && grupo.equipos.filter(restringido).length >= cfg.maxPlayoffODerrotadoGrupoDe5)
+    return "Un grupo de cinco admite como máximo un equipo de los play-offs NL o un derrotado de cuartos";
+  if (eqPorTipo(entrada, separados) && grupo.equipos.some((e) => eqPorTipo(e, separados))) return "Anfitriones e Irlanda del Norte, en grupos distintos";
+  const choque = grupo.equipos.find((e) => eqChocan(entrada, e, prohibidos));
   if (choque) return `Emparejamiento prohibido con ${choque.nombre}`;
+  if (eqPorTipo(entrada, invierno) && grupo.equipos.filter((e) => eqPorTipo(e, invierno)).length >= EQ_INVIERNO_MAX) return "Máximo dos selecciones con riesgo de invierno";
+  const paresViaje = grupo.equipos.filter((e) => eqChocan(entrada, e, viaje)).length;
+  const paresPrevios = grupo.equipos.reduce((n, e, i) => n + grupo.equipos.slice(i + 1).filter((f) => eqChocan(e, f, viaje)).length, 0);
+  if (paresPrevios + paresViaje > EQ_VIAJE_MAX_PARES) return "Viaje excesivo: máximo un par por grupo";
   return null;
 }
-function eqSortearGrupos(rankingProvisional, cfg = EQ_BOMBOS_CFG, tamanos = EQ_TAMANOS_GRUPO, anfitriones = EQ_ANFITRIONES, prohibidos = EQ_PROHIBIDOS) {
-  const bombos = eqConstruirBombos(rankingProvisional, cfg);
-  const idsGrupos = Array.from({ length: tamanos.totalGrupos }, (_, i) => `G${i + 1}`);
-  const ctx = eqContextoRestricciones(rankingProvisional, cfg, anfitriones, prohibidos);
-  const bomboExtra = cfg.bombo5SoloGruposDe5 ? bombos[bombos.length - 1] : null;
-  const bombosPrincipales = bomboExtra ? bombos.slice(0, -1) : bombos;
-
+// ¿Existe alguna forma de completar el sorteo con las entradas restantes? Búsqueda con
+// límite de nodos: la UEFA calcula las opciones "anticipando todos los escenarios" para
+// evitar bloqueos; si se agota el límite se acepta y, si luego no hay salida, se repite el sorteo.
+function eqSePuedeCompletar(grupos, restantes, ctx) {
+  const orden = [...restantes].sort((a, b) => (b.tipoQF === "ganador") - (a.tipoQF === "ganador") || (b.bombo === 5) - (a.bombo === 5) || (b.esPO || b.tipoQF === "derrotado") - (a.esPO || a.tipoQF === "derrotado"));
+  let nodos = 0;
+  function dfs(i) {
+    if (i === orden.length) return true;
+    if (++nodos > 3000) return true;
+    for (const g of grupos) {
+      if (eqMotivoBloqueo(orden[i], g, ctx) !== null) continue;
+      g.equipos.push(orden[i]);
+      const ok = dfs(i + 1);
+      g.equipos.pop();
+      if (ok) return true;
+    }
+    return false;
+  }
+  return dfs(0);
+}
+// Sorteo automático según el procedimiento: bombo a bombo, extracción aleatoria dentro de cada
+// bombo y colocación en el primer grupo alfabético disponible que no incumpla ninguna
+// restricción ni deje el sorteo sin salida.
+function eqSortearGrupos(rankingProvisional, cuartos, cfg = EQ_BOMBOS_CFG, prohibidos = EQ_PROHIBIDOS) {
+  const bombos = eqEntradasSorteo(rankingProvisional, cuartos, cfg);
+  const ctx = eqContextoRestricciones(cfg, prohibidos);
   function intentar() {
-    const grupos = new Map(idsGrupos.map((id) => [id, []]));
-    let gruposDe5 = new Set();
-    if (bomboExtra) {
-      const elegidos = shuffleCopy(idsGrupos).slice(0, tamanos.gruposDe5);
-      const equiposExtra = shuffleCopy(bomboExtra);
-      elegidos.forEach((gid, idx) => grupos.get(gid).push(equiposExtra[idx]));
-      gruposDe5 = new Set(elegidos);
-    }
-    const tamanoDe = (gid) => (gruposDe5.has(gid) ? 5 : 4);
-    // NOTA (Fase 3): NO se exige "máximo un equipo por bombo en cada grupo".
-    // Se probó, pero con la estructura de bombos acordada (bombo 1 = ranks
-    // 1-12, que contiene los 8 cuartofinalistas de Liga A) esa regla adicional
-    // es matemáticamente irreconciliable con "los QF caen siempre en grupos de
-    // cuatro": 8 equipos de un mismo bombo no caben en solo 6 grupos a razón
-    // de 1 por grupo. La separación por bombo no la exige el reglamento (solo
-    // las de más abajo), así que se retira en vez de forzar un EQ_BOMBOS_CFG
-    // artificial — queda anotado como limitación conocida de esta Fase 3.
-    const secuencia = bombosPrincipales.flatMap((b) => shuffleCopy(b));
-
-    const valido = (equipo, gid) => eqMotivoBloqueo(equipo, { equipos: grupos.get(gid), tamano: tamanoDe(gid) }, ctx) === null;
-    let nodos = 0;
-    const LIMITE_NODOS = 20000;
-    function backtrack(pos) {
-      if (pos === secuencia.length) return true;
-      if (++nodos > LIMITE_NODOS) return false;
-      const equipo = secuencia[pos];
-      for (const gid of shuffleCopy(idsGrupos.filter((g) => valido(equipo, g)))) {
-        grupos.get(gid).push(equipo);
-        if (backtrack(pos + 1)) return true;
-        grupos.get(gid).pop();
-        if (nodos > LIMITE_NODOS) return false;
+    const grupos = EQ_GRUPOS_IDS.map((id) => ({ id, tamano: EQ_TAMANOS_GRUPO.idsDe4.includes(id) ? 4 : 5, equipos: [] }));
+    for (let b = 0; b < bombos.length; b++) {
+      const extraccion = shuffleCopy(bombos[b]);
+      for (let k = 0; k < extraccion.length; k++) {
+        const entrada = extraccion[k];
+        const restantes = [...extraccion.slice(k + 1), ...bombos.slice(b + 1).flat()];
+        const destino = grupos.find((g) => {
+          if (eqMotivoBloqueo(entrada, g, ctx) !== null) return false;
+          g.equipos.push(entrada);
+          const ok = eqSePuedeCompletar(grupos, restantes, ctx);
+          g.equipos.pop();
+          return ok;
+        });
+        if (!destino) return null;
+        destino.equipos.push(entrada);
       }
-      return false;
     }
-    return backtrack(0) ? { grupos, gruposDe5 } : null;
+    return grupos;
   }
-
-  for (let intento = 0; intento < 2000; intento++) {
+  for (let intento = 0; intento < 200; intento++) {
     const r = intentar();
-    if (r) return idsGrupos.map((gid) => ({ id: gid, tamano: r.gruposDe5.has(gid) ? 5 : 4, equipos: r.grupos.get(gid) }));
+    if (r) return r;
   }
-  return { error: "No se pudo completar el sorteo con las restricciones dadas tras 300 intentos." };
+  return { error: "No se pudo completar el sorteo con las restricciones dadas tras 200 intentos." };
+}
+// Cruces de cuartos de la Liga A para el sorteo de clasificación: ganadores de grupo (puestos
+// 1-4) contra segundos de otro grupo (5-8). Si no se conoce el grupo de origen (ranking real
+// inyectado sin fase 1) no se aplica la restricción de grupo.
+function eqEmparejarCuartos(rankingProvisional, fase1) {
+  const grupoDe = (nombre) => fase1?.grupos.find((g) => g.equipos.some((e) => e.nombre === nombre))?.id ?? null;
+  const conGrupo = (e) => ({ ...e, grupo: grupoDe(e.nombre) });
+  const r = nlSortearEmparejamiento(rankingProvisional.slice(0, 4).map(conGrupo), rankingProvisional.slice(4, 8).map(conGrupo), (s, q) => !!s.grupo && s.grupo === q.grupo);
+  return r.cruces.map((c, i) => ({ id: `QF${i + 1}`, a: c.cabeza.nombre, b: c.rival.nombre }));
+}
+// Sustituye los marcadores por las selecciones reales. `resultados`: { QF1: { ganador, derrotado } }.
+function eqResolverCuartos(sorteo, resultados, rankingProvisional) {
+  const equipo = (nombre) => rankingProvisional.find((e) => e.nombre === nombre);
+  return sorteo.map((g) => ({
+    ...g,
+    equipos: g.equipos.map((e) => (e.placeholder ? equipo(resultados[e.qf][e.tipoQF]) : e)),
+  }));
 }
 // Punto de entrada E2: si hay sorteo real inyectado, se usa tal cual y no se
 // simula la etapa 3.
-function eqObtenerSorteo(rankingProvisional) {
+function eqObtenerSorteo(rankingProvisional, cuartos) {
   if (EQ_SORTEO_REAL) return { sorteo: EQ_SORTEO_REAL, origen: "real" };
-  return { sorteo: eqSortearGrupos(rankingProvisional), origen: "simulado" };
+  return { sorteo: eqSortearGrupos(rankingProvisional, cuartos), origen: "simulado" };
 }
 
 // ---- Etapa 4: fase de grupos de clasificación ----
@@ -6048,8 +6110,14 @@ function eqSimularPipelineCompleto() {
   const { ranking: rankingProvisional, origen: origenRanking, fase1 } = eqObtenerRankingProvisional();
   const rankNL = new Map(rankingProvisional.map((e, i) => [e.nombre, i + 1]));
 
-  const { sorteo, origen: origenSorteo } = eqObtenerSorteo(rankingProvisional);
-  if (sorteo.error) return { error: sorteo.error };
+  const cuartos = eqEmparejarCuartos(rankingProvisional, fase1);
+  const { sorteo: sorteoConMarcadores, origen: origenSorteo } = eqObtenerSorteo(rankingProvisional, cuartos);
+  if (sorteoConMarcadores.error) return { error: sorteoConMarcadores.error };
+  // Los cuartos de la Liga A se juegan en marzo de 2027, antes de la fase de grupos: los marcadores
+  // "Ganador/Derrotado QFn" se sustituyen por la selección real (aquí, ganador al azar).
+  const resultadosCuartos = {};
+  cuartos.forEach((c) => { const gan = Math.random() < 0.5 ? c.a : c.b; resultadosCuartos[c.id] = { ganador: gan, derrotado: gan === c.a ? c.b : c.a }; });
+  const sorteo = origenSorteo === "simulado" ? eqResolverCuartos(sorteoConMarcadores, resultadosCuartos, rankingProvisional) : sorteoConMarcadores;
 
   const gruposCal = sorteo.map((g) => ({ ...g, partidos: eqCalendarioGrupo(g.id, g.equipos.map((e) => e.nombre)) }));
   const resultados = { ...EQ_RESULTADOS_REALES_PARCIALES };
@@ -6078,7 +6146,7 @@ function eqSimularPipelineCompleto() {
 
   return {
     origen: { ranking: origenRanking, sorteo: origenSorteo },
-    rankingProvisional, sorteo, gruposCal, resultados, tablas, quintos, rankingGeneral,
+    rankingProvisional, cuartos, resultadosCuartos, sorteoConMarcadores, sorteo, gruposCal, resultados, tablas, quintos, rankingGeneral,
     directos20: directos20.map((e) => e.nombre), anfitrionesAsignados, plazasAnfitrionUsadas,
     peoresSegundos, cfgRepesca, poolABC, ganadorD49, mejoresLibres, repesca,
     clasificadosFinales: [...clasificadosEtapa4, ...repesca.ganadores],
@@ -6093,7 +6161,8 @@ export {
   estadoEliminatoria, estadoPartidoUnico, generarResultadoAleatorio, generarFinalAleatoria,
   EQ_ANFITRIONES, EQ_CLASIFICADOS_DIRECTOS_CFG, EQ_PLAZAS_ANFITRION, EQ_CRITERIOS_DESEMPATE,
   EQ_REPESCA_CFG, EQ_ORDEN_ENTRADA_NL, EQ_SIEMBRA_REPESCA_CFG, EQ_TAMANOS_GRUPO, EQ_BOMBOS_CFG,
-  EQ_PROHIBIDOS, EQ_FUENTE_FUERZA,
+  EQ_PROHIBIDOS, EQ_FUENTE_FUERZA, EQ_SEPARADOS, EQ_INVIERNO, EQ_INVIERNO_MAX, EQ_VIAJE_PARES, EQ_VIAJE_MAX_PARES, EQ_GRUPOS_IDS,
+  eqEntradasSorteo, eqEmparejarCuartos, eqResolverCuartos, eqSePuedeCompletar,
   eqSimularFaseLigaNL, eqRankingProvisional, eqObtenerRankingProvisional,
   eqSortearGrupos, eqObtenerSorteo, eqCalendarioGrupo, eqStats, eqCriteriosCmp,
   eqContextoRestricciones, eqMotivoBloqueo,
@@ -6142,63 +6211,92 @@ function useEuro2028(nl) {
   const [sorteo, setSorteo] = useState(EQ_SORTEO_REAL);
   const [seleccionMovimiento, setSeleccionMovimiento] = useState(null);
   const origenSorteo = EQ_SORTEO_REAL ? "real" : "simulado";
-  const sortear = () => { if (rankingProvisional) { setSorteo(eqSortearGrupos(rankingProvisional)); setSeleccionMovimiento(null); } };
+  // Cruces de cuartos de la Liga A (los del sorteo real del 20/11/2026 por defecto; comparten estado con
+  // el simulador de Nations League). Alimentan los marcadores "Ganador/Derrotado QFn" del bombo 1.
+  const cuartos = useMemo(
+    () => (nl.sorteoQF && !nl.sorteoQF.error ? nl.sorteoQF.cruces.map((c, i) => ({ id: `QF${i + 1}`, a: c.cabeza.nombre, b: c.rival.nombre })) : null),
+    [nl.sorteoQF]
+  );
+  const firmaCuartos = cuartos ? cuartos.map((c) => `${c.a}|${c.b}`).join(",") : null;
+  // Los cuartos se resuelven al jugarse en la Final a Cuatro (nl.qfCompleta).
+  const resultadosCuartos = useMemo(() => {
+    if (!cuartos || !nl.qfCompleta) return null;
+    const out = {};
+    nl.tiesQF.forEach((t, i) => { const g = nlResolverGanador(t, nl.resQF[t.id]); out[cuartos[i].id] = { ganador: g.nombre, derrotado: g.nombre === t.a.nombre ? t.b.nombre : t.a.nombre }; });
+    return out;
+  }, [cuartos, nl.qfCompleta, nl.tiesQF, nl.resQF]);
+  // Si todavía no hay cruces de cuartos (p. ej. la fase de liga se ha simulado y no coincide con el
+  // sorteo real), se sortean aquí: el sorteo de clasificación los necesita.
+  useEffect(() => { if (nlCompleta && !nl.sorteoQF) nl.sortearQF(); }, [nlCompleta, nl.sorteoQF]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setSorteo(EQ_SORTEO_REAL ?? null); setSeleccionMovimiento(null); }, [firmaCuartos]);
+  const entradas = useMemo(
+    () => (rankingProvisional && cuartos ? eqEntradasSorteo(rankingProvisional, cuartos) : null),
+    [rankingProvisional, cuartos]
+  );
+  const entradasPlano = useMemo(() => (entradas ? entradas.flat() : []), [entradas]);
+  const sortear = () => { if (rankingProvisional && cuartos) { setSorteo(eqSortearGrupos(rankingProvisional, cuartos)); setSeleccionMovimiento(null); } };
   const reiniciarSorteo = () => { setSorteo(EQ_SORTEO_REAL ?? null); setSeleccionMovimiento(null); };
-  // Sorteo manual: arranca con los 12 grupos vacíos (tamaños 6x5+6x4 ya
-  // fijados, igual que en el automático) y todos los equipos en el "pool".
+  // Sorteo manual: arranca con los 12 grupos vacíos (A-F de cuatro, G-L de cinco) y todas las entradas en el "pool".
   const iniciarSorteoManual = () => {
-    if (!rankingProvisional) return;
-    const idsGrupos = Array.from({ length: EQ_TAMANOS_GRUPO.totalGrupos }, (_, i) => `G${i + 1}`);
-    const de5 = new Set(shuffleCopy(idsGrupos).slice(0, EQ_TAMANOS_GRUPO.gruposDe5));
-    setSorteo(idsGrupos.map((id) => ({ id, tamano: de5.has(id) ? 5 : 4, equipos: [] })));
+    if (!entradas) return;
+    setSorteo(EQ_GRUPOS_IDS.map((id) => ({ id, tamano: EQ_TAMANOS_GRUPO.idsDe4.includes(id) ? 4 : 5, equipos: [] })));
     setSeleccionMovimiento(null);
   };
   const poolSorteo = useMemo(() => {
-    if (!Array.isArray(sorteo) || !rankingProvisional) return [];
+    if (!Array.isArray(sorteo) || !entradas) return [];
     const colocados = new Set(sorteo.flatMap((g) => g.equipos.map((e) => e.nombre)));
-    return rankingProvisional.filter((e) => !colocados.has(e.nombre));
-  }, [sorteo, rankingProvisional]);
+    return entradasPlano.filter((e) => !colocados.has(e.nombre));
+  }, [sorteo, entradas, entradasPlano]);
   const seleccionarParaMover = (nombre) => setSeleccionMovimiento((p) => (p === nombre ? null : nombre));
-  // Quita un equipo de su grupo y lo deja seleccionado, listo para
-  // reasignarlo con colocarEnGrupo — así se edita tanto un sorteo automático
-  // como uno manual con el mismo mecanismo de dos clics.
+  // Quita una entrada de su grupo y la deja seleccionada, lista para reasignarla con colocarEnGrupo —
+  // así se edita tanto un sorteo automático como uno manual con el mismo mecanismo de dos clics.
   const quitarDelGrupo = (nombre) => {
     setSorteo((prev) => (Array.isArray(prev) ? prev.map((g) => ({ ...g, equipos: g.equipos.filter((e) => e.nombre !== nombre) })) : prev));
     setSeleccionMovimiento(nombre);
   };
-  // Motivo por el que el equipo seleccionado no podría entrar en un grupo
-  // (null = sí puede). Aplica exactamente las mismas restricciones que el
-  // sorteo automático — misma función eqMotivoBloqueo — evaluadas sobre el
-  // grupo ya sin el equipo, para que mover un equipo dentro de su propio
-  // grupo no se bloquee a sí mismo.
+  // Motivo por el que la entrada seleccionada no podría entrar en un grupo (null = sí puede). Aplica
+  // exactamente las mismas restricciones que el sorteo automático — misma función eqMotivoBloqueo —
+  // evaluadas sobre el grupo ya sin la entrada, para que mover dentro de su propio grupo no se bloquee.
   const motivoBloqueo = (nombre, gid) => {
-    if (!Array.isArray(sorteo) || !rankingProvisional) return "Sorteo no disponible";
-    const equipo = rankingProvisional.find((e) => e.nombre === nombre);
+    if (!Array.isArray(sorteo) || !entradas) return "Sorteo no disponible";
+    const entrada = entradasPlano.find((e) => e.nombre === nombre);
     const grupo = sorteo.find((g) => g.id === gid);
-    if (!equipo || !grupo) return "Grupo no encontrado";
-    const ctx = eqContextoRestricciones(rankingProvisional);
-    return eqMotivoBloqueo(equipo, { ...grupo, equipos: grupo.equipos.filter((e) => e.nombre !== nombre) }, ctx);
+    if (!entrada || !grupo) return "Grupo no encontrado";
+    return eqMotivoBloqueo(entrada, { ...grupo, equipos: grupo.equipos.filter((e) => e.nombre !== nombre) }, eqContextoRestricciones());
   };
   const colocarEnGrupo = (gid) => {
-    if (!seleccionMovimiento || !Array.isArray(sorteo) || !rankingProvisional) return;
-    const equipoObj = rankingProvisional.find((e) => e.nombre === seleccionMovimiento);
-    if (!equipoObj) return;
+    if (!seleccionMovimiento || !Array.isArray(sorteo) || !entradas) return;
+    const entrada = entradasPlano.find((e) => e.nombre === seleccionMovimiento);
+    if (!entrada) return;
     if (motivoBloqueo(seleccionMovimiento, gid)) return; // nunca se construye un sorteo ilegal desde la UI
     setSorteo((prev) => {
-      const sinEquipo = prev.map((g) => ({ ...g, equipos: g.equipos.filter((e) => e.nombre !== seleccionMovimiento) }));
-      return sinEquipo.map((g) => (g.id === gid ? { ...g, equipos: [...g.equipos, equipoObj] } : g));
+      const sinEntrada = prev.map((g) => ({ ...g, equipos: g.equipos.filter((e) => e.nombre !== seleccionMovimiento) }));
+      return sinEntrada.map((g) => (g.id === gid ? { ...g, equipos: [...g.equipos, entrada].sort((x, y) => x.bombo - y.bombo) } : g));
     });
     setSeleccionMovimiento(null);
   };
-  const sorteoListo = Array.isArray(sorteo) && sorteo.every((g) => g.equipos.length === g.tamano);
+  const sorteoCompleto = Array.isArray(sorteo) && sorteo.every((g) => g.equipos.length === g.tamano);
+  // Con el sorteo completo y los cuartos jugados, los marcadores pasan a ser las selecciones reales.
+  const sorteoResuelto = useMemo(
+    () => (sorteoCompleto && rankingProvisional && (EQ_SORTEO_REAL || resultadosCuartos) ? (EQ_SORTEO_REAL ? sorteo : eqResolverCuartos(sorteo, resultadosCuartos, rankingProvisional)) : null),
+    [sorteoCompleto, sorteo, rankingProvisional, resultadosCuartos]
+  );
+  const sorteoListo = !!sorteoResuelto;
+  const pendienteCuartos = sorteoCompleto && !sorteoResuelto;
+  // Etiqueta de una entrada: el marcador se muestra con la selección real cuando ya se conoce.
+  const etiquetaEntrada = (e) => {
+    if (!e.placeholder) return null;
+    const real = resultadosCuartos?.[e.qf]?.[e.tipoQF];
+    return `${e.nombre} (${e.equipos.join(" / ")})${real ? ` → ${real}` : ""}`;
+  };
 
   // ---- Etapa 4: fase de grupos de clasificación ----
   const gruposCal = useMemo(
-    () => (sorteoListo ? sorteo.map((g) => ({ ...g, partidos: eqCalendarioGrupo(g.id, g.equipos.map((e) => e.nombre)) })) : null),
-    [sorteo, sorteoListo]
+    () => (sorteoListo ? sorteoResuelto.map((g) => ({ ...g, partidos: eqCalendarioGrupo(g.id, g.equipos.map((e) => e.nombre)) })) : null),
+    [sorteoResuelto, sorteoListo]
   );
   const [resClasif, setResClasif] = useState(EQ_RESULTADOS_REALES_PARCIALES);
-  useEffect(() => { setResClasif(EQ_RESULTADOS_REALES_PARCIALES); }, [sorteo]);
+  useEffect(() => { setResClasif(EQ_RESULTADOS_REALES_PARCIALES); }, [sorteoResuelto]);
   const cambiarClasif = (clave, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResClasif((p) => ({ ...p, [clave]: { ...p[clave], [campo]: v } })); };
   const reiniciarPartidoClasif = (clave) => setResClasif((p) => { const n = { ...p }; delete n[clave]; return n; });
   const rellenarClasif = (partidos) => setResClasif((p) => { const n = { ...p }; partidos.forEach((m) => { if (!n[m.clave]) n[m.clave] = { gl: rnd5(), gv: rnd5() }; }); return n; });
@@ -6253,7 +6351,7 @@ function useEuro2028(nl) {
   return {
     nl, nlGrupos, resNL, rellenarNL: nl.rellenarTodo, reiniciarNL: nl.reiniciarTodo, nlClasificaciones, nlCompleta,
     rankingProvisional, origenRanking, origenSorteo,
-    sorteo, sortear, reiniciarSorteo, iniciarSorteoManual, sorteoListo,
+    sorteo, sortear, reiniciarSorteo, iniciarSorteoManual, sorteoListo, sorteoCompleto, pendienteCuartos, cuartos, resultadosCuartos, etiquetaEntrada,
     poolSorteo, seleccionMovimiento, seleccionarParaMover, quitarDelGrupo, colocarEnGrupo, motivoBloqueo,
     gruposCal, resClasif, cambiarClasif, reiniciarPartidoClasif, rellenarClasif, rellenarTodoClasif, tablas, quintos, clasifCompleta,
     rankingGeneral, directos20, plazasAnfitrion,
@@ -6467,15 +6565,15 @@ function EQEtapa3Sorteo({ eq, colores }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
         <div>
           <span style={{ fontFamily: "'Oswald', sans-serif", color: colores.acento, fontSize: 16 }}>Etapa 3 · Sorteo de los 12 grupos</span>
-          {eq.origenSorteo === "simulado" && <Supuesto colores={colores}>ESTRUCTURA DE BOMBOS NO OFICIAL</Supuesto>}
+          {eq.origenSorteo === "simulado" && <Supuesto colores={colores}>SORTEO SIMULADO · PROCEDIMIENTO OFICIAL</Supuesto>}
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button disabled={!eq.rankingProvisional} onClick={eq.sortear}
-            style={{ background: eq.rankingProvisional ? colores.acento : colores.borde, color: "#0B1420", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: eq.rankingProvisional ? "pointer" : "not-allowed" }}>
+          <button disabled={!eq.cuartos} onClick={eq.sortear}
+            style={{ background: eq.cuartos ? colores.acento : colores.borde, color: "#0B1420", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: eq.cuartos ? "pointer" : "not-allowed" }}>
             {hayGrupos ? "🎲 Repetir sorteo" : "🎲 Sortear grupos"}
           </button>
-          <button disabled={!eq.rankingProvisional} onClick={() => { eq.iniciarSorteoManual(); setEditando(true); }}
-            style={{ background: "none", color: eq.rankingProvisional ? colores.texto : colores.textoSuave, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: eq.rankingProvisional ? "pointer" : "not-allowed" }}>
+          <button disabled={!eq.cuartos} onClick={() => { eq.iniciarSorteoManual(); setEditando(true); }}
+            style={{ background: "none", color: eq.cuartos ? colores.texto : colores.textoSuave, border: `1px solid ${colores.borde}`, borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: eq.cuartos ? "pointer" : "not-allowed" }}>
             ✋ Sorteo manual
           </button>
           {hayGrupos && (
@@ -6487,17 +6585,28 @@ function EQEtapa3Sorteo({ eq, colores }) {
         </div>
       </div>
       <div style={{ color: colores.textoSuave, fontSize: 11, marginBottom: 8 }}>
-        Bombos por defecto (5: cuatro de 12 + uno de 6 solo para grupos de cinco), separación de anfitriones y lista de
-        prohibidos son SUPUESTOS documentados en la capa de datos, pendientes de confirmación oficial (sorteo real: 6/12/2026).
-        {editando && " Modo edición: pulsa un equipo para seleccionarlo y luego el grupo de destino. Se aplican las mismas restricciones que en el sorteo automático (anfitriones en grupos distintos, emparejamientos prohibidos y cuartofinalistas de Liga A en grupos de cuatro): los grupos que las incumplirían aparecen atenuados con el motivo y no admiten el equipo. El botón × lo manda de vuelta al pool."}
+        Procedimiento oficial de la UEFA (sorteo real: 6/12/2026, Belfast): cinco bombos por el ranking provisional NL, grupos A-F de
+        cuatro y G-L de cinco, un equipo por bombo y grupo, y colocación en el primer grupo alfabético disponible. Los ganadores de los
+        cuartos de la Liga A solo caen en grupos de cuatro; cada cruce de cuartos entra como "Ganador QFn" y "Derrotado QFn" y se sustituye
+        por la selección real cuando se juegan los cuartos. Un grupo de cinco admite como máximo un equipo de los play-offs NL o un derrotado.
+        Restricciones: anfitriones e Irlanda del Norte separados, 5 emparejamientos prohibidos, máximo 2 selecciones con riesgo de invierno
+        y máximo 1 par de viaje excesivo por grupo.
+        {editando && " Modo edición: pulsa una entrada para seleccionarla y luego el grupo de destino. Se aplican las mismas restricciones que en el sorteo automático: los grupos que las incumplirían aparecen atenuados con el motivo y no admiten la entrada. El botón × la manda de vuelta al pool."}
       </div>
+      {!eq.cuartos && <div style={{ color: colores.alerta, fontSize: 12, marginBottom: 8 }}>Pendiente: faltan los cruces de cuartos de la Liga A (se cargan al completar la fase de liga NL).</div>}
+      {eq.pendienteCuartos && (
+        <div style={{ border: `1px dashed ${colores.acento}`, borderRadius: 8, padding: "8px 10px", marginBottom: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ color: colores.textoSuave, fontSize: 12 }}>Sorteo completo. Para pasar a la fase de grupos hay que jugar los cuartos de la Liga A (marzo de 2027): los marcadores se sustituyen por las selecciones reales.</span>
+          <BotonAleatorio onClick={eq.nl.rellenarQF} label="Simular cuartos NL" colores={colores} />
+        </div>
+      )}
       {editando && eq.poolSorteo.length > 0 && (
         <div style={{ border: `1px dashed ${colores.borde}`, borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
           <div style={{ color: colores.textoSuave, fontSize: 10, marginBottom: 4 }}>Sin asignar ({eq.poolSorteo.length}):</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
             {eq.poolSorteo.map((e) => (
               <span key={e.nombre} style={chipEstilo(e.nombre, true)} onClick={() => eq.seleccionarParaMover(e.nombre)}>
-                <ConBandera nombre={e.nombre} />
+                {e.placeholder ? eq.etiquetaEntrada(e) : <ConBandera nombre={e.nombre} />}
               </span>
             ))}
           </div>
@@ -6533,7 +6642,7 @@ function EQEtapa3Sorteo({ eq, colores }) {
                 {g.equipos.map((e) => (
                   <div key={e.nombre} style={{ ...chipEstilo(e.nombre, false), display: "flex", justifyContent: "space-between", width: "100%" }}>
                     <span onClick={editando ? (ev) => { ev.stopPropagation(); eq.seleccionarParaMover(e.nombre); } : undefined} style={{ color: colores.texto }}>
-                      <ConBandera nombre={e.nombre} />
+                      {e.placeholder ? eq.etiquetaEntrada(e) : <ConBandera nombre={e.nombre} />}
                     </span>
                     {editando && (
                       <button onClick={(ev) => { ev.stopPropagation(); eq.quitarDelGrupo(e.nombre); }} title="Quitar del grupo"
@@ -6649,8 +6758,8 @@ function SimuladorEuro2028Page({ eq }) {
         <p style={{ color: c.textoSuave, fontSize: 13, lineHeight: 1.6, maxWidth: 700, marginBottom: 6 }}>
           54 selecciones, 12 grupos (6 de cinco + 6 de cuatro), 20 clasificados directos + hasta 2 plazas de anfitrión +
           repesca de marzo de 2028 hasta completar 24. Los anfitriones (Inglaterra, Escocia, Gales, República de Irlanda)
-          no tienen plaza automática. Estado de datos a 27/07/2026 — todo lo marcado <Supuesto colores={c} /> es un valor
-          por defecto configurable, no un dato oficial de la UEFA.
+          no tienen plaza automática. El sorteo de grupos sigue el procedimiento oficial publicado por la UEFA (sorteo real: 6/12/2026);
+          estado de datos a 22/11/2026 — todo lo marcado <Supuesto colores={c} /> es un valor por defecto configurable, no un dato oficial de la UEFA.
         </p>
         <div style={{ marginBottom: 16 }}>
           <button onClick={eq.reiniciarTodo} style={{ background: "none", border: `1px solid ${c.borde}`, color: c.textoSuave, borderRadius: 8, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>

@@ -87,11 +87,35 @@ export default function ArticuloEuro2028() {
           </P>
           <P>
             Los cuatro anfitriones —Inglaterra, Escocia, Gales y República de Irlanda— juegan la clasificación
-            como todo el mundo y se sortean en grupos distintos para no eliminarse entre ellos. La novedad
+            como todo el mundo y se sortean en grupos distintos —igual que Irlanda del Norte— para no eliminarse entre ellos. La novedad
             respecto a Eurocopas anteriores es que no tienen plaza automática, sino red de seguridad: dos plazas
             reservadas para los dos anfitriones mejor clasificados que no hayan entrado ni como primeros ni como
             mejores segundos. (Irlanda del Norte, que perdió su condición de sede al caerse Casement Park del
             proyecto, no entra en ese reparto.)
+          </P>
+          <P>
+            El sorteo, el 6 de diciembre en Belfast, sigue un procedimiento propio. Las 54 selecciones se reparten en
+            cinco bombos por el ranking provisional (puestos 1-12, 13-24, 25-36, 37-48 y un último bombo de seis). Los
+            grupos A a F son de cuatro y los G a L de cinco, y cada grupo recibe un equipo de cada bombo; el bombo 5
+            solo va a los de cinco. Se sortea bombo a bombo, de uno a cinco, y cada selección extraída se coloca en el
+            primer grupo disponible por orden alfabético; si una restricción salta o se anticipa, va al siguiente que
+            la respete.
+          </P>
+          <P>
+            Hay una pieza que se sale de lo habitual: los cuartos de la Liga A (marzo de 2027) se juegan en paralelo a
+            la clasificación. Los cuatro ganadores de cuartos tienen que caer en grupos de cuatro, porque los de cinco
+            ya empiezan en marzo. Como en el sorteo todavía no se sabe quién gana, cada cruce entra en el bombo 1 dos
+            veces: como "ganador" y como "derrotado" de ese cruce, y el marcador se sustituye por la selección real
+            cuando se juegan los cuartos. Un grupo de cinco, además, admite como máximo un equipo de los play-offs de la
+            Nations League o un derrotado de cuartos.
+          </P>
+          <P>
+            El resto de condiciones son cinco emparejamientos prohibidos (Armenia–Azerbaiyán, Bielorrusia–Ucrania,
+            Gibraltar–España, Kosovo–Bosnia y Herzegovina y Kosovo–Serbia), un máximo de dos selecciones con riesgo de
+            invierno severo por grupo (Estonia, Islas Feroe, Finlandia, Islandia, Letonia, Lituania y Noruega) y un
+            máximo de un par con viaje excesivo, de ocho horas o más (Kazajistán con buena parte de Europa occidental,
+            Azerbaiyán con Islandia y Portugal, Islandia con Armenia y Chipre). Si los implicados juegan los cuartos, la
+            restricción se aplica a su cruce.
           </P>
           <P>
             Con 12 segundos de grupo y 8 plazas directas para ellos, sobran cuatro. Esos cuatro peores segundos
