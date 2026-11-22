@@ -4706,6 +4706,26 @@ function nlTiePlayoff(cabeza, rival) {
 function nlTieCuartos(cabeza, rival) {
   return { id: `QF-${cabeza.nombre}`, a: rival, b: cabeza };
 }
+// Sorteo REAL de los cuartos de la Final a Cuatro 2026/27 (sorteo del 20/11/2026).
+// Fuente: página "Partidos de la fase eliminatoria" de es.uefa.com (UEFA Nations League),
+// pegada por Carlos el 22/11/2026. Cada cruce: cabeza = ganador de grupo (vuelta en casa),
+// rival = segundo (ida en casa; es el primer equipo de cada partido de ida en la fuente).
+// El orden alimenta las semifinales (cruces 1+2 → SF-1, cruces 3+4 → SF-2): la fuente fija
+// SF-1 = Países Bajos/Portugal – España/Francia (9/6/2027) y SF-2 = Bélgica/Alemania –
+// Noruega/Inglaterra (10/6/2027).
+const NL_QF_SORTEO_REAL = [
+  { cabeza: "Portugal", rival: "Países Bajos", ida: "sáb 27/03/2027 20:45", vuelta: "mar 30/03/2027 20:45" },
+  { cabeza: "Francia", rival: "España", ida: "jue 25/03/2027 20:45", vuelta: "dom 28/03/2027 20:45" },
+  { cabeza: "Alemania", rival: "Bélgica", ida: "jue 25/03/2027 20:45", vuelta: "dom 28/03/2027 20:45" },
+  { cabeza: "Inglaterra", rival: "Noruega", ida: "sáb 27/03/2027 18:00", vuelta: "mar 30/03/2027 20:45" },
+];
+const NL_FECHAS_FF_REAL = { "SF-1": "mié 9/6/2027 21:00", "SF-2": "jue 10/6/2027 21:00", "3P": "dom 13/6/2027 15:00 (por confirmar)", FINAL: "dom 13/6/2027 21:00" };
+// Cruces reales con los objetos del pool; null si algún equipo no está en la posición esperada.
+function nlCrucesQFReal(pool) {
+  if (!pool?.listo) return null;
+  const cruces = NL_QF_SORTEO_REAL.map((c) => ({ cabeza: pool.seeds.find((e) => e.nombre === c.cabeza), rival: pool.runnersUp.find((e) => e.nombre === c.rival) }));
+  return cruces.every((c) => c.cabeza && c.rival) ? cruces : null;
+}
 function nlResolverGanador(tie, resultado) {
   const est = estadoEliminatoria(resultado);
   return est.fase === "resuelto" ? (est.ganador === "A" ? tie.a : tie.b) : null;
@@ -4842,18 +4862,23 @@ function useNationsLeague() {
   const rellenarBC = () => { if (!tiesBC) return; const n = {}; tiesBC.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResBC(n); };
 
   // ---- Cuartos, semifinales, 3er puesto y final de la Final a Cuatro (Liga A) ----
-  const [sorteoQF, setSorteoQF] = useState(null);
+  const crucesQFReal = useMemo(() => nlCrucesQFReal(finalFourPool), [finalFourPool]);
+  const [sorteoQF, setSorteoQF] = useState(() => (crucesQFReal ? { cruces: crucesQFReal, bloqueo: false } : null));
+  const [qfEsReal, setQfEsReal] = useState(!!crucesQFReal);
   const [resQF, setResQF] = useState({});
   const [resSF, setResSF] = useState({});
   const [res3P, setRes3P] = useState({});
   const [resFinal, setResFinal] = useState({});
   const limpiarFF = () => { setResQF({}); setResSF({}); setRes3P({}); setResFinal({}); };
-  useEffect(() => { setSorteoQF(null); limpiarFF();
+  // Con los grupos de Liga A completos, el sorteo real del 20/11/2026 se carga por defecto
+  // (editable y restaurable); si el pool no coincide con él, queda sin sortear como antes.
+  useEffect(() => { setSorteoQF(crucesQFReal ? { cruces: crucesQFReal, bloqueo: false } : null); setQfEsReal(!!crucesQFReal); limpiarFF();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firmaFF]);
   const bloqueadoQF = (seed, runnerUp) => seed.grupo === runnerUp.grupo;
-  const sortearQF = () => { setSorteoQF(nlSortearEmparejamiento(finalFourPool.seeds, finalFourPool.runnersUp, bloqueadoQF)); limpiarFF(); };
-  const confirmarQF = (cruces) => { setSorteoQF({ cruces, bloqueo: false }); limpiarFF(); };
+  const sortearQF = () => { setSorteoQF(nlSortearEmparejamiento(finalFourPool.seeds, finalFourPool.runnersUp, bloqueadoQF)); setQfEsReal(false); limpiarFF(); };
+  const confirmarQF = (cruces) => { setSorteoQF({ cruces, bloqueo: false }); setQfEsReal(false); limpiarFF(); };
+  const restaurarQFReal = () => { if (!crucesQFReal) return; setSorteoQF({ cruces: crucesQFReal, bloqueo: false }); setQfEsReal(true); limpiarFF(); };
   const cambiarQF = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResQF((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
   const reiniciarQF = (id) => setResQF((p) => { const n = { ...p }; delete n[id]; return n; });
   const tiesQF = useMemo(() => (sorteoQF && !sorteoQF.error ? sorteoQF.cruces.map((c) => nlTieCuartos(c.cabeza, c.rival)) : null), [sorteoQF]);
@@ -4970,6 +4995,7 @@ function useNationsLeague() {
     origenNL: oNL.origen, bloqueadoPartido: oNL.esBloqueado, desbloquearPartido: oNL.desbloquear, restaurarPartido,
     playoffPools, sorteoAB, tiesAB, resAB, sortearAB, confirmarAB, cambiarAB, reiniciarAB, rellenarAB,
     sorteoBC, tiesBC, resBC, sortearBC, confirmarBC, cambiarBC, reiniciarBC, rellenarBC,
+    qfEsReal, restaurarQFReal, crucesQFReal,
     finalFourPool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta,
     semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas,
     res3P, cambiar3P, reiniciar3P, rellenar3P, resFinal, cambiarFinal, reiniciarFinal, rellenarFinalPartido, campeon,
@@ -5342,7 +5368,7 @@ function NLPartidoUnico({ titulo, a, b, resultado, onChange, onReset, colores, g
   );
 }
 function NLFinalFourSection({ nl, colores }) {
-  const { finalFourPool: pool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta, semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas, res3P, cambiar3P, reiniciar3P, rellenar3P, resFinal, cambiarFinal, reiniciarFinal, rellenarFinalPartido, campeon } = nl;
+  const { qfEsReal, restaurarQFReal, crucesQFReal, finalFourPool: pool, sorteoQF, tiesQF, resQF, sortearQF, confirmarQF, cambiarQF, reiniciarQF, rellenarQF, bloqueadoQF, qfCompleta, semis, resSF, cambiarSF, reiniciarSF, rellenarSF, sfCompleta, finalistas, terceristas, res3P, cambiar3P, reiniciar3P, rellenar3P, resFinal, cambiarFinal, reiniciarFinal, rellenarFinalPartido, campeon } = nl;
   return (
     <div style={{ marginTop: 26 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${colores.acento}`, paddingLeft: 12, marginBottom: 10 }}>
@@ -5353,6 +5379,12 @@ function NLFinalFourSection({ nl, colores }) {
       <NLControlesEmparejamiento sorteo={sorteoQF} listo={pool.listo} onAuto={sortearQF} onConfirmarManual={confirmarQF}
         alta={pool.seeds} baja={pool.runnersUp} bloqueado={bloqueadoQF} colores={colores} labelAuto="Sortear cuartos" />
       {sorteoQF?.bloqueo && <div style={{ color: colores.alerta, fontSize: 12, marginBottom: 10 }}>No se pudo evitar algún cruce con el 2º del propio grupo — se ha asignado en el orden del sorteo.</div>}
+      {qfEsReal && <div style={{ color: colores.acento, fontSize: 12, marginBottom: 10 }}>✓ SORTEO REAL (20/11/2026, UEFA) · ida y vuelta 25-30/3/2027, semifinales 9 y 10/6/2027, 3er puesto y final 13/6/2027.</div>}
+      {!qfEsReal && crucesQFReal && (
+        <div style={{ marginBottom: 10 }}>
+          <button onClick={restaurarQFReal} style={{ background: "none", border: `1px solid ${colores.acento}`, color: colores.acento, borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>↩ Restaurar sorteo real</button>
+        </div>
+      )}
       {tiesQF && (
         <>
           <div style={{ marginBottom: 10 }}><BotonAleatorio onClick={rellenarQF} label="Simular cuartos" colores={colores} /></div>
@@ -5360,7 +5392,7 @@ function NLFinalFourSection({ nl, colores }) {
             {tiesQF.map((tie) => (
               <NLTieCard key={tie.id} tie={tie} resultado={resQF[tie.id]} onChange={cambiarQF} onReset={reiniciarQF} colores={colores}
                 ganador={nlResolverGanador(tie, resQF[tie.id])} perdedor={null} destinoGanador="Pasa a semifinales"
-                notaSede={`${tie.a.nombre} juega la ida en casa; ${tie.b.nombre} (cabeza de serie, ganador de grupo) decide la vuelta en casa.`} />
+                notaSede={`${tie.a.nombre} juega la ida en casa; ${tie.b.nombre} (cabeza de serie, ganador de grupo) decide la vuelta en casa.${qfEsReal ? (() => { const f = NL_QF_SORTEO_REAL.find((c) => c.rival === tie.a.nombre && c.cabeza === tie.b.nombre); return f ? ` Ida ${f.ida} · vuelta ${f.vuelta}.` : ""; })() : ""}`} />
             ))}
           </div>
         </>
@@ -5373,10 +5405,10 @@ function NLFinalFourSection({ nl, colores }) {
           </div>
           <NLPartidoUnico titulo="SF-1" a={semis[0].a} b={semis[0].b} resultado={resSF["SF-1"]}
             onChange={(_, c, v) => cambiarSF("SF-1", c, v)} onReset={() => reiniciarSF("SF-1")} colores={colores}
-            ganador={finalistas?.a ?? null} />
+            ganador={finalistas?.a ?? null} notaExtra={qfEsReal ? `Fecha: ${NL_FECHAS_FF_REAL["SF-1"]}` : null} />
           <NLPartidoUnico titulo="SF-2" a={semis[1].a} b={semis[1].b} resultado={resSF["SF-2"]}
             onChange={(_, c, v) => cambiarSF("SF-2", c, v)} onReset={() => reiniciarSF("SF-2")} colores={colores}
-            ganador={finalistas?.b ?? null} />
+            ganador={finalistas?.b ?? null} notaExtra={qfEsReal ? `Fecha: ${NL_FECHAS_FF_REAL["SF-2"]}` : null} />
         </>
       )}
       {sfCompleta && (
@@ -5386,11 +5418,11 @@ function NLFinalFourSection({ nl, colores }) {
           <NLPartidoUnico titulo="3P" a={terceristas.a} b={terceristas.b} resultado={res3P["3P"]}
             onChange={(_, c, v) => cambiar3P("3P", c, v)} onReset={() => reiniciar3P("3P")} colores={colores}
             ganador={estadoPartidoUnico(res3P["3P"]).fase === "resuelto" ? (estadoPartidoUnico(res3P["3P"]).ganador === "A" ? terceristas.a : terceristas.b) : null}
-            notaExtra="Pierden ambas semifinales." />
+            notaExtra={`Pierden ambas semifinales.${qfEsReal ? ` Fecha: ${NL_FECHAS_FF_REAL["3P"]}.` : ""}`} />
           <div style={{ marginBottom: 6 }}><BotonAleatorio onClick={rellenarFinalPartido} label="Simular final" colores={colores} /></div>
           <NLPartidoUnico titulo="FINAL" a={finalistas.a} b={finalistas.b} resultado={resFinal["FINAL"]}
             onChange={(_, c, v) => cambiarFinal("FINAL", c, v)} onReset={() => reiniciarFinal("FINAL")} colores={colores}
-            ganador={campeon} notaExtra={campeon ? `🏆 Campeón de la UEFA Nations League 2026/27: ${campeon.nombre}` : null} />
+            ganador={campeon} notaExtra={[qfEsReal ? `Fecha: ${NL_FECHAS_FF_REAL.FINAL}` : null, campeon ? `🏆 Campeón de la UEFA Nations League 2026/27: ${campeon.nombre}` : null].filter(Boolean).join(" · ") || null} />
         </>
       )}
     </div>
