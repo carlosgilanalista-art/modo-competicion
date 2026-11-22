@@ -4694,12 +4694,12 @@ function nlSortearEmparejamiento(alta, baja, bloqueado) {
   const cruces = alta.map((cabeza) => ({ cabeza, rival: libres.shift() }));
   return { cruces, bloqueo: true };
 }
-// Play-off de ida y vuelta: el peor clasificado de la general 2024/25 juega la ida en
-// casa y el mejor decide la vuelta en casa — regla explícita del reglamento, aplicada
-// igual venga el cruce de un sorteo automático o de una edición manual.
+// Play-off de ida y vuelta (Art. 16.04 del reglamento 2026/27): la selección de la liga
+// inferior (el "rival" del sorteo) juega la ida en casa y la de la liga superior (la
+// cabeza de serie) decide la vuelta en casa — igual venga el cruce de un sorteo
+// automático o de una edición manual.
 function nlTiePlayoff(cabeza, rival) {
-  const [peor, mejor] = cabeza.rank > rival.rank ? [cabeza, rival] : [rival, cabeza];
-  return { id: `${cabeza.nombre}|${rival.nombre}`, a: peor, b: mejor };
+  return { id: `${cabeza.nombre}|${rival.nombre}`, a: rival, b: cabeza };
 }
 // Cuartos de la Final a Cuatro: el ganador de grupo (cabeza de serie) decide siempre la
 // vuelta en casa, sea cual sea el rival que le toque en el sorteo.
@@ -4724,6 +4724,30 @@ const NL_FECHAS_FF_REAL = { "SF-1": "mié 9/6/2027 21:00", "SF-2": "jue 10/6/202
 function nlCrucesQFReal(pool) {
   if (!pool?.listo) return null;
   const cruces = NL_QF_SORTEO_REAL.map((c) => ({ cabeza: pool.seeds.find((e) => e.nombre === c.cabeza), rival: pool.runnersUp.find((e) => e.nombre === c.rival) }));
+  return cruces.every((c) => c.cabeza && c.rival) ? cruces : null;
+}
+// Sorteo REAL de los play-offs A/B y B/C 2026/27 (sorteo del 20/11/2026). Fuente: página
+// "Partidos de la fase eliminatoria" de es.uefa.com, pegada por Carlos el 22/11/2026. Emparejamientos
+// contrastados con el Art. 16.01 del reglamento (A/B: 2 peores 3.º y 2 mejores 4.º de A vs 2.º de B;
+// B/C: 4.º de B vs 2.º de C). cabeza = liga superior (vuelta en casa); rival = liga inferior (ida en casa, Art. 16.04).
+const NL_PO_SORTEO_REAL = {
+  AB: [
+    { cabeza: "Dinamarca", rival: "Bosnia y Herzegovina", ida: "jue 25/03/2027 20:45", vuelta: "dom 28/03/2027 20:45" },
+    { cabeza: "Serbia", rival: "Hungría", ida: "jue 25/03/2027 20:45", vuelta: "dom 28/03/2027 18:00" },
+    { cabeza: "Croacia", rival: "República de Irlanda", ida: "sáb 27/03/2027 20:45", vuelta: "mar 30/03/2027 20:45" },
+    { cabeza: "Gales", rival: "Eslovenia", ida: "sáb 27/03/2027 20:45", vuelta: "mar 30/03/2027 20:45" },
+  ],
+  BC: [
+    { cabeza: "Macedonia del Norte", rival: "Chipre", ida: "jue 25/03/2027 18:00", vuelta: "dom 28/03/2027 15:00" },
+    { cabeza: "Israel", rival: "Bielorrusia", ida: "jue 25/03/2027 20:45", vuelta: "dom 28/03/2027 20:45" },
+    { cabeza: "Georgia", rival: "Islas Feroe", ida: "sáb 27/03/2027 15:00", vuelta: "mar 30/03/2027 18:00" },
+    { cabeza: "Rumanía", rival: "Estonia", ida: "sáb 27/03/2027 18:00", vuelta: "mar 30/03/2027 20:45" },
+  ],
+};
+// Cruces reales con los objetos del pool; null si algún equipo no está en el pool esperado.
+function nlCrucesPORealDe(real, pool) {
+  if (!pool?.listo) return null;
+  const cruces = real.map((c) => ({ cabeza: pool.alta.find((e) => e.nombre === c.cabeza), rival: pool.baja.find((e) => e.nombre === c.rival) }));
   return cruces.every((c) => c.cabeza && c.rival) ? cruces : null;
 }
 function nlResolverGanador(tie, resultado) {
@@ -4801,6 +4825,7 @@ function useNationsLeague() {
     const ligaCompleta = (liga) => gruposDe(liga).every((g) => clasificaciones.get(g.id).completa);
     const posEnLiga = (liga, i) => gruposDe(liga).map((g) => ({ g: g.id, fila: clasificaciones.get(g.id).filas[i] }));
     const nombres = (arr) => arr.map((x) => ({ nombre: x.fila.equipo.nombre, grupo: x.g }));
+    const cuartosA = ligaCompleta("A") ? nlRankMismaPosicion(posEnLiga("A", 3).map((x) => x.fila)) : null;
     const cuartosC = ligaCompleta("C") ? nlRankMismaPosicion(posEnLiga("C", 3).map((x) => x.fila)) : null;
     return {
       ascensos: {
@@ -4809,8 +4834,9 @@ function useNationsLeague() {
         C: ligaCompleta("D") ? nombres(posEnLiga("D", 0)) : null, // ganadores de D → C
       },
       descensos: {
-        B: ligaCompleta("A") ? nombres(posEnLiga("A", 3)) : null, // 4º de A → B
-        C: ligaCompleta("B") ? nombres(posEnLiga("B", 3)) : null, // 4º de B → C
+        // Art. 19.03 b: los dos 4.º de A en los puestos 15.º y 16.º del ranking provisional bajan a B.
+        // Los otros dos 4.º de A juegan el play-off A/B y los 4 de B juegan el B/C (no hay descenso directo a C).
+        B: cuartosA ? cuartosA.slice(-2).map((f) => ({ nombre: f.equipo.nombre, grupo: null })) : null,
         D: cuartosC ? cuartosC.slice(-2).map((f) => ({ nombre: f.equipo.nombre, grupo: null })) : null, // 2 peores 4º de C → D
       },
     };
@@ -4822,10 +4848,19 @@ function useNationsLeague() {
   const playoffPools = useMemo(() => {
     const gruposDe = (liga) => grupos.filter((g) => g.liga === liga);
     const ligaCompleta = (liga) => gruposDe(liga).every((g) => clasificaciones.get(g.id).completa);
-    const fila = (liga, i) => gruposDe(liga).map((g) => { const f = clasificaciones.get(g.id).filas[i]; return { nombre: f.equipo.nombre, rank: f.equipo.rank, grupo: g.id }; });
+    // Posición `i` de cada grupo de la liga, ordenada entre grupos como en el ranking provisional
+    // (Art. 19.02): puntos, desempates generales y ranking de acceso.
+    const fila = (liga, i) => {
+      const grupoDe = new Map(gruposDe(liga).map((g) => { const f = clasificaciones.get(g.id).filas[i]; return [f.equipo.nombre, g.id]; }));
+      return nlRankMismaPosicion(gruposDe(liga).map((g) => clasificaciones.get(g.id).filas[i]))
+        .map((f) => ({ nombre: f.equipo.nombre, rank: f.equipo.rank, grupo: grupoDe.get(f.equipo.nombre) }));
+    };
+    // Art. 16.01 a: A/B = los 2 peores 3.º de A (puestos 11.º-12.º) y los 2 mejores 4.º de A (13.º-14.º)
+    //   contra los 4 segundos de B. Art. 16.01 b: B/C = los 4 cuartos de B contra los 4 segundos de C.
+    // La liga superior es cabeza de serie (Art. 16.02).
     return {
-      AB: { listo: ligaCompleta("A") && ligaCompleta("B"), alta: fila("A", 2), baja: fila("B", 1) }, // 3º de A vs 2º de B
-      BC: { listo: ligaCompleta("B") && ligaCompleta("C"), alta: fila("B", 2), baja: fila("C", 1) }, // 3º de B vs 2º de C
+      AB: { listo: ligaCompleta("A") && ligaCompleta("B"), alta: [...fila("A", 2).slice(2), ...fila("A", 3).slice(0, 2)], baja: fila("B", 1) },
+      BC: { listo: ligaCompleta("B") && ligaCompleta("C"), alta: fila("B", 3), baja: fila("C", 1) },
     };
   }, [grupos, clasificaciones]);
   const finalFourPool = useMemo(() => {
@@ -4840,22 +4875,33 @@ function useNationsLeague() {
   const firmaFF = finalFourPool.listo ? finalFourPool.seeds.map((e) => e.nombre).join(",") + "|" + finalFourPool.runnersUp.map((e) => e.nombre).join(",") : null;
 
   // ---- Play-off A/B ----
-  const [sorteoAB, setSorteoAB] = useState(null);
+  const crucesABReal = useMemo(() => nlCrucesPORealDe(NL_PO_SORTEO_REAL.AB, playoffPools.AB), [playoffPools]);
+  const [sorteoAB, setSorteoAB] = useState(() => (crucesABReal ? { cruces: crucesABReal, bloqueo: false } : null));
+  const [abEsReal, setAbEsReal] = useState(!!crucesABReal);
   const [resAB, setResAB] = useState({});
-  useEffect(() => { setSorteoAB(null); setResAB({}); }, [firmaAB]);
-  const sortearAB = () => { setSorteoAB(nlSortearEmparejamiento(playoffPools.AB.alta, playoffPools.AB.baja, () => false)); setResAB({}); };
-  const confirmarAB = (cruces) => { setSorteoAB({ cruces, bloqueo: false }); setResAB({}); };
+  // Con las ligas completas, el sorteo real del 20/11/2026 se carga por defecto (editable y restaurable).
+  useEffect(() => { setSorteoAB(crucesABReal ? { cruces: crucesABReal, bloqueo: false } : null); setAbEsReal(!!crucesABReal); setResAB({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaAB]);
+  const sortearAB = () => { setSorteoAB(nlSortearEmparejamiento(playoffPools.AB.alta, playoffPools.AB.baja, () => false)); setAbEsReal(false); setResAB({}); };
+  const confirmarAB = (cruces) => { setSorteoAB({ cruces, bloqueo: false }); setAbEsReal(false); setResAB({}); };
+  const restaurarABReal = () => { if (!crucesABReal) return; setSorteoAB({ cruces: crucesABReal, bloqueo: false }); setAbEsReal(true); setResAB({}); };
   const cambiarAB = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResAB((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
   const reiniciarAB = (id) => setResAB((p) => { const n = { ...p }; delete n[id]; return n; });
   const tiesAB = useMemo(() => (sorteoAB && !sorteoAB.error ? sorteoAB.cruces.map((c) => nlTiePlayoff(c.cabeza, c.rival)) : null), [sorteoAB]);
   const rellenarAB = () => { if (!tiesAB) return; const n = {}; tiesAB.forEach((t) => { n[t.id] = generarResultadoAleatorio(); }); setResAB(n); };
 
   // ---- Play-off B/C ----
-  const [sorteoBC, setSorteoBC] = useState(null);
+  const crucesBCReal = useMemo(() => nlCrucesPORealDe(NL_PO_SORTEO_REAL.BC, playoffPools.BC), [playoffPools]);
+  const [sorteoBC, setSorteoBC] = useState(() => (crucesBCReal ? { cruces: crucesBCReal, bloqueo: false } : null));
+  const [bcEsReal, setBcEsReal] = useState(!!crucesBCReal);
   const [resBC, setResBC] = useState({});
-  useEffect(() => { setSorteoBC(null); setResBC({}); }, [firmaBC]);
-  const sortearBC = () => { setSorteoBC(nlSortearEmparejamiento(playoffPools.BC.alta, playoffPools.BC.baja, () => false)); setResBC({}); };
-  const confirmarBC = (cruces) => { setSorteoBC({ cruces, bloqueo: false }); setResBC({}); };
+  useEffect(() => { setSorteoBC(crucesBCReal ? { cruces: crucesBCReal, bloqueo: false } : null); setBcEsReal(!!crucesBCReal); setResBC({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaBC]);
+  const sortearBC = () => { setSorteoBC(nlSortearEmparejamiento(playoffPools.BC.alta, playoffPools.BC.baja, () => false)); setBcEsReal(false); setResBC({}); };
+  const confirmarBC = (cruces) => { setSorteoBC({ cruces, bloqueo: false }); setBcEsReal(false); setResBC({}); };
+  const restaurarBCReal = () => { if (!crucesBCReal) return; setSorteoBC({ cruces: crucesBCReal, bloqueo: false }); setBcEsReal(true); setResBC({}); };
   const cambiarBC = (id, campo, raw) => { const v = validar(raw); if (v === "INVALIDO") return; setResBC((p) => ({ ...p, [id]: { ...p[id], [campo]: v } })); };
   const reiniciarBC = (id) => setResBC((p) => { const n = { ...p }; delete n[id]; return n; });
   const tiesBC = useMemo(() => (sorteoBC && !sorteoBC.error ? sorteoBC.cruces.map((c) => nlTiePlayoff(c.cabeza, c.rival)) : null), [sorteoBC]);
@@ -4956,18 +5002,22 @@ function useNationsLeague() {
       banda1_8 = [campeon, subcampeon, tercero, cuarto, ...derrotadosQF];
     }
 
+    // Art. 19.04: 9.º-10.º los 2 mejores 3.º de A; 11.º-18.º ganadores de B + ganadores del play-off A/B;
+    // 19.º-24.º los 2 peores 4.º de A + los 4 derrotados del A/B (sin resolver el A/B, orden provisional).
     let banda9_24 = rankingProvisional.slice(8, 24);
     if (tiesAB && tiesAB.every((t) => estadoEliminatoria(resAB[t.id]).fase === "resuelto")) {
       const ganadoresAB = tiesAB.map((t) => nlResolverGanador(t, resAB[t.id]));
       const perdedoresAB = tiesAB.map((t) => { const g = nlResolverGanador(t, resAB[t.id]); return g.nombre === t.a.nombre ? t.b : t.a; });
-      banda9_24 = [...porInterino([...ganadoresAB, ...posLiga("B", 0)]), ...porInterino([...perdedoresAB, ...posLiga("A", 3)])];
+      banda9_24 = [...rankingProvisional.slice(8, 10), ...porInterino([...ganadoresAB, ...posLiga("B", 0)]), ...porInterino([...perdedoresAB, ...rankingProvisional.slice(14, 16)])];
     }
 
+    // Art. 19.04: 25.º-28.º los 4 terceros de B; 29.º-36.º ganadores de C + ganadores del play-off B/C;
+    // 37.º-40.º los 4 derrotados del B/C.
     let banda25_40 = rankingProvisional.slice(24, 40);
     if (tiesBC && tiesBC.every((t) => estadoEliminatoria(resBC[t.id]).fase === "resuelto")) {
       const ganadoresBC = tiesBC.map((t) => nlResolverGanador(t, resBC[t.id]));
       const perdedoresBC = tiesBC.map((t) => { const g = nlResolverGanador(t, resBC[t.id]); return g.nombre === t.a.nombre ? t.b : t.a; });
-      banda25_40 = [...porInterino([...ganadoresBC, ...posLiga("C", 0)]), ...porInterino([...perdedoresBC, ...posLiga("B", 3)])];
+      banda25_40 = [...rankingProvisional.slice(24, 28), ...porInterino([...ganadoresBC, ...posLiga("C", 0)]), ...porInterino(perdedoresBC)];
     }
 
     const banda41_54 = rankingProvisional.slice(40, 54);
@@ -4993,6 +5043,7 @@ function useNationsLeague() {
   return {
     grupos, numJornadas, res, cambiar, reiniciar, rellenarGrupo, rellenarJornadaGrupo, rellenarTodo, reiniciarTodo, clasificaciones, movimientos,
     origenNL: oNL.origen, bloqueadoPartido: oNL.esBloqueado, desbloquearPartido: oNL.desbloquear, restaurarPartido,
+    abEsReal, restaurarABReal, crucesABReal, bcEsReal, restaurarBCReal, crucesBCReal,
     playoffPools, sorteoAB, tiesAB, resAB, sortearAB, confirmarAB, cambiarAB, reiniciarAB, rellenarAB,
     sorteoBC, tiesBC, resBC, sortearBC, confirmarBC, cambiarBC, reiniciarBC, rellenarBC,
     qfEsReal, restaurarQFReal, crucesQFReal,
@@ -5016,8 +5067,8 @@ const NL_ZONA_COLOR = {
   D: ["#5BBB7B", "#8A97A8", "#8A97A8"],
 };
 const NL_ZONA_LABEL = {
-  A: ["Cuartos (Final a Cuatro)", "Cuartos (Final a Cuatro)", "Play-off descenso A/B", "Descenso directo a B"],
-  B: ["Ascenso directo a A", "Play-off ascenso A/B", "Play-off descenso B/C", "Descenso directo a C"],
+  A: ["Cuartos (Final a Cuatro)", "Cuartos (Final a Cuatro)", "Permanece en A, o play-off A/B si es de los 2 peores 3.º (11.º-12.º)", "Play-off A/B (13.º-14.º) o descenso directo a B (15.º-16.º)"],
+  B: ["Ascenso directo a A", "Play-off ascenso A/B", "Permanece en B", "Play-off descenso B/C"],
   C: ["Ascenso directo a B", "Play-off ascenso B/C", "Play-off descenso C/D", "Descenso a D / play-off C/D"],
   D: ["Ascenso directo a C", "Play-off C/D o permanencia", "Play-off C/D o permanencia"],
 };
@@ -5141,14 +5192,16 @@ function NationsLeagueView({ nl }) {
         );
       })}
       <NLResumenMovimientos mov={nl.movimientos} colores={c} />
-      <NLPlayoffSection titulo="Play-off A/B" sub="3º de Liga A vs 2º de Liga B — el ganador juega en Liga A, el perdedor en Liga B"
+      <NLPlayoffSection titulo="Play-off A/B" sub="2 peores 3.º y 2 mejores 4.º de Liga A (puestos 11.º-14.º) vs 2.º de Liga B — el ganador juega en Liga A, el perdedor en Liga B"
         pool={nl.playoffPools.AB} sorteo={nl.sorteoAB} ties={nl.tiesAB} res={nl.resAB}
         sortear={nl.sortearAB} confirmar={nl.confirmarAB} cambiar={nl.cambiarAB} reiniciar={nl.reiniciarAB} rellenar={nl.rellenarAB}
-        colores={c} destinoGanador="Se queda/asciende a Liga A" destinoPerdedor="Se queda/desciende a Liga B" />
-      <NLPlayoffSection titulo="Play-off B/C" sub="3º de Liga B vs 2º de Liga C — el ganador juega en Liga B, el perdedor en Liga C"
+        colores={c} destinoGanador="Se queda/asciende a Liga A" destinoPerdedor="Se queda/desciende a Liga B"
+        esReal={nl.abEsReal} restaurarReal={nl.restaurarABReal} hayReal={!!nl.crucesABReal} reales={NL_PO_SORTEO_REAL.AB} />
+      <NLPlayoffSection titulo="Play-off B/C" sub="4.º de Liga B vs 2.º de Liga C — el ganador juega en Liga B, el perdedor en Liga C"
         pool={nl.playoffPools.BC} sorteo={nl.sorteoBC} ties={nl.tiesBC} res={nl.resBC}
         sortear={nl.sortearBC} confirmar={nl.confirmarBC} cambiar={nl.cambiarBC} reiniciar={nl.reiniciarBC} rellenar={nl.rellenarBC}
-        colores={c} destinoGanador="Se queda/asciende a Liga B" destinoPerdedor="Se queda/desciende a Liga C" />
+        colores={c} destinoGanador="Se queda/asciende a Liga B" destinoPerdedor="Se queda/desciende a Liga C"
+        esReal={nl.bcEsReal} restaurarReal={nl.restaurarBCReal} hayReal={!!nl.crucesBCReal} reales={NL_PO_SORTEO_REAL.BC} />
       <div style={{ color: c.textoSuave, fontSize: 11, marginTop: 8, maxWidth: 720 }}>
         El play-off de ascenso/descenso C/D de esta edición se disputa en marzo de 2028, ya en la temporada
         siguiente, así que queda fuera del alcance de este simulador.
@@ -5190,8 +5243,7 @@ function NLResumenMovimientos({ mov, colores }) {
           {linea("C ← ganadores de D", mov.ascensos.C)}
         </>)}
         {columna("Descensos directos", "#C0392B", <>
-          {linea("B ← 4.º de A", mov.descensos.B)}
-          {linea("C ← 4.º de B", mov.descensos.C)}
+          {linea("B ← 2 peores 4.º de A (15.º-16.º)", mov.descensos.B)}
           {linea("D ← 2 peores 4.º de C", mov.descensos.D)}
         </>)}
       </div>
@@ -5295,7 +5347,7 @@ function NLTieCard({ tie, resultado, onChange, onReset, colores, ganador, perded
     </div>
   );
 }
-function NLPlayoffSection({ titulo, sub, pool, sorteo, ties, res, sortear, confirmar, cambiar, reiniciar, rellenar, colores, destinoGanador, destinoPerdedor }) {
+function NLPlayoffSection({ titulo, sub, pool, sorteo, ties, res, sortear, confirmar, cambiar, reiniciar, rellenar, colores, destinoGanador, destinoPerdedor, esReal, restaurarReal, hayReal, reales }) {
   return (
     <div style={{ marginTop: 22 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", borderLeft: `3px solid ${colores.acento}`, paddingLeft: 12, marginBottom: 10 }}>
@@ -5306,6 +5358,12 @@ function NLPlayoffSection({ titulo, sub, pool, sorteo, ties, res, sortear, confi
       <NLControlesEmparejamiento sorteo={sorteo} listo={pool.listo} onAuto={sortear} onConfirmarManual={confirmar}
         alta={pool.alta} baja={pool.baja} bloqueado={() => false} colores={colores} labelAuto="Sortear emparejamiento" />
       {sorteo?.bloqueo && <div style={{ color: colores.alerta, fontSize: 12, marginBottom: 10 }}>No se encontró una combinación distinta tras varios intentos — se ha asignado en el orden del sorteo.</div>}
+      {esReal && <div style={{ color: colores.acento, fontSize: 12, marginBottom: 10 }}>✓ SORTEO REAL (20/11/2026, UEFA) · ida y vuelta 25-30/3/2027.</div>}
+      {!esReal && hayReal && (
+        <div style={{ marginBottom: 10 }}>
+          <button onClick={restaurarReal} style={{ background: "none", border: `1px solid ${colores.acento}`, color: colores.acento, borderRadius: 8, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>↩ Restaurar sorteo real</button>
+        </div>
+      )}
       {ties && (
         <>
           <div style={{ marginBottom: 10 }}><BotonAleatorio onClick={rellenar} label="Simular todos los cruces" colores={colores} /></div>
@@ -5314,7 +5372,7 @@ function NLPlayoffSection({ titulo, sub, pool, sorteo, ties, res, sortear, confi
               <NLTieCard key={tie.id} tie={tie} resultado={res[tie.id]} onChange={cambiar} onReset={reiniciar} colores={colores}
                 ganador={nlResolverGanador(tie, res[tie.id])} perdedor={estadoEliminatoria(res[tie.id]).fase === "resuelto" ? (estadoEliminatoria(res[tie.id]).ganador === "A" ? tie.b : tie.a) : null}
                 destinoGanador={destinoGanador} destinoPerdedor={destinoPerdedor}
-                notaSede={`${tie.a.nombre} juega la ida en casa (peor clasificada del general 2024/25); ${tie.b.nombre} decide la vuelta en casa.`} />
+                notaSede={`${tie.a.nombre} (liga inferior) juega la ida en casa; ${tie.b.nombre} (liga superior) decide la vuelta en casa.${esReal ? (() => { const f = (reales || []).find((c) => c.rival === tie.a.nombre && c.cabeza === tie.b.nombre); return f ? ` Ida ${f.ida} · vuelta ${f.vuelta}.` : ""; })() : ""}`} />
             ))}
           </div>
         </>
