@@ -195,6 +195,16 @@ tono buscado, y guardándolos como referencia en la Skill.
 
 ---
 
+## 8. Reglas permanentes
+
+**Resultados al día.** Cada vez que se jueguen partidos de las competiciones que están en MC, se actualizan sus resultados.
+
+- Fuente: la web oficial de la competición (UEFA para Champions, Europa y Conference). Si no se puede leer, se piden los resultados a Carlos; no se inventan ni se completan marcadores.
+- Tras cargarlos se comprueba que clasificaciones y simuladores cuadran y que el proyecto compila, y se registra la actualización en `ESTADO.md`.
+- Registrada el 27/11/2026. No existe `CLAUDE.md` en el repo, por lo que la regla vive solo aquí.
+
+---
+
 ## Nota sobre esta reconstrucción (22/08/2026)
 
 Este documento se recuperó buscando en el chat original del 17/08 tras

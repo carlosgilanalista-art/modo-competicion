@@ -1519,7 +1519,32 @@ const UCL_RESULTADOS_JORNADA4_REAL = {
   "Lens|Como": { gl: 1, gv: 9 },
   "Viking|Sabah": { gl: 4, gv: 1 },
 };
-const UCL_RESULTADOS_REAL = { ...UCL_RESULTADOS_JORNADA1_REAL, ...UCL_RESULTADOS_JORNADA2_REAL, ...UCL_RESULTADOS_JORNADA3_REAL, ...UCL_RESULTADOS_JORNADA4_REAL };
+// Resultados reales de la Jornada 5 de la fase de liga UCL 2026/27, jugada el
+// 24-25 de noviembre de 2026 (fuente: resultados pegados por Carlos el 27/11/2026,
+// copiados de la web de la UEFA). Mismo formato y mecanismo que las jornadas
+// anteriores; los 18 partidos son exactamente los que UCL_JORNADA_REAL marca como
+// jornada 5 (verificado por script).
+const UCL_RESULTADOS_JORNADA5_REAL = {
+  "Bodø/Glimt|LASK Linz": { gl: 1, gv: 0 },
+  "Galatasaray|Aston Villa": { gl: 1, gv: 0 },
+  "Real Madrid|PSV Eindhoven": { gl: 5, gv: 1 },
+  "Manchester City|Napoli": { gl: 2, gv: 2 },
+  "Arsenal|Borussia Dortmund": { gl: 1, gv: 1 },
+  "Feyenoord|Porto": { gl: 0, gv: 1 },
+  "RB Leipzig|Lens": { gl: 3, gv: 1 },
+  "Slovan Bratislava|Real Betis": { gl: 0, gv: 2 },
+  "Como|AEK Atenas": { gl: 1, gv: 0 },
+  "Slavia Praga|Villarreal": { gl: 0, gv: 1 },
+  "Sabah|Barcelona": { gl: 1, gv: 4 },
+  "Paris Saint-Germain|Roma": { gl: 2, gv: 2 },
+  "Inter|VfB Stuttgart": { gl: 2, gv: 0 },
+  "Atlético de Madrid|Viking": { gl: 2, gv: 0 },
+  "Sporting CP|Manchester United": { gl: 2, gv: 2 },
+  "Club Brugge|Liverpool": { gl: 0, gv: 3 },
+  "Lille|Bayern de Múnich": { gl: 2, gv: 1 },
+  "Shakhtar Donetsk|Fenerbahçe": { gl: 0, gv: 1 },
+};
+const UCL_RESULTADOS_REAL = { ...UCL_RESULTADOS_JORNADA1_REAL, ...UCL_RESULTADOS_JORNADA2_REAL, ...UCL_RESULTADOS_JORNADA3_REAL, ...UCL_RESULTADOS_JORNADA4_REAL, ...UCL_RESULTADOS_JORNADA5_REAL };
 
 // Sorteo real (no simulado) de la fase de liga de la Europa League 2026/27.
 // A diferencia de la Champions, el reparto de bombos NO se pudo derivar del
@@ -1856,7 +1881,30 @@ const UEL_RESULTADOS_JORNADA4_REAL = {
   "Hapoel Beer-Sheva|OFI Creta": { gl: 0, gv: 2 },
   "Rennes|Olympiakos": { gl: 0, gv: 0 },
 };
-const UEL_RESULTADOS_REAL = { ...UEL_RESULTADOS_JORNADA1_REAL, ...UEL_RESULTADOS_JORNADA2_REAL, ...UEL_RESULTADOS_JORNADA3_REAL, ...UEL_RESULTADOS_JORNADA4_REAL };
+// Resultados reales de la Jornada 5 de la fase de liga UEL 2026/27, jugada el
+// jueves 26 de noviembre de 2026 (fuente: resultados pegados por Carlos el 27/11/2026,
+// copiados de la web de la UEFA). 18 de 18, exactamente los que UEL_JORNADA_REAL marca como jornada 5 (verificado por script).
+const UEL_RESULTADOS_JORNADA5_REAL = {
+  "Olympiakos|Milan": { gl: 2, gv: 4 },
+  "Marsella|Levski Sofia": { gl: 1, gv: 0 },
+  "Viktoria Plzeň|Benfica": { gl: 4, gv: 0 },
+  "Union Saint-Gilloise|Lech Poznań": { gl: 2, gv: 2 },
+  "GNK Dinamo|Bayer Leverkusen": { gl: 0, gv: 2 },
+  "Salzburgo|Ararat-Armenia": { gl: 2, gv: 0 },
+  "Celta de Vigo|Bournemouth": { gl: 1, gv: 2 },
+  "Beşiktaş|Hapoel Beer-Sheva": { gl: 2, gv: 1 },
+  "Juventus|Omonoia": { gl: 4, gv: 1 },
+  "Lyon|Lillestrøm": { gl: 0, gv: 0 },
+  "Ferencváros|Celje": { gl: 0, gv: 0 },
+  "Sparta Praga|AZ Alkmaar": { gl: 2, gv: 4 },
+  "Crystal Palace|Real Sociedad": { gl: 2, gv: 1 },
+  "Sunderland|Jagiellonia Białystok": { gl: 1, gv: 1 },
+  "TSG Hoffenheim|Sturm Graz": { gl: 3, gv: 1 },
+  "Torreense|Celtic": { gl: 1, gv: 2 },
+  "NEC Nijmegen|Rennes": { gl: 3, gv: 1 },
+  "OFI Creta|Anderlecht": { gl: 1, gv: 3 },
+};
+const UEL_RESULTADOS_REAL = { ...UEL_RESULTADOS_JORNADA1_REAL, ...UEL_RESULTADOS_JORNADA2_REAL, ...UEL_RESULTADOS_JORNADA3_REAL, ...UEL_RESULTADOS_JORNADA4_REAL, ...UEL_RESULTADOS_JORNADA5_REAL };
 
 // Sorteo real (no simulado) de la fase de liga de la Conference League 2026/27.
 // Mismo motivo que en Europa League: los 6 bombos de 6 (UECL_POT_REAL) y los
@@ -2122,7 +2170,31 @@ const UECL_RESULTADOS_JORNADA3_REAL = {
   "Universitatea Craiova|Egnatia": { gl: 2, gv: 0 },
   "Riga|Jablonec": { gl: 1, gv: 1 },
 };
-const UECL_RESULTADOS_REAL = { ...UECL_RESULTADOS_JORNADA1_REAL, ...UECL_RESULTADOS_JORNADA2_REAL, ...UECL_RESULTADOS_JORNADA3_REAL };
+// Resultados reales de la Jornada 4 de la fase de liga UECL 2026/27, jugada el
+// jueves 26 de noviembre de 2026 (fuente: resultados pegados por Carlos el 27/11/2026,
+// copiados de la web de la UEFA). 18 de 18 (Kauno Žalgiris–Riga 2-0 y Gent–Crvena Zvezda 1-1
+// confirmados por Carlos tras un texto pegado ambiguo). Verificado por script contra UECL_JORNADA_REAL.
+const UECL_RESULTADOS_JORNADA4_REAL = {
+  "Kauno Žalgiris|Riga": { gl: 2, gv: 0 },
+  "Gent|Crvena Zvezda": { gl: 1, gv: 1 },
+  "Kairat Almaty|Mjällby": { gl: 1, gv: 0 },
+  "Ajax|Thun": { gl: 4, gv: 0 },
+  "Pafos|Midtjylland": { gl: 0, gv: 2 },
+  "Brighton & Hove Albion|Universitatea Craiova": { gl: 4, gv: 0 },
+  "Brann|Aarhus": { gl: 1, gv: 4 },
+  "Hearts|Mónaco": { gl: 2, gv: 3 },
+  "Jablonec|Lugano": { gl: 2, gv: 0 },
+  "Iberia Tbilisi|Getafe": { gl: 1, gv: 0 },
+  "Egnatia|Lincoln Red Imps": { gl: 2, gv: 1 },
+  "Braga|KuPS Kuopio": { gl: 4, gv: 0 },
+  "Friburgo|Twente": { gl: 2, gv: 1 },
+  "Borac|Atalanta": { gl: 2, gv: 3 },
+  "Hajduk Split|Sint-Truidense": { gl: 0, gv: 2 },
+  "Nordsjælland|Panathinaikos": { gl: 3, gv: 2 },
+  "Inter Escaldes|Copenhagen": { gl: 2, gv: 0 },
+  "CSKA Sofia|Trabzonspor": { gl: 1, gv: 2 },
+};
+const UECL_RESULTADOS_REAL = { ...UECL_RESULTADOS_JORNADA1_REAL, ...UECL_RESULTADOS_JORNADA2_REAL, ...UECL_RESULTADOS_JORNADA3_REAL, ...UECL_RESULTADOS_JORNADA4_REAL };
 
 // ---- Edición tras el sorteo: intercambio de visitantes entre dos partidos ----
 // Intercambiar los visitantes de dos partidos del mismo "bloque" (mismo bombo
