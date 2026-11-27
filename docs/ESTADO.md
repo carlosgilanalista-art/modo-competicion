@@ -599,6 +599,7 @@ _(Ideas surgidas a mitad de sesión. Se revisa los viernes, nunca antes.)_
 - (26/11) Valorar la rentabilidad económica de MC, cómo ofrecerlo a clientes y los pasos a seguir → Proyecto «Decisión estratégica · TAI y cartera»; lo alimenta el resultado del embed (13/12).
 - (26/11) Embed y cookies: GA4 carga sin banner de consentimiento; dentro de un iframe en un medio, pone cookies de MC a sus lectores. Riesgo de adopción; lo decide el Proyecto «Decisión estratégica · TAI y cartera».
 - (26/11) Embed, mejoras sin evaluar: ajuste automático de altura por postMessage; vista solo de grupos; `frame-ancestors` limitado al embed (con rutas hash todo el sitio es incrustable); dividir el código (bundle de 680 KB, 175 KB comprimido, con todos los simuladores).
+- (27/11) Poder leer la web oficial de la UEFA desde las sesiones de Code (hoy `es.uefa.com` está fuera de la red permitida del entorno y los resultados los pega Carlos a mano). Sin evaluar.
 
 ## 8. Preguntas abiertas
 
